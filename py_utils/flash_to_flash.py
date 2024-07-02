@@ -1,5 +1,6 @@
 import serial
 import struct
+import tkinter
 
 USART_FLASH_HEADER = 0xAD1991DA
 USART_FLASH_END = 0xDA9119AD
@@ -14,6 +15,7 @@ USART_FLASH_SHAKE_3 = 0x19
 USART_FLASH_ACK = 0x00
 USART_FLASH_NACK = 0xFF
 
+
 USART_FLASH_CMD_FLASH_DATA = 0x01  # // Flash data request
 USART_FLASH_CMD_PACK_DATA = 0x02  # // data package
 USART_FLASH_CMD_READ_DATA = 0x03  # // read data from flash
@@ -22,7 +24,7 @@ USART_FLASH_CMD_READ_DATA = 0x03  # // read data from flash
 W25Q16JV_PAGE_SIZE = 256
 W25Q16JV_SECTOR_SIZE = 4096
 
-ser = serial.Serial("COM7", 115200, timeout=10)
+ser = serial.Serial("COM7", 115200, timeout=20)
 handshake_count = 1
 
 # handshake
@@ -47,7 +49,7 @@ def send_cmd(cmd, *args, handshake=0, wait_ack=True):
             return None
         data2 = struct.unpack("<IBIBI", ser.read(14))
         # print("rev: ", data2)
-        return data2[0] == USART_FLASH_HEADER and data2[1] == USART_FLASH_CMD and data2[2] == 0x01 and data2[3] == (USART_FLASH_ACK if handshake == 0 else cmd) and data2[4] == USART_FLASH_END
+        return data2[0] == USART_FLASH_HEADER and ((data2[1] == USART_FLASH_CMD) or (data2[1] == USART_FLASH_FLAG)) and data2[2] == 0x01 and data2[3] == (USART_FLASH_ACK if handshake == 0 else cmd) and data2[4] == USART_FLASH_END
     except Exception as e:
         print(e)
         return False
@@ -69,7 +71,7 @@ def send_data(data: bytes, size):
         ser.write(data2)
         data3 = struct.unpack("<IBIBI", ser.read(14))
         # print("rev: ", data3)
-        return data3[0] == USART_FLASH_HEADER and data3[1] == USART_FLASH_CMD and data3[2] == 0x01 and data3[3] == USART_FLASH_ACK and data3[4] == USART_FLASH_END
+        return data3[0] == USART_FLASH_HEADER and data3[1] == USART_FLASH_FLAG and data3[2] == 0x01 and data3[3] == USART_FLASH_ACK and data3[4] == USART_FLASH_END
     except Exception as e:
         print(e)
         return False
@@ -80,12 +82,14 @@ def write_file(file_path: str, addr: int):
         print("The address must be aligned W25Q16JV_PAGE_SIZE")
         exit(-1)
 
+    print("Erasing flash...")
     if not send_cmd(USART_FLASH_CMD_FLASH_DATA, struct.pack("<I", addr)):
         print("Flash command failed...")
         exit(-1)
 
     with open(file_path, 'rb') as f:
         data = f.read()
+        
     print("Writing file...")
     print("File size: %d" % len(data))
     for i in range(0, len(data), 256):
@@ -101,7 +105,7 @@ def read_to_file(file_path: str, addr: int, size: int):
     if addr % W25Q16JV_SECTOR_SIZE != 0:
         print("The address must be aligned W25Q16JV_SECTOR_SIZE")
         exit(-1)
-        
+
     if not send_cmd(USART_FLASH_CMD_READ_DATA, struct.pack("<II", addr, size)):
         print("Read command failed...")
         exit(-1)

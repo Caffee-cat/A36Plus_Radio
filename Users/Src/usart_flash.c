@@ -1,194 +1,209 @@
 #include "usart_flash.h"
 
-static uint8_t data[512] = {0};
-static uint16_t pos = 0;
-static uint8_t usart_flash_idle_bit = 0;
-static usart_flash_state_t state = USART_FLASH_STATE_NONE;
-static uint32_t rcv_data_addr = 0;
-static uint32_t timeout_count = 0;
+usart_flash_context_t context = {
+    .data = {0},
+    .data_pos = 0,
+    .rcv_idle_bit = 0,
+    .timeout_count = 0,
+    .trs_data_addr = 0,
+    .rcv_data_addr = 0,
+    .temp = 0,
+    .state = USART_FLASH_STATE_NONE,
+    .rcv_proto = {
+        .header = USART_FLASH_HEADER,
+        .end = USART_FLASH_END},
+    .trs_proto = {.header = USART_FLASH_HEADER, .end = USART_FLASH_END},
+    .send_cb = USART_SendByte};
 
-uint32_t trs_addr;
-uint32_t trs_size;
-uint8_t trs_data[W25Q16JV_SECTOR_SIZE];
-// static usart_flash_str_t rec_str;
+usart_flash_context_ptr context_ptr = &context;
 
-// static usart_flash_str_t sen_str = {
-//     .header = USART_FLASH_HEADER,
-//     .length = 0,
-//     .option = 0};
-
-static void handshake_ack_reply(usart_flash_handshake_ack_t ufha)
+static void protocol_unpack(usart_flash_protocol_ptr ptr, uint8_t *data)
 {
-    for (uint8_t i = 0; i < 4; i++)
-        USART_SendByte((USART_FLASH_HEADER >> (i * 8)) & 0xFF); // header
+    uint16_t pos = 0;
+    ptr->header = *(uint32_t *)data;
+    pos += 4;
 
-    USART_SendByte(USART_FLASH_CMD); // options
+    ptr->option = *(uint8_t *)(data + pos);
+    pos += 1;
 
-    USART_SendByte(0x01); // length
-    USART_SendByte(0x00);
-    USART_SendByte(0x00);
-    USART_SendByte(0x00);
+    ptr->size = *(uint32_t *)(data + pos);
+    pos += 4;
 
-    USART_SendByte(ufha);
+    ptr->data = data + pos;
+    pos += ptr->size;
 
-    for (uint8_t i = 0; i < 4; i++)
-        USART_SendByte((USART_FLASH_END >> (i * 8)) & 0xFF);
+    ptr->end = ptr->end;
 }
 
-static void send_data(uint8_t *data, uint32_t size)
+static void protocol_send(usart_flash_protocol_ptr ptr)
 {
     for (uint8_t i = 0; i < 4; i++)
-        USART_SendByte((USART_FLASH_HEADER >> (i * 8)) & 0xFF); // header
+        context_ptr->send_cb((ptr->header >> (i * 8)) & 0xFF); // header
 
-    USART_SendByte(USART_FLASH_DATA); // options
-
-    USART_SendByte(size & 0xFF); // length
-    USART_SendByte((size >> 8) & 0xFF);
-    USART_SendByte((size >> 16) & 0xFF);
-    USART_SendByte((size >> 24) & 0xFF);
-
-    for (uint32_t i = 0; i < size; i++)
-        USART_SendByte(*(data + i));
+    context_ptr->send_cb(ptr->option); // options
 
     for (uint8_t i = 0; i < 4; i++)
-        USART_SendByte((USART_FLASH_END >> (i * 8)) & 0xFF);
+        context_ptr->send_cb((ptr->size >> (i * 8)) & 0xFF); // length
+
+    for (uint16_t i = 0; i < ptr->size; i++) // data
+        context_ptr->send_cb(*(ptr->data + i));
+
+    for (uint8_t i = 0; i < 4; i++)
+        context_ptr->send_cb((ptr->end >> (i * 8)) & 0xFF); // end
 }
 
-static void process_cmd(usart_flash_cmd_t cmd)
+static void protocol_pack_data(usart_flash_protocol_ptr ptr, usart_flash_option_t opt, uint32_t size, uint8_t *data)
 {
-    if (cmd == USART_FLASH_SHAKE_1)
+    ptr->header = USART_FLASH_HEADER;
+    ptr->option = opt;
+    ptr->size = size;
+    ptr->data = data;
+    ptr->end = USART_FLASH_END;
+}
+
+static void protocol_pack_flag(usart_flash_protocol_ptr ptr, usart_flash_flag_t flag)
+{
+    context_ptr->temp = flag;
+    protocol_pack_data(ptr, USART_FLASH_OPT_FLAG, 0x01, &context_ptr->temp);
+}
+
+static void protocol_pack_handshake(usart_flash_protocol_ptr ptr, usart_flash_hanshake_t shake)
+{
+    context_ptr->temp = shake;
+    protocol_pack_data(ptr, USART_FLASH_OPT_CMD, 0x01, &context_ptr->temp);
+}
+
+static void process_command(usart_flash_protocol_ptr ptr)
+{
+    if (context_ptr->state != USART_FLASH_STATE_SHAKE_OK)
     {
-        state = USART_FLASH_STATE_SHAKE_1;
-        handshake_ack_reply(USART_FLASH_SHAKE_1);
+        switch (context_ptr->state)
+        {
+        case USART_FLASH_STATE_NONE:
+            if (*ptr->data == USART_FLASH_SHAKE_1)
+            {
+                context_ptr->state = USART_FLASH_STATE_SHAKE_1;
+                protocol_pack_handshake(&context_ptr->trs_proto, USART_FLASH_SHAKE_1);
+            }
+            else
+            {
+                context_ptr->state = USART_FLASH_STATE_NONE;
+                protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
+            }
+            break;
+        case USART_FLASH_STATE_SHAKE_1:
+
+            if (*ptr->data == USART_FLASH_SHAKE_2)
+            {
+                context_ptr->state = USART_FLASH_STATE_SHAKE_2;
+                protocol_pack_handshake(&context_ptr->trs_proto, USART_FLASH_SHAKE_2);
+            }
+            else
+            {
+                context_ptr->state = USART_FLASH_STATE_NONE;
+                protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
+            }
+            break;
+        case USART_FLASH_STATE_SHAKE_2:
+            if (*ptr->data == USART_FLASH_SHAKE_3)
+            {
+                context_ptr->state = USART_FLASH_STATE_SHAKE_OK;
+                protocol_pack_handshake(&context_ptr->trs_proto, USART_FLASH_SHAKE_3);
+            }
+            else
+            {
+                context_ptr->state = USART_FLASH_STATE_NONE;
+                protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
+            }
+            break;
+        default:
+            if (*ptr->data == USART_FLASH_SHAKE_1)
+            {
+                context_ptr->state = USART_FLASH_STATE_SHAKE_1;
+                protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_SHAKE_1);
+            }
+            break;
+        }
+        protocol_send(&context_ptr->trs_proto);
+        return;
     }
-    else if (cmd == USART_FLASH_CMD_FLASH_DATA)
+
+    if (*ptr->data == USART_FLASH_SHAKE_1)
     {
-        if (*(uint32_t *)(data + 5) < 5)
-            handshake_ack_reply(USART_FLASH_NACK);
+        context_ptr->state = USART_FLASH_STATE_SHAKE_1;
+        protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_ACK);
+    }
+    else if (*ptr->data == USART_FLASH_CMD_FLASH_DATA)
+    {
+        if (ptr->size < 5)
+            protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
 
         w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
         w25q16jv_chip_erase();
-        timeout_count = 0;
+        context_ptr->timeout_count = 0;
         while (w25q16jv_read_busy() != W25Q16JV_RESET)
         {
-            timeout_count++;
-            if (timeout_count > 0xFF)
-                handshake_ack_reply(USART_FLASH_NACK);
+            context_ptr->timeout_count++;
+            if (context_ptr->timeout_count > USART_FLASH_TIMEOUT)
+                protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
         }
 
-        rcv_data_addr = *(uint32_t *)(data + 10);
-        state = USART_FLASH_STATE_REV_DATA;
-        handshake_ack_reply(USART_FLASH_ACK);
+        context_ptr->rcv_data_addr = *(uint32_t *)(ptr->data + 1);
+        context_ptr->state = USART_FLASH_STATE_REV_DATA;
+        protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_ACK);
     }
-    else if (cmd == USART_FLASH_CMD_READ_DATA)
+    else if (*ptr->data == USART_FLASH_CMD_READ_DATA)
     {
 
-        if (*(uint32_t *)(data + 5) < 9)
-            handshake_ack_reply(USART_FLASH_NACK);
+        if (ptr->size < 9)
+            protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
 
-        trs_addr = *(uint32_t *)(data + 10);
-        trs_size = *(uint32_t *)(data + 14);
-
-        state = USART_FLASH_STATE_TRS_DATA;
-        handshake_ack_reply(USART_FLASH_ACK);
+        context_ptr->trs_data_addr = *(uint32_t *)(ptr->data + 1);
+        context_ptr->state = USART_FLASH_STATE_TRS_DATA;
+        protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_ACK);
     }
-    else if (cmd == USART_FLASH_ACK)
-        state = USART_FLASH_STATE_NONE;
     else
-        handshake_ack_reply(USART_FLASH_NACK);
+        protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
+    protocol_send(&context_ptr->trs_proto);
 }
 
-static void analyse_cmd(usart_flash_cmd_t cmd)
+static void process_data(usart_flash_protocol_ptr ptr)
 {
-    // handshake(cmd);
-
-    switch (state)
-    {
-    case USART_FLASH_STATE_NONE:
-        if (cmd == USART_FLASH_SHAKE_1)
-        {
-            state = USART_FLASH_STATE_SHAKE_1;
-            handshake_ack_reply(USART_FLASH_SHAKE_1);
-        }
-        else
-        {
-            state = USART_FLASH_STATE_NONE;
-            handshake_ack_reply(USART_FLASH_NACK);
-        }
-        break;
-    case USART_FLASH_STATE_SHAKE_1:
-        if (cmd == USART_FLASH_SHAKE_2)
-        {
-            state = USART_FLASH_STATE_SHAKE_2;
-            handshake_ack_reply(USART_FLASH_SHAKE_2);
-        }
-        else
-        {
-            state = USART_FLASH_STATE_NONE;
-            handshake_ack_reply(USART_FLASH_NACK);
-        }
-        break;
-    case USART_FLASH_STATE_SHAKE_2:
-        if (cmd == USART_FLASH_SHAKE_3)
-        {
-            state = USART_FLASH_STATE_SHAKE_OK;
-            handshake_ack_reply(USART_FLASH_SHAKE_3);
-        }
-        else
-        {
-            state = USART_FLASH_STATE_NONE;
-            handshake_ack_reply(USART_FLASH_NACK);
-        }
-        break;
-    case USART_FLASH_STATE_SHAKE_OK:
-        process_cmd(cmd);
-        break;
-    default:
-        if (cmd == USART_FLASH_SHAKE_1)
-        {
-            state = USART_FLASH_STATE_SHAKE_1;
-            handshake_ack_reply(USART_FLASH_SHAKE_1);
-        }
-        break;
-    }
-}
-
-static void process_data(uint8_t *data, uint32_t size)
-{
-    if (state == USART_FLASH_STATE_REV_DATA)
+    if (context_ptr->state == USART_FLASH_STATE_REV_DATA)
     {
         w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-        w25q16jv_page_program(rcv_data_addr, data, size);
-        timeout_count = 0;
+        w25q16jv_page_program(context_ptr->rcv_data_addr, ptr->data, ptr->size);
+        context_ptr->timeout_count = 0;
         while (w25q16jv_read_busy() != W25Q16JV_RESET)
         {
-            timeout_count++;
-            if (timeout_count > 0xFF)
-                handshake_ack_reply(USART_FLASH_NACK);
+            context_ptr->timeout_count++;
+            if (context_ptr->timeout_count > 0xFF)
+                protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
         }
-        rcv_data_addr += W25Q16JV_PAGE_SIZE;
-        handshake_ack_reply(USART_FLASH_ACK);
+        context_ptr->rcv_data_addr += W25Q16JV_PAGE_SIZE;
+        protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_ACK);
     }
-    else if (state == USART_FLASH_STATE_TRS_DATA)
+    else if (context_ptr->state == USART_FLASH_STATE_TRS_DATA)
     {
-        w25q16jv_read_sector(trs_addr, trs_data);
-        send_data(trs_data, W25Q16JV_SECTOR_SIZE);
+        w25q16jv_read_sector(context_ptr->trs_data_addr, context_ptr->trs_data_buffer);
+        protocol_pack_data(&context_ptr->trs_proto, USART_FLASH_OPT_DATA, W25Q16JV_SECTOR_SIZE, context_ptr->trs_data_buffer);
     }
     else
-        handshake_ack_reply(USART_FLASH_NACK);
+        protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
+    protocol_send(&context_ptr->trs_proto);
 }
 
-static void process_flag(usart_flash_handshake_ack_t flag)
+static void process_flag(usart_flash_protocol_ptr ptr)
 {
-    switch (flag)
+    switch (*(uint8_t *)ptr->data)
     {
-    case USART_FLASH_ACK:
+    case USART_FLASH_FLAG_ACK:
 
         break;
 
-    case USART_FLASH_NACK:
-        if (state == USART_FLASH_STATE_REV_DATA)
-            state = USART_FLASH_STATE_NONE;
+    case USART_FLASH_FLAG_NACK:
+        if (context_ptr->state == USART_FLASH_STATE_REV_DATA)
+            context_ptr->state = USART_FLASH_STATE_NONE;
         break;
     }
 }
@@ -196,32 +211,30 @@ static void process_flag(usart_flash_handshake_ack_t flag)
 void usart_flash_cb(uint8_t n)
 {
     if (n == 0)
-        data[pos++] = usart_data_receive(USART0);
+        context_ptr->data[context_ptr->data_pos++] = usart_data_receive(USART0);
     else if (n == 1)
-        usart_flash_idle_bit = 1;
+        context_ptr->rcv_idle_bit = 1;
 }
 
 void usart_flash_run(void)
 {
     while (1)
     {
-        if (usart_flash_idle_bit == 1)
+        if (context_ptr->rcv_idle_bit == 1)
         {
-            if (*(uint32_t *)data == USART_FLASH_HEADER && *(uint32_t *)(data + (pos - 5)) == USART_FLASH_END)
+            if (*(uint32_t *)context_ptr->data == USART_FLASH_HEADER && *(uint32_t *)(context_ptr->data + (context_ptr->data_pos - 5)) == USART_FLASH_END)
             {
-                // memcpy(&rec_str, data, pos - 1);
-                if (*(uint8_t *)(data + 4) == USART_FLASH_CMD)
-                    analyse_cmd(*(uint32_t *)(data + 9));
-                else if (*(uint8_t *)(data + 4) == USART_FLASH_DATA)
-                    process_data((uint8_t *)(data + 9), *(uint32_t *)(data + 5));
-                else if (*(uint8_t *)(data + 4) == USART_FLASH_FLAG)
-                    process_flag(*(uint8_t *)(data + 9));
-                else
-                    handshake_ack_reply(USART_FLASH_NACK);
+                protocol_unpack(&context_ptr->rcv_proto, context_ptr->data);
+                if (context_ptr->rcv_proto.option == USART_FLASH_OPT_CMD)
+                    process_command(&context_ptr->rcv_proto);
+                else if (context_ptr->rcv_proto.option == USART_FLASH_OPT_DATA)
+                    process_data(&context_ptr->rcv_proto);
+                else if (context_ptr->rcv_proto.option == USART_FLASH_OPT_FLAG)
+                    process_flag(&context_ptr->rcv_proto);
             }
-            usart_flash_idle_bit = 0;
-            pos = 0;
-            memset(data, 0, 512);
+            context_ptr->rcv_idle_bit = 0;
+            context_ptr->data_pos = 0;
+            memset(context_ptr->data, 0, 512);
         }
     }
 }
