@@ -4,7 +4,7 @@ static uint8_t data[512] = {0};
 static uint16_t pos = 0;
 static uint8_t usart_flash_idle_bit = 0;
 static usart_flash_state_t state = USART_FLASH_STATE_NONE;
-static uint32_t rcv_data_pos = 0;
+static uint32_t rcv_data_addr = 0;
 static uint32_t timeout_count = 0;
 
 uint32_t trs_addr;
@@ -54,61 +54,6 @@ static void send_data(uint8_t *data, uint32_t size)
         USART_SendByte((USART_FLASH_END >> (i * 8)) & 0xFF);
 }
 
-// static void handshake(uint8_t cmd)
-// {
-
-// }
-
-// static void pack_data(uint8_t *data, uint32_t size)
-// {
-// switch (state)
-//     {
-//     case USART_FLASH_STATE_NONE:
-//         if (cmd == USART_FLASH_SHAKE_1)
-//         {
-//             handshake_ack_reply(USART_FLASH_SHAKE_1);
-//             state = USART_FLASH_STATE_SHAKE_1;
-//         }
-//         else
-//         {
-//             handshake_ack_reply(USART_FLASH_NACK);
-//             state = USART_FLASH_STATE_NONE;
-//         }
-//         break;
-//     case USART_FLASH_STATE_SHAKE_1:
-//         if (cmd == USART_FLASH_SHAKE_2)
-//         {
-//             handshake_ack_reply(USART_FLASH_SHAKE_2);
-//             state = USART_FLASH_STATE_SHAKE_2;
-//         }
-//         else
-//         {
-//             handshake_ack_reply(USART_FLASH_NACK);
-//             state = USART_FLASH_STATE_NONE;
-//         }
-//         break;
-//     case USART_FLASH_STATE_SHAKE_2:
-//         if (cmd == USART_FLASH_SHAKE_3)
-//         {
-//             handshake_ack_reply(USART_FLASH_SHAKE_3);
-//             state = USART_FLASH_STATE_SHAKE_OK;
-//         }
-//         else
-//         {
-//             handshake_ack_reply(USART_FLASH_NACK);
-//             state = USART_FLASH_STATE_NONE;
-//         }
-//         break;
-//     case USART_FLASH_STATE_SHAKE_OK:
-//         if (cmd == USART_FLASH_SHAKE_1)
-//         {
-//             handshake_ack_reply(USART_FLASH_SHAKE_1);
-//             state = USART_FLASH_STATE_SHAKE_1;
-//         }
-//         break;
-//     }
-// }
-
 static void process_cmd(usart_flash_cmd_t cmd)
 {
     if (cmd == USART_FLASH_SHAKE_1)
@@ -118,6 +63,9 @@ static void process_cmd(usart_flash_cmd_t cmd)
     }
     else if (cmd == USART_FLASH_CMD_FLASH_DATA)
     {
+        if (*(uint32_t *)(data + 5) < 5)
+            handshake_ack_reply(USART_FLASH_NACK);
+
         w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
         w25q16jv_chip_erase();
         timeout_count = 0;
@@ -128,7 +76,7 @@ static void process_cmd(usart_flash_cmd_t cmd)
                 handshake_ack_reply(USART_FLASH_NACK);
         }
 
-        rcv_data_pos = 0;
+        rcv_data_addr = *(uint32_t *)(data + 10);
         state = USART_FLASH_STATE_REV_DATA;
         handshake_ack_reply(USART_FLASH_ACK);
     }
@@ -210,7 +158,7 @@ static void process_data(uint8_t *data, uint32_t size)
     if (state == USART_FLASH_STATE_REV_DATA)
     {
         w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-        w25q16jv_page_program(rcv_data_pos, data, size);
+        w25q16jv_page_program(rcv_data_addr, data, size);
         timeout_count = 0;
         while (w25q16jv_read_busy() != W25Q16JV_RESET)
         {
@@ -218,7 +166,7 @@ static void process_data(uint8_t *data, uint32_t size)
             if (timeout_count > 0xFF)
                 handshake_ack_reply(USART_FLASH_NACK);
         }
-        rcv_data_pos += 256;
+        rcv_data_addr += W25Q16JV_PAGE_SIZE;
         handshake_ack_reply(USART_FLASH_ACK);
     }
     else if (state == USART_FLASH_STATE_TRS_DATA)

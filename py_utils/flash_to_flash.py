@@ -18,6 +18,10 @@ USART_FLASH_CMD_FLASH_DATA = 0x01  # // Flash data request
 USART_FLASH_CMD_PACK_DATA = 0x02  # // data package
 USART_FLASH_CMD_READ_DATA = 0x03  # // read data from flash
 
+
+W25Q16JV_PAGE_SIZE = 256
+W25Q16JV_SECTOR_SIZE = 4096
+
 ser = serial.Serial("COM7", 115200, timeout=10)
 handshake_count = 1
 
@@ -50,7 +54,8 @@ def send_cmd(cmd, *args, handshake=0, wait_ack=True):
 
 
 def send_flag(flag):
-    data = struct.pack("<IBIBI", USART_FLASH_HEADER, USART_FLASH_FLAG, 0x01, flag, USART_FLASH_END)
+    data = struct.pack("<IBIBI", USART_FLASH_HEADER,
+                       USART_FLASH_FLAG, 0x01, flag, USART_FLASH_END)
     ser.write(data)
 
 
@@ -70,8 +75,12 @@ def send_data(data: bytes, size):
         return False
 
 
-def write_file(file_path: str):
-    if not send_cmd(USART_FLASH_CMD_FLASH_DATA):
+def write_file(file_path: str, addr: int):
+    if addr % W25Q16JV_PAGE_SIZE != 0:
+        print("The address must be aligned W25Q16JV_PAGE_SIZE")
+        exit(-1)
+
+    if not send_cmd(USART_FLASH_CMD_FLASH_DATA, struct.pack("<I", addr)):
         print("Flash command failed...")
         exit(-1)
 
@@ -89,6 +98,10 @@ def write_file(file_path: str):
 
 
 def read_to_file(file_path: str, addr: int, size: int):
+    if addr % W25Q16JV_SECTOR_SIZE != 0:
+        print("The address must be aligned W25Q16JV_SECTOR_SIZE")
+        exit(-1)
+        
     if not send_cmd(USART_FLASH_CMD_READ_DATA, struct.pack("<II", addr, size)):
         print("Read command failed...")
         exit(-1)
@@ -140,8 +153,8 @@ if __name__ == "__main__":
     print()
     print()
 
-    # write_file(r"C:\Users\Administrator\Desktop\A36plus 开机图\Talkpod.bin")
-    read_to_file(
-        r"C:\Users\Administrator\Desktop\A36plus 开机图\Talkpod_read.bin", 0x00, 32768)
+    write_file(r"C:\Users\Administrator\Desktop\A36Plus\Talkpod.jpg", 0x100)
+    # read_to_file(
+    #     r"C:\Users\Administrator\Desktop\A36Plus\Talkpod_read.bin", 0x00, 32768)
 
     print("Done!")
