@@ -94,6 +94,8 @@ void w25q16jv_read_sector_fast(uint32_t addr, uint8_t *readData);
 void w25q16jv_read_block(uint32_t addr, uint8_t *readData);
 void w25q16jv_read_block_fast(uint32_t addr, uint8_t *readData);
 
+void w25q16jv_read_num(uint32_t addr, uint8_t *readData, uint32_t num);
+
 void w25q16jv_page_program(uint32_t addr, uint8_t *raw_data, uint16_t size);
 void w25q16jv_sector_erase(uint32_t addr);
 void w25q16jv_block32_erase(uint32_t addr);

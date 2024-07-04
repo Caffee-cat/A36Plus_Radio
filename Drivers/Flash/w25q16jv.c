@@ -154,6 +154,11 @@ uint8_t w25q16jv_read_busy(void)
 
 void w25q16jv_read_sector(uint32_t addr, uint8_t *readData)
 {
+
+    while (w25q16jv_read_busy() != W25Q16JV_RESET)
+    {
+    }
+
     FLASH_CS_LOW;
 
     SPI_send_data(W25Q16JV_CMD_READ);
@@ -180,6 +185,11 @@ void w25q16jv_read_block(uint32_t addr, uint8_t *readData)
 
 void w25q16jv_read_sector_fast(uint32_t addr, uint8_t *readData)
 {
+
+    while (w25q16jv_read_busy() != W25Q16JV_RESET)
+    {
+    }
+
     FLASH_CS_LOW;
 
     SPI_send_data(W25Q16JV_CMD_FAST_READ);
@@ -205,6 +215,25 @@ void w25q16jv_read_block_fast(uint32_t addr, uint8_t *readData)
 {
     for (uint8_t i = 0; i < 16; i++)
         w25q16jv_read_sector_fast(addr + i * W25Q16JV_SECTOR_SIZE, (uint8_t *)readData[i * W25Q16JV_SECTOR_SIZE]);
+}
+
+void w25q16jv_read_num(uint32_t addr, uint8_t *readData, uint32_t num)
+{
+    while (w25q16jv_read_busy() != W25Q16JV_RESET)
+    {
+    }
+
+    FLASH_CS_LOW;
+
+    SPI_send_data(W25Q16JV_CMD_READ);
+    SPI_send_data((addr >> 16) & 0xFF);
+    SPI_send_data((addr >> 8) & 0xFF);
+    SPI_send_data(addr & 0xFF);
+
+    for (uint16_t i = 0; i < num; i++)
+        readData[i] = SPI_read_data();
+
+    FLASH_CS_HIGHT;
 }
 
 void w25q16jv_sector_erase(uint32_t addr)
