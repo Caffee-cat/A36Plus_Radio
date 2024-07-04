@@ -149,7 +149,7 @@ static void process_command(usart_flash_protocol_ptr ptr)
         }
 
         context_ptr->rcv_data_addr = *(uint32_t *)(ptr->data + 1);
-        context_ptr->state = USART_FLASH_STATE_REV_DATA;
+        context_ptr->state = USART_FLASH_STATE_RCV_DATA;
         protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_ACK);
     }
     else if (*ptr->data == USART_FLASH_CMD_READ_DATA)
@@ -169,7 +169,7 @@ static void process_command(usart_flash_protocol_ptr ptr)
 
 static void process_data(usart_flash_protocol_ptr ptr)
 {
-    if (context_ptr->state == USART_FLASH_STATE_REV_DATA)
+    if (context_ptr->state == USART_FLASH_STATE_RCV_DATA)
     {
         w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
         w25q16jv_page_program(context_ptr->rcv_data_addr, ptr->data, ptr->size);
@@ -177,7 +177,7 @@ static void process_data(usart_flash_protocol_ptr ptr)
         while (w25q16jv_read_busy() != W25Q16JV_RESET)
         {
             context_ptr->timeout_count++;
-            if (context_ptr->timeout_count > 0xFF)
+            if (context_ptr->timeout_count > USART_FLASH_TIMEOUT)
                 protocol_pack_flag(&context_ptr->trs_proto, USART_FLASH_FLAG_NACK);
         }
         context_ptr->rcv_data_addr += W25Q16JV_PAGE_SIZE;
@@ -202,7 +202,7 @@ static void process_flag(usart_flash_protocol_ptr ptr)
         break;
 
     case USART_FLASH_FLAG_NACK:
-        if (context_ptr->state == USART_FLASH_STATE_REV_DATA)
+        if (context_ptr->state == USART_FLASH_STATE_RCV_DATA)
             context_ptr->state = USART_FLASH_STATE_NONE;
         break;
     }
