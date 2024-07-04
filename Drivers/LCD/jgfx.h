@@ -67,6 +67,14 @@ typedef enum
     COLOR_FORMAT_NO_USED = 0x07
 } jgfx_color_format;
 
+typedef enum
+{
+    JGFX_FONT_CN_16X16 = 0X00,
+    JGFX_FONT_CN_16X16_BLOD,
+    JGFX_FONT_EN_8X16,
+    JGFX_FONT_EN_8X16_BLOD
+} jgfx_font_sel_t;
+
 typedef struct
 {
     uint16_t xs;
@@ -75,11 +83,20 @@ typedef struct
     uint16_t ye;
 } jgfx_area_t;
 
+typedef struct
+{
+    uint8_t width;
+    uint8_t height;
+    uint8_t size;
+    uint32_t addr;
+} jgfx_font_t;
+
 typedef struct gfx
 {
     jgfx_area_t area;
     jgfx_draw_buffer_t draw_buf;
     uint8_t flushing;
+    jgfx_font_t font;
     // void (*send_command)(uint8_t);
     // void (*send_data)(uint8_t);
 } jgfx_t;
@@ -92,6 +109,11 @@ void jgfx_set_pixel_format(jgfx_color_format x);               //  set pixel for
 void jgfx_draw_pixel(uint8_t x, uint8_t y);
 void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height); //  fill react
 void jgfx_draw_circle(uint16_t x, uint16_t y, uint16_t radius);
+void jgfx_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
+void jgfx_draw_rect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
+void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str);
+void jgfx_draw_img(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *img);
+void jgfx_set_font(jgfx_font_sel_t font);
 void jgfx_set_buff_size(uint32_t buf1_size, uint32_t buf2_size);
 void jgfx_flush(void);
 
