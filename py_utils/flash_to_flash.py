@@ -89,12 +89,15 @@ def write_file(file_path: str, addr: int):
 
     with open(file_path, 'rb') as f:
         data = f.read()
-        
+
     print("Writing file...")
     print("File size: %d" % len(data))
     for i in range(0, len(data), 256):
-        print("Flash data[%d:%d] to SPI Flash..." % (i, i+256))
-        if not send_data(data[i:i+256], 256):
+        end = i + 256
+        if end > len(data):
+            end = len(data)
+        print("Flash data[%d:%d] to SPI Flash..." % (i, end))
+        if not send_data(data[i:end], 256):
             print("Flash fatal..")
             exit(-1)
 
@@ -157,7 +160,7 @@ if __name__ == "__main__":
     print()
     print()
 
-    write_file(r"C:\Users\Administrator\Desktop\A36Plus\Talkpod.jpg", 0x100)
+    write_file(r"output/merged_file.bin", 0x00)
     # read_to_file(
     #     r"C:\Users\Administrator\Desktop\A36Plus\Talkpod_read.bin", 0x00, 32768)
 
