@@ -1,8 +1,8 @@
 #include "ui_menu.h"
 ui_init_type_t ui_menu;
 
-static lv_obj_t *title;
-static lv_obj_t *list_menu;
+// static lv_obj_t *title;
+// static lv_obj_t *list_menu;
 
 void ui_menu_initial(void)
 {
@@ -14,10 +14,10 @@ void ui_menu_initial(void)
 
 void ui_menu_init(void)
 {
-    title = lv_label_create(lv_scr_act(), NULL);
-    lv_label_set_recolor(title, true);
-    lv_label_set_text(title, "#FFFFFF Menu#");
-    lv_obj_align(title, NULL, LV_ALIGN_IN_TOP_MID, 5, 0);
+    // title = lv_label_create(lv_scr_act(), NULL);
+    // lv_label_set_recolor(title, true);
+    // lv_label_set_text(title, "#FFFFFF Menu#");
+    // lv_obj_align(title, NULL, LV_ALIGN_IN_TOP_MID, 5, 0);
 
 }
 
