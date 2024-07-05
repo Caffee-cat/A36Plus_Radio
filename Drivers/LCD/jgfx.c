@@ -216,7 +216,7 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
         {
             // temp =
             st7735s_send_data(*(uint8_t *)(font_data + j));
-            st7735s_send_data(*(uint8_t *)(font_data + j + 1)); 
+            st7735s_send_data(*(uint8_t *)(font_data + j + 1));
         }
     }
 }
@@ -300,6 +300,50 @@ void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str)
             y += font_height;
 
         str++;
+    }
+}
+
+void jgfx_draw_text_cn(uint16_t x, uint16_t y, uint8_t *str)
+{
+    // NEG CODE, MSb(bit), ROW
+    uint8_t font_width = jgfx->font.width;
+    uint8_t font_height = jgfx->font.height;
+    int16_t offset;
+    uint8_t temp;
+    uint8_t j = 0;
+    uint8_t k = 0;
+    while (*str != '\0')
+    {
+        st7735s_set_window(x, x + font_width - 1, y, y + font_height - 1);
+
+        w25q16jv_read_num(jgfx->font.addr + JGFX_GET_CN_FONT_ADDR(*(uint16_t *)str), font_data, jgfx->font.size);
+
+        for (uint16_t i = 0; i < font_height * font_width; i++)
+        {
+            if (i % 8 == 0)
+            {
+                temp = font_data[j++];
+                k = 0;
+            }
+
+            if (((temp << k++) & JGFX_FONT_HIGH_MASK) == JGFX_FONT_HIGH_MASK)
+            {
+                st7735s_send_data((color_rgb565_front.ch.r << 5) | (color_rgb565_front.ch.g & 0x38));
+                st7735s_send_data(((color_rgb565_front.ch.g & 0x07) << 5) | color_rgb565_front.ch.b << 2);
+            }
+            else
+            {
+                st7735s_send_data((color_rgb565_back.ch.r << 5) | (color_rgb565_back.ch.g & 0x38));
+                st7735s_send_data(((color_rgb565_back.ch.g & 0x07) << 5) | color_rgb565_back.ch.b << 2);
+            }
+        }
+
+        j = 0;
+        x += font_width;
+        if (x > DISPLAY_W - font_width)
+            y += font_height;
+
+        str += 2;
     }
 }
 

@@ -10,6 +10,8 @@
 #define RGB888_TO_RGB565(rgb888) \
     ((((rgb888 >> 19) & 0x1F) << 11) | (((rgb888 >> 10) & 0x3F) << 5) | ((rgb888 >> 3) & 0x1F))
 
+#define JGFX_GET_CN_FONT_ADDR(f) ((((f & 0xFF) - 0xA1) * 94 + ((f >> 8) & 0xFF)) - 0xA1) * 16 * 16 / 8
+
 #define BUFFER_SIZE DISPLAY_W
 
 #define JGFX_FONT_START_INDEX_EN 0x20
@@ -17,7 +19,6 @@
 #define JGFX_FONT_START_INDEX_CN 0x20
 
 #define JGFX_FONT_HIGH_MASK 0x80
-
 
 // define piexel rgb depth format
 typedef union
@@ -121,6 +122,7 @@ void jgfx_draw_circle(uint16_t x, uint16_t y, uint16_t radius);
 void jgfx_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void jgfx_draw_rect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str);
+void jgfx_draw_text_cn(uint16_t x, uint16_t y, uint8_t *str);
 void jgfx_draw_img(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *img);
 void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t addr);
 void jgfx_set_font(jgfx_font_sel_t font);
