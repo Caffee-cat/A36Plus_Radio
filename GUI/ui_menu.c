@@ -1,5 +1,5 @@
 #include "ui_menu.h"
-ui_init_type_t ui_menu;
+ui_page_t ui_menu;
 
 // static lv_obj_t *title;
 // static lv_obj_t *list_menu;
