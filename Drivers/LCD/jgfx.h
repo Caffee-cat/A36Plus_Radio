@@ -12,6 +12,13 @@
 
 #define BUFFER_SIZE DISPLAY_W
 
+#define JGFX_FONT_START_INDEX_EN 0x20
+
+#define JGFX_FONT_START_INDEX_CN 0x20
+
+#define JGFX_FONT_HIGH_MASK 0x80
+
+
 // define piexel rgb depth format
 typedef union
 {
@@ -70,9 +77,10 @@ typedef enum
 typedef enum
 {
     JGFX_FONT_CN_16X16 = 0X00,
-    JGFX_FONT_CN_16X16_BLOD,
+    // JGFX_FONT_CN_16X16_BLOD,
     JGFX_FONT_EN_8X16,
-    JGFX_FONT_EN_8X16_BLOD
+    JGFX_FONT_EN_8X16_BLOD,
+    JGFX_FONT_EN_16X32,
 } jgfx_font_sel_t;
 
 typedef struct
@@ -89,6 +97,7 @@ typedef struct
     uint8_t height;
     uint8_t size;
     uint32_t addr;
+    uint32_t index;
 } jgfx_font_t;
 
 typedef struct gfx
@@ -113,6 +122,7 @@ void jgfx_draw_line(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void jgfx_draw_rect(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2);
 void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str);
 void jgfx_draw_img(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *img);
+void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t addr);
 void jgfx_set_font(jgfx_font_sel_t font);
 void jgfx_set_buff_size(uint32_t buf1_size, uint32_t buf2_size);
 void jgfx_flush(void);

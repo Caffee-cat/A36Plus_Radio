@@ -1,3 +1,34 @@
+/**
+ * @file jgfx.c
+ * @author Jamiexu (doxm@foxmail.com)
+ * @brief
+ * @version 0.1
+ * @date 2024-06-25
+ *
+ * @copyright MIT License
+
+Copyright (c) 2024 (Jamiexu or Jamie793)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+ *
+ */
+
 #include "jgfx.h"
 
 static jgfx_color_format color_format = COLOR_FORMAT_RGB565;
@@ -167,6 +198,29 @@ void jgfx_draw_img(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t *img)
     }
 }
 
+void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t addr)
+{
+    uint16_t temp;
+    uint32_t i = 0;
+    uint32_t byte_num = 24576;
+    st7735s_set_window(x, x + w - 1, y, y + h - 1);
+    while (i < byte_num)
+    {
+        w25q16jv_read_num(addr + i, font_data, 128);
+        if (i + 128 < byte_num)
+            i += 128;
+        else
+            i += (byte_num - i);
+
+        for (uint32_t j = 0; j < 128; j += 2)
+        {
+            // temp =
+            st7735s_send_data(*(uint8_t *)(font_data + j));
+            st7735s_send_data(*(uint8_t *)(font_data + j + 1)); 
+        }
+    }
+}
+
 void jgfx_set_font(jgfx_font_sel_t font)
 {
     if (font == JGFX_FONT_EN_8X16)
@@ -175,6 +229,7 @@ void jgfx_set_font(jgfx_font_sel_t font)
         jgfx->font.width = 8;
         jgfx->font.height = 16;
         jgfx->font.size = 16;
+        jgfx->font.index = JGFX_FONT_START_INDEX_EN;
     }
     else if (font == JGFX_FONT_EN_8X16_BLOD)
     {
@@ -182,6 +237,15 @@ void jgfx_set_font(jgfx_font_sel_t font)
         jgfx->font.width = 8;
         jgfx->font.height = 16;
         jgfx->font.size = 16;
+        jgfx->font.index = JGFX_FONT_START_INDEX_EN;
+    }
+    else if (font == JGFX_FONT_EN_16X32)
+    {
+        jgfx->font.addr = FLASH_FONT_EN_16x32_ADDR;
+        jgfx->font.width = 16;
+        jgfx->font.height = 32;
+        jgfx->font.size = 64;
+        jgfx->font.index = JGFX_FONT_START_INDEX_EN;
     }
     else if (font == JGFX_FONT_CN_16X16)
     {
@@ -189,13 +253,7 @@ void jgfx_set_font(jgfx_font_sel_t font)
         jgfx->font.width = 16;
         jgfx->font.height = 16;
         jgfx->font.size = 32;
-    }
-    else if (font == JGFX_FONT_CN_16X16_BLOD)
-    {
-        jgfx->font.addr = FLASH_FONT_CN_16X16_BLOD_ADDR;
-        jgfx->font.width = 16;
-        jgfx->font.height = 16;
-        jgfx->font.size = 32;
+        jgfx->font.index = JGFX_FONT_START_INDEX_CN;
     }
 }
 
@@ -205,37 +263,43 @@ void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str)
     uint8_t font_width = jgfx->font.width;
     uint8_t font_height = jgfx->font.height;
     int16_t offset;
-    for (uint16_t k = 0; k < strlen(str); k++)
+    uint8_t tmp;
+    uint8_t j = 0;
+    uint8_t k = 0;
+    while (*str != '\0')
     {
 
         st7735s_set_window(x, x + font_width - 1, y, y + font_height - 1);
-        if (jgfx->font.addr == FLASH_FONT_EN_8X16_ADDR || jgfx->font.addr == FLASH_FONT_EN_8X16_BLOD_ADDR)
-            offset = *(str + k) - ' ';
-        else if (jgfx->font.addr == FLASH_FONT_CN_16X16_ADDR || jgfx->font.addr == FLASH_FONT_CN_16X16_BLOD_ADDR)
-            offset = *(uint16_t *)(str + k) - 0xA1A1;
 
+        offset = *str - jgfx->font.index;
         w25q16jv_read_num(jgfx->font.addr + offset * jgfx->font.size, font_data, jgfx->font.size);
 
-        for (uint8_t i = 0; i < jgfx->font.height; i++)
+        for (uint16_t i = 0; i < font_height * font_width; i++)
         {
-            uint8_t tmp = font_data[i];
-            for (uint8_t j = 0; j < jgfx->font.width; j++)
+            if (i % 8 == 0)
             {
-                if (((tmp << j) & 0x80) == 0x80)
-                {
-                    st7735s_send_data((color_rgb565_front.ch.r << 5) | (color_rgb565_front.ch.g & 0x38));
-                    st7735s_send_data(((color_rgb565_front.ch.g & 0x07) << 5) | color_rgb565_front.ch.b << 2);
-                }
-                else
-                {
-                    st7735s_send_data((color_rgb565_back.ch.r << 5) | (color_rgb565_back.ch.g & 0x38));
-                    st7735s_send_data(((color_rgb565_back.ch.g & 0x07) << 5) | color_rgb565_back.ch.b << 2);
-                }
+                tmp = font_data[j++];
+                k = 0;
+            }
+
+            if (((tmp << k++) & JGFX_FONT_HIGH_MASK) == JGFX_FONT_HIGH_MASK)
+            {
+                st7735s_send_data((color_rgb565_front.ch.r << 5) | (color_rgb565_front.ch.g & 0x38));
+                st7735s_send_data(((color_rgb565_front.ch.g & 0x07) << 5) | color_rgb565_front.ch.b << 2);
+            }
+            else
+            {
+                st7735s_send_data((color_rgb565_back.ch.r << 5) | (color_rgb565_back.ch.g & 0x38));
+                st7735s_send_data(((color_rgb565_back.ch.g & 0x07) << 5) | color_rgb565_back.ch.b << 2);
             }
         }
+
+        j = 0;
         x += font_width;
         if (x > DISPLAY_W - font_width)
             y += font_height;
+
+        str++;
     }
 }
 
