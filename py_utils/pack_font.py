@@ -42,7 +42,7 @@ def merge_files(addr, target_file, files_to_merge):
     with open(target_file, 'wb') as target:
         # target.write(b'\xFF')
         # target.write(bytearray([0xFF] * 3))
-        
+
         current_offset = addr
 
         target.write(bytearray([0xFF] * addr))
@@ -60,12 +60,14 @@ def merge_files(addr, target_file, files_to_merge):
                 target.write(b'\xFF')
 
             # reserve
-            size += 0x10 * 5
-            target.write(bytearray([0xFF] * 5 * 0x10))
+            size += 0x10 * 20
+            target.write(bytearray([0xFF] * 20 * 0x10))
 
             # break
             current_offset += size
+        target.seek(0, 2)
 
+        print("pack ok...  file size: %d" % target.tell())
 
 
 if __name__ == '__main__':
