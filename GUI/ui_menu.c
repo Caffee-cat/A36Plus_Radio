@@ -1,9 +1,6 @@
 #include "ui_menu.h"
 ui_page_t ui_menu;
 
-// static lv_obj_t *title;
-// static lv_obj_t *list_menu;
-
 void ui_menu_initial(void)
 {
     ui_menu.ui_init = ui_menu_init;
@@ -14,11 +11,17 @@ void ui_menu_initial(void)
 
 void ui_menu_init(void)
 {
-    // title = lv_label_create(lv_scr_act(), NULL);
-    // lv_label_set_recolor(title, true);
-    // lv_label_set_text(title, "#FFFFFF Menu#");
-    // lv_obj_align(title, NULL, LV_ALIGN_IN_TOP_MID, 5, 0);
+    jgfx_set_color_hex(JGFXF_COLOR_BLACK);
 
+    jgfx_fill_react(32, 0, DISPLAY_W, DISPLAY_H);
+
+    jgfx_set_color_hex(JGFXF_COLOR_BLUE);
+    jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
+
+    jgfx_fill_react(32, 0, 128, 16);
+    
+    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+    jgfx_draw_text_en(32 + DISPLAY_W / 2, 0, "Menu");
 }
 
 void ui_menu_refresh(void)
