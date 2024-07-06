@@ -56,19 +56,31 @@ int main(void)
     tim_config();
     usart_config();
     st7735s_init();
-    jgfx_init();
+    jgfx_init(DISPLAY_W, DISPLAY_W);
+
     // bk4819_init();
 
-    // ui_init();
-    jgfx_test();
+    // jgfx_test();
+    ui_init();
 
     vtasks_init();
     vTaskStartScheduler();
 
+    // delay_1ms(30000);
     // printf("Running...\r\n");
+    // w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    // w25q16jv_chip_erase();
+    // w25q16jv_sector_erase(0x00);
+    // usart_flash_run();
+    // flash_test();
+    // w25q16jv_chip_erase();
+    // w25q16jv_sector_erase(0x00);
+
     while (1)
     {
 
+        flash_dump();
+        // delay_1ms(1000);
         // if (++time1_current_ms >= 1000){
         //     printf("1s...\r\n");
         //     time1_current_ms = 0;
