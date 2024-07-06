@@ -312,13 +312,13 @@ void jgfx_draw_text_en(uint16_t x, uint16_t y, uint8_t *str)
 
             if (((temp << k++) & JGFX_FONT_HIGH_MASK) == JGFX_FONT_HIGH_MASK)
             {
-                st7735s_send_data((jgfx->color_front.full >> 8 & 0xFF));
-                st7735s_send_data((jgfx->color_front.full & 0xFF));
+                st7735s_send_data(((jgfx->color_front.full >> 8) & 0xFF));
+                st7735s_send_data(jgfx->color_front.full & 0xFF);
             }
             else
             {
-                st7735s_send_data((jgfx->color_back.full >> 8 & 0xFF));
-                st7735s_send_data((jgfx->color_back.full & 0xFF));
+                st7735s_send_data(((jgfx->color_back.full >> 8) & 0xFF));
+                st7735s_send_data(jgfx->color_back.full & 0xFF);
             }
         }
 
@@ -359,13 +359,13 @@ void jgfx_draw_text_cn(uint16_t x, uint16_t y, uint8_t *str)
 
             if (((temp << k++) & JGFX_FONT_HIGH_MASK) == JGFX_FONT_HIGH_MASK)
             {
-                st7735s_send_data((jgfx->color_front.full >> 8 & 0xFF));
-                st7735s_send_data((jgfx->color_front.full & 0xFF));
+                st7735s_send_data(((jgfx->color_front.full >> 8) & 0xFF));
+                st7735s_send_data(jgfx->color_front.full & 0xFF);
             }
             else
             {
-                st7735s_send_data((jgfx->color_back.full >> 8 & 0xFF));
-                st7735s_send_data((jgfx->color_back.full & 0xFF));
+                st7735s_send_data(((jgfx->color_back.full >> 8) & 0xFF));
+                st7735s_send_data(jgfx->color_back.full & 0xFF);
             }
         }
 
