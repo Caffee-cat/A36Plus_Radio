@@ -14,9 +14,9 @@ message(STATUS "Use start c: ${USE_START_C}")
 
 # "Setting up OpenOCD based on system"
 if (WIN32)
-    set(OPENOCD_CFG_PATH "D:/2-Software/3-Env/xpack-openocd-0.12.0-3/openocd")
+    set(OPENOCD_CFG_PATH "openocd")
 else()
-    set(OPENOCD_CFG_PATH "/usr/share/openocd")
+    set(OPENOCD_CFG_PATH "openocd")
 endif()
 message(STATUS "OPENOCD_CFG_PATH: ${OPENOCD_CFG_PATH}")
 
@@ -39,7 +39,6 @@ include_directories(Libraries/printf/)
 include_directories(Libraries/GD32/CMSIS)
 include_directories(Libraries/FreeRTOS-Kernel/include)
 include_directories(Libraries/FreeRTOS-Kernel/portable/GCC/ARM_CM4F)
-include_directories(Libraries/lvgl/src)
 include_directories(Libraries/GD32/CMSIS/GD/GD32F3x0/Include)
 include_directories(Libraries/GD32/GD32F3x0_standard_peripheral/Include)
 
@@ -48,6 +47,7 @@ include_directories(Drivers/BK1080)
 include_directories(Drivers/BK4819)
 include_directories(Drivers/Flash)
 include_directories(Drivers/Key)
+include_directories(GUI)
 
 
 # Add definition
@@ -90,7 +90,7 @@ file(GLOB_RECURSE DRIVERS_SOURCE_DIR Drivers/*.c)
 
 file(GLOB_RECURSE CORE_SOURCE_DIR Core/Src/*.c)
 
-file(GLOB_RECURSE USER_SOURCE_DIR Users/Src/*.c)
+file(GLOB_RECURSE USER_SOURCE_DIR Users/Src/*.c GUI/*.c)
 
 
 
