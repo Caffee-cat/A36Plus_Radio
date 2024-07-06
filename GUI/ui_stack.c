@@ -2,7 +2,10 @@
 
 void uiStackInit(ui_stack_ptr p, uint8_t size)
 {
-    p->stack = (uint32_t *)malloc(size);
+    p->stack = (ui_page_ptr *)malloc(size * sizeof(ui_page_ptr));
+    if (p->stack == NULL)
+        return;
+
     p->pos = 0;
     p->size = size;
 }
@@ -12,26 +15,34 @@ void uiStackPush(ui_stack_ptr p, ui_page_ptr page)
     if (p == NULL || page == NULL)
         return;
 
-    if (p->pos >= p->size - 1)
+    if (p->pos >= p->size)
         return;
 
-    *(p->stack + p->pos) = (uint32_t)page;
+    *(p->stack + p->pos) = page;
     p->pos++;
 }
 
 ui_page_ptr uiStackPop(ui_stack_ptr p)
 {
-    if (p == NULL || p->pos < 0)
+    if (p == NULL || p->pos <= 0)
         return NULL;
 
-    ui_page_ptr temp = (ui_page_ptr)(p->stack + p->pos);
     p->pos--;
-    return temp;
+    return *(p->stack + p->pos);
 }
 
 ui_page_ptr uiStackGetTop(ui_stack_ptr p)
 {
-    if (p == NULL || p->pos < 0)
+    if (p == NULL || p->pos <= 0)
         return NULL;
-    return (ui_page_ptr)(p->stack + p->pos);
+    return *(p->stack + (p->pos - 1));
+}
+
+void uiStatckDestory(ui_stack_ptr p)
+{
+    if (p == NULL)
+        return;
+    free(p->stack);
+    p->stack = NULL;
+    free(p);
 }
