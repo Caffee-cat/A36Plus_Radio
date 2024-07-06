@@ -149,6 +149,6 @@ void st7735s_init(void)
     // st7735s_send_command(ST7735S_CMD_DISPOFF);
 
     // backlight on
-    st7735s_delay(30);
-    LCD_LIGHT_HIGH;
+    // st7735s_delay(30);
+    // LCD_LIGHT_HIGH;
 }
