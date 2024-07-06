@@ -12891,29 +12891,31 @@ const unsigned char gImage_img[12800] = {
 
 void jgfx_test(void)
 {
+    LCD_LIGHT_HIGH;
+    
     jgfx_set_color_hex(0x00);
     jgfx_fill_react(0, 0, DISPLAY_W, DISPLAY_H);
     // delay_1ms(500);
 
-    jgfx_set_color_hex(0x00FF00);
+    jgfx_set_color_hex(0x00FF);
     jgfx_draw_circle(DISPLAY_W / 2, DISPLAY_H / 2, 40);
     // delay_1ms(500);
 
-    jgfx_set_color_hex(0x0000FF);
-    jgfx_draw_line(10, 0, 100, 100);
+    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+    jgfx_draw_line(32, 0, 100, 100);
     delay_1ms(500);
 
-    jgfx_draw_text(32, 20, "Jamiexu");
+    jgfx_draw_text_en(100, 20, "Jamiexu");
     jgfx_set_font(JGFX_FONT_EN_8X16_BLOD);
-    jgfx_draw_text(32, 60, "Blod: Jamiexu");
+    jgfx_draw_text_en(32, 60, "Blod: Jamiexu");
     jgfx_set_font(JGFX_FONT_EN_16X32);
-    jgfx_draw_text(32, 80, "419.460");
+    jgfx_draw_text_en(32, 80, "419.460");
     
 
     jgfx_set_font(JGFX_FONT_CN_16X16);
     jgfx_draw_text_cn(32, 60, "明天会更好！");
 
-    jgfx_draw_img_byaddr(32, 0, 128, 128, FLASH_SPLASH_ADDR);
+    // jgfx_draw_img_byaddr(32, 0, 128, 128, FLASH_SPLASH_ADDR);
     // jgfx_set_color_hex(0x0000FF);
     // jgfx_draw_img(DISPLAY_W / 2 - 40, DISPLAY_H / 2 - 40, 80, 80, (uint8_t *)gImage_img);
     // delay_1ms(500);
