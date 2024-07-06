@@ -31,20 +31,14 @@ SOFTWARE.
 
 #include "jgfx.h"
 
-static jgfx_color_format color_format = COLOR_FORMAT_RGB565;
-// static _color_rgb444 color_rgb444;
-static jgfx_color_rgb565 color_rgb565_front;
-static jgfx_color_rgb565 color_rgb565_back = {
-    .full = 0x00};
+static jgfx_ptr jgfx;
 
-// static _color_rgb666 color_rgb666;
-
-static jgfx_t *jgfx;
-static uint8_t font_data[128];
-
-void jgfx_init(void)
+void jgfx_init(uint16_t buf1_size, uint16_t buf2_size)
 {
     jgfx = (jgfx_t *)malloc(sizeof(jgfx_t));
+    if (jgfx == NULL || buf1_size == NULL || buf2_size == NULL)
+        return;
+
     jgfx->draw_buf.buf1 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE);
     jgfx->draw_buf.buf2 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE);
     jgfx->draw_buf.buf1_size = BUFFER_SIZE;
@@ -53,23 +47,17 @@ void jgfx_init(void)
     jgfx->draw_buf.buf_act = jgfx->draw_buf.buf1;
     jgfx->flushing = 0;
 
-    jgfx_set_font(JGFX_FONT_EN_8X16);
-    jgfx_set_pixel_format(COLOR_FORMAT_RGB565);
-}
+    jgfx->color_front.full = 0x00;
+    jgfx->color_back.full = 0x00;
+    jgfx->color_fmt = COLOR_FORMAT_RGB565;
 
-// void jgfx_set_buff_size(uint32_t buf1_size, uint32_t buf2_size)
-// {
-//     if (buf1_size == 0 && buf2_size == 0)
-//         return;
-//     if (buf1_size != 0)
-//     {
-//         &jgfx.draw_buf.buf1 =
-//     }
-// }
+    jgfx_set_font(JGFX_FONT_EN_8X16);
+    jgfx_set_pixel_format(jgfx->color_fmt);
+}
 
 void jgfx_set_pixel_format(jgfx_color_format x)
 {
-    color_format = x;
+    jgfx->color_fmt = x;
     st7735s_send_command(ST7735S_CMD_COLMOD);
     st7735s_send_data(x);
 }
@@ -92,18 +80,18 @@ static void jgfx_update_area(uint16_t x, uint16_t y)
 
 void jgfx_send_color(void)
 {
-    if (color_format == COLOR_FORMAT_RGB666)
+    if (jgfx->color_fmt == COLOR_FORMAT_RGB666)
     {
         // st7735s_send_data(color_rgb666.ch.r << 2);
         // st7735s_send_data(color_rgb666.ch.g << 2);
         // st7735s_send_data(color_rgb666.ch.b << 2);
     }
-    else if (color_format == COLOR_FORMAT_RGB565)
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        st7735s_send_data((color_rgb565_front.ch.r << 5) | (color_rgb565_front.ch.g & 0x38));
-        st7735s_send_data(((color_rgb565_front.ch.g & 0x07) << 5) | color_rgb565_front.ch.b << 2);
+        st7735s_send_data((jgfx->color_front.ch.r << 5) | (jgfx->color_front.ch.g & 0x38));
+        st7735s_send_data(((jgfx->color_front.ch.g & 0x07) << 5) | jgfx->color_front.ch.b << 2);
     }
-    else if (color_format == COLOR_FORMAT_RGB444)
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
         // st7735s_send_data((color_rgb444.ch.r << 4) | (color_rgb444.ch.g));
         // st7735s_send_data(color_rgb444.ch.b << 4);
@@ -127,7 +115,7 @@ void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
     {
         for (uint16_t i = 0; i < width; i++)
         {
-            (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full = color_rgb565_front.full;
+            (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full = jgfx->color_front.full;
             jgfx->draw_buf.buf_point++;
 
             if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
@@ -206,7 +194,7 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
     st7735s_set_window(x, x + w - 1, y, y + h - 1);
     while (i < byte_num)
     {
-        w25q16jv_read_num(addr + i, font_data, 128);
+        w25q16jv_read_num(addr + i, jgfx->font_data, 128);
         if (i + 128 < byte_num)
             i += 128;
         else
@@ -215,10 +203,10 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
         for (uint32_t j = 0; j < 128; j += 2)
         {
             // temp =
-            st7735s_send_data(*(uint8_t *)(font_data + j));
-            st7735s_send_data(*(uint8_t *)(font_data + j + 1));
-            // (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full = (*(uint8_t *)(font_data + j) << 8);
-            // (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full |= (*(uint8_t *)(font_data + j + 1));
+            st7735s_send_data(*(uint8_t *)(jgfx->font_data + j));
+            st7735s_send_data(*(uint8_t *)(jgfx->font_data + j + 1));
+            // (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full = (*(uint8_t *)(jgfx->font_data + j) << 8);
+            // (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full |= (*(uint8_t *)(jgfx->font_data + j + 1));
             // jgfx->draw_buf.buf_point++;
 
             // if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
@@ -273,11 +261,37 @@ void jgfx_set_font(jgfx_font_sel_t font)
 
 void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str)
 {
+    while (*str != '\0')
+    {
+        if (*(uint16_t *)str >= JGFX_FONT_START_INDEX_CN)
+        {
+            jgfx_set_font(JGFX_FONT_CN_16X16);
+            jgfx_draw_text_cn(x, y, str);
+            str += 2;
+        }
+        else
+        {
+            jgfx_set_font(JGFX_FONT_EN_8X16);
+            jgfx_draw_text_cn(x, y, str);
+            str++;
+        }
+
+        x += jgfx->font.width;
+        if (x > DISPLAY_W - jgfx->font.width + 32)
+        {
+            y += jgfx->font.height;
+            x = 32;
+        }
+    }
+}
+
+void jgfx_draw_text_en(uint16_t x, uint16_t y, uint8_t *str)
+{
     // NEG CODE, MSb(bit), ROW
     uint8_t font_width = jgfx->font.width;
     uint8_t font_height = jgfx->font.height;
     int16_t offset;
-    uint8_t tmp;
+    uint8_t temp;
     uint8_t j = 0;
     uint8_t k = 0;
     while (*str != '\0')
@@ -286,32 +300,35 @@ void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str)
         st7735s_set_window(x, x + font_width - 1, y, y + font_height - 1);
 
         offset = *str - jgfx->font.index;
-        w25q16jv_read_num(jgfx->font.addr + offset * jgfx->font.size, font_data, jgfx->font.size);
+        w25q16jv_read_num(jgfx->font.addr + offset * jgfx->font.size, jgfx->font_data, jgfx->font.size);
 
         for (uint16_t i = 0; i < font_height * font_width; i++)
         {
             if (i % 8 == 0)
             {
-                tmp = font_data[j++];
+                temp = jgfx->font_data[j++];
                 k = 0;
             }
 
-            if (((tmp << k++) & JGFX_FONT_HIGH_MASK) == JGFX_FONT_HIGH_MASK)
+            if (((temp << k++) & JGFX_FONT_HIGH_MASK) == JGFX_FONT_HIGH_MASK)
             {
-                st7735s_send_data((color_rgb565_front.ch.r << 5) | (color_rgb565_front.ch.g & 0x38));
-                st7735s_send_data(((color_rgb565_front.ch.g & 0x07) << 5) | color_rgb565_front.ch.b << 2);
+                st7735s_send_data((jgfx->color_front.full >> 8 & 0xFF));
+                st7735s_send_data((jgfx->color_front.full & 0xFF));
             }
             else
             {
-                st7735s_send_data((color_rgb565_back.ch.r << 5) | (color_rgb565_back.ch.g & 0x38));
-                st7735s_send_data(((color_rgb565_back.ch.g & 0x07) << 5) | color_rgb565_back.ch.b << 2);
+                st7735s_send_data((jgfx->color_back.full >> 8 & 0xFF));
+                st7735s_send_data((jgfx->color_back.full & 0xFF));
             }
         }
 
         j = 0;
         x += font_width;
-        if (x > DISPLAY_W - font_width)
+        if (x > DISPLAY_W - font_width + 32)
+        {
             y += font_height;
+            x = 32;
+        }
 
         str++;
     }
@@ -330,32 +347,35 @@ void jgfx_draw_text_cn(uint16_t x, uint16_t y, uint8_t *str)
     {
         st7735s_set_window(x, x + font_width - 1, y, y + font_height - 1);
 
-        w25q16jv_read_num(jgfx->font.addr + JGFX_GET_CN_FONT_ADDR(*(uint16_t *)str), font_data, jgfx->font.size);
+        w25q16jv_read_num(jgfx->font.addr + JGFX_GET_CN_FONT_ADDR(*(uint16_t *)str), jgfx->font_data, jgfx->font.size);
 
         for (uint16_t i = 0; i < font_height * font_width; i++)
         {
             if (i % 8 == 0)
             {
-                temp = font_data[j++];
+                temp = jgfx->font_data[j++];
                 k = 0;
             }
 
             if (((temp << k++) & JGFX_FONT_HIGH_MASK) == JGFX_FONT_HIGH_MASK)
             {
-                st7735s_send_data((color_rgb565_front.ch.r << 5) | (color_rgb565_front.ch.g & 0x38));
-                st7735s_send_data(((color_rgb565_front.ch.g & 0x07) << 5) | color_rgb565_front.ch.b << 2);
+                st7735s_send_data((jgfx->color_front.full >> 8 & 0xFF));
+                st7735s_send_data((jgfx->color_front.full & 0xFF));
             }
             else
             {
-                st7735s_send_data((color_rgb565_back.ch.r << 5) | (color_rgb565_back.ch.g & 0x38));
-                st7735s_send_data(((color_rgb565_back.ch.g & 0x07) << 5) | color_rgb565_back.ch.b << 2);
+                st7735s_send_data((jgfx->color_back.full >> 8 & 0xFF));
+                st7735s_send_data((jgfx->color_back.full & 0xFF));
             }
         }
 
         j = 0;
         x += font_width;
-        if (x > DISPLAY_W - font_width)
+        if (x > DISPLAY_W - font_width + 32)
+        {
+            x = 32;
             y += font_height;
+        }
 
         str += 2;
     }
@@ -463,19 +483,19 @@ void jgfx_flush()
 
 void jgfx_set_color(uint8_t red, uint8_t green, uint8_t blue)
 {
-    if (color_format == COLOR_FORMAT_RGB666)
+    if (jgfx->color_fmt == COLOR_FORMAT_RGB666)
     {
         // color_rgb666.ch.r = red;
         // color_rgb666.ch.g = green;
         // color_rgb666.ch.b = blue;
     }
-    else if (color_format == COLOR_FORMAT_RGB565)
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        color_rgb565_front.ch.r = red;
-        color_rgb565_front.ch.g = green;
-        color_rgb565_front.ch.b = blue;
+        jgfx->color_front.ch.r = red;
+        jgfx->color_front.ch.g = green;
+        jgfx->color_front.ch.b = blue;
     }
-    else if (color_format == COLOR_FORMAT_RGB444)
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
         // color_rgb444.ch.r = red;
         // color_rgb444.ch.g = green;
@@ -485,17 +505,55 @@ void jgfx_set_color(uint8_t red, uint8_t green, uint8_t blue)
 
 void jgfx_set_color_hex(uint32_t color)
 {
-    if (color_format == COLOR_FORMAT_RGB666)
+    if (jgfx->color_fmt == COLOR_FORMAT_RGB666)
     {
         // color_rgb666.ch.r = (color >> 16) & 0xFF;
         // color_rgb666.ch.g = (color >> 8) & 0xFF;
         // color_rgb666.ch.b = color & 0xFF;
     }
-    else if (color_format == COLOR_FORMAT_RGB565)
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        color_rgb565_front.full = (color);
+        jgfx->color_front.full = (color << 8) | (color) >> 8;
     }
-    else if (color_format == COLOR_FORMAT_RGB444)
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
+    {
+    }
+}
+
+void jgfx_set_color_back(uint8_t red, uint8_t green, uint8_t blue)
+{
+    if (jgfx->color_fmt == COLOR_FORMAT_RGB666)
+    {
+        // color_rgb666.ch.r = red;
+        // color_rgb666.ch.g = green;
+        // color_rgb666.ch.b = blue;
+    }
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
+    {
+        jgfx->color_back.ch.r = red;
+        jgfx->color_back.ch.g = green;
+        jgfx->color_back.ch.b = blue;
+    }
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
+    {
+        // color_rgb444.ch.r = red;
+        // color_rgb444.ch.g = green;
+        // color_rgb444.ch.b = blue;
+    }
+}
+void jgfx_set_color_back_hex(uint32_t color)
+{
+    if (jgfx->color_fmt == COLOR_FORMAT_RGB666)
+    {
+        // color_rgb666.ch.r = (color >> 16) & 0xFF;
+        // color_rgb666.ch.g = (color >> 8) & 0xFF;
+        // color_rgb666.ch.b = color & 0xFF;
+    }
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
+    {
+        jgfx->color_back.full = (color << 8) | (color) >> 8;
+    }
+    else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
     }
 }
