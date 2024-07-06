@@ -10188,6 +10188,11 @@
               <FileType>1</FileType>
               <FilePath>..\GUI\ui_stack.c</FilePath>
             </File>
+            <File>
+              <FileName>ui_main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\ui_main.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
