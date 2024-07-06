@@ -79,7 +79,6 @@ void gpio_config(void)
     LCD_gpio_init();
     key_gpio_init();
     flash_gpio_init();
-    key_gpio_init();
     usart_gpio_init();
     bk4819_gpio_init();
     bk1080_gpio_init();
