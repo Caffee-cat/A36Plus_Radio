@@ -86,7 +86,7 @@ typedef enum
     ST7735S_CMD_GCV = 0xFC        //
 } st7735s_cmd_t;
 
-#define DISPLAY_W 160
+#define DISPLAY_W 128
 #define DISPLAY_H 128
 
 static void spi_send_bytes(uint8_t len, uint8_t *data); // spi send data
