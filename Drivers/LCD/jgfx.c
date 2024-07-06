@@ -202,7 +202,7 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
 {
     uint16_t temp;
     uint32_t i = 0;
-    uint32_t byte_num = 24576;
+    uint32_t byte_num = w * h * 2;
     st7735s_set_window(x, x + w - 1, y, y + h - 1);
     while (i < byte_num)
     {
@@ -217,6 +217,20 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
             // temp =
             st7735s_send_data(*(uint8_t *)(font_data + j));
             st7735s_send_data(*(uint8_t *)(font_data + j + 1));
+            // (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full = (*(uint8_t *)(font_data + j) << 8);
+            // (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full |= (*(uint8_t *)(font_data + j + 1));
+            // jgfx->draw_buf.buf_point++;
+
+            // if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
+            // {
+            //     if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf1_size)
+            //         jgfx_flush();
+            // }
+            // else if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf2)
+            // {
+            //     if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf2_size)
+            //         jgfx_flush();
+            // }
         }
     }
 }
