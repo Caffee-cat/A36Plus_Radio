@@ -39,8 +39,8 @@ void jgfx_init(uint16_t buf1_size, uint16_t buf2_size)
     if (jgfx == NULL || buf1_size == NULL || buf2_size == NULL)
         return;
 
-    jgfx->draw_buf.buf1 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE);
-    jgfx->draw_buf.buf2 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE);
+    jgfx->draw_buf.buf1 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE * sizeof(jgfx_color_rgb565));
+    jgfx->draw_buf.buf2 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE * sizeof(jgfx_color_rgb565));
     jgfx->draw_buf.buf1_size = BUFFER_SIZE;
     jgfx->draw_buf.buf2_size = BUFFER_SIZE;
     jgfx->draw_buf.buf_point = 0;
@@ -88,8 +88,8 @@ void jgfx_send_color(void)
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        st7735s_send_data((jgfx->color_front.ch.r << 5) | (jgfx->color_front.ch.g & 0x38));
-        st7735s_send_data(((jgfx->color_front.ch.g & 0x07) << 5) | jgfx->color_front.ch.b << 2);
+        st7735s_send_data(((jgfx->color_front.full >> 8) & 0xFF));
+        st7735s_send_data(jgfx->color_front.full & 0xFF);
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
@@ -115,7 +115,7 @@ void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
     {
         for (uint16_t i = 0; i < width; i++)
         {
-            (jgfx->draw_buf.buf_act + jgfx->draw_buf.buf_point)->full = jgfx->color_front.full;
+            ((jgfx->draw_buf.buf_act) + (jgfx->draw_buf.buf_point))->full = ((jgfx->color_front.full >> 8) | (jgfx->color_front.full << 8));
             jgfx->draw_buf.buf_point++;
 
             if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
@@ -513,7 +513,7 @@ void jgfx_set_color_hex(uint32_t color)
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        jgfx->color_front.full = (color << 8) | (color) >> 8;
+        jgfx->color_front.full = color;
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
@@ -551,7 +551,7 @@ void jgfx_set_color_back_hex(uint32_t color)
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        jgfx->color_back.full = (color << 8) | (color) >> 8;
+        jgfx->color_back.full = color;
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
