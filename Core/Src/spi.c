@@ -32,7 +32,7 @@ static void flash_spi_config(void)
 
     /* configure SPI1 parameter */
     spi_init_struct.nss = SPI_NSS_SOFT;
-    spi_init_struct.prescale = SPI_PSC_2;
+    spi_init_struct.prescale = SPI_PSC_4;
     spi_init_struct.endian = SPI_ENDIAN_MSB;
     spi_init_struct.device_mode = SPI_MASTER;
     spi_init_struct.frame_size = SPI_FRAMESIZE_8BIT;
