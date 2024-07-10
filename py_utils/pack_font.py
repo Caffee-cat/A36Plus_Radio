@@ -74,6 +74,9 @@ if __name__ == '__main__':
     target_file = r'output/merged_file.bin'
     files_to_merge = [
         'font/jamiexu_splash.bin',
+        'font/channelA.bin',
+        'font/channelB.bin',
+        'font/main.bin',
         'font/font_en_8x16.fon',
         'font/font_en_8x16_blod.fon',
         'font/font_en_16x32.fon',
