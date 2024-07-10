@@ -3,6 +3,7 @@
 #include "main.h"
 #include "tim.h"
 
+#define KEY_GET_NUM(x) ((x > 12) ? (x - 6) : ((x > 8) ? ((x == 12) ? 0 : (x - 5)) : ((x > 4) ? (x - 4) : 0)))
 // Written by Jamiexu
 
 typedef enum
