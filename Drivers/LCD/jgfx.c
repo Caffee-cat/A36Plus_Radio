@@ -190,17 +190,16 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
 {
     uint16_t temp;
     uint32_t i = 0;
+    uint8_t read_len = 0;
     uint32_t byte_num = w * h * 2;
     st7735s_set_window(x, x + w - 1, y, y + h - 1);
     while (i < byte_num)
     {
-        w25q16jv_read_num(addr + i, jgfx->font_data, 128);
-        if (i + 128 < byte_num)
-            i += 128;
-        else
-            i += (byte_num - i);
+        read_len = (byte_num - i < sizeof(jgfx->font_data)) ? (byte_num - i) : sizeof(jgfx->font_data);
+        w25q16jv_read_num(addr + i, jgfx->font_data, read_len);
+        i += read_len;
 
-        for (uint32_t j = 0; j < 128; j += 2)
+        for (uint32_t j = 0; j < read_len; j += 2)
         {
             // temp =
             st7735s_send_data(*(uint8_t *)(jgfx->font_data + j));
@@ -210,10 +209,11 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
             // jgfx->draw_buf.buf_point++;
 
             // if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
-            // {
-            //     if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf1_size)
-            //         jgfx_flush();
+            // {	
+            //     if (jgfx->draw_buf	.buf_point >= jgfx->draw_buf.buf1_size)
+            //         jgfx_flush();+
             // }
+
             // else if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf2)
             // {
             //     if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf2_size)
