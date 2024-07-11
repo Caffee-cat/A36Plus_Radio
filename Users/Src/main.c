@@ -47,7 +47,12 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask,
 
 int main(void)
 {
+    // get the unit brick
 
+    // ob_unlock();
+    // ob_erase();
+    // ob_reset();
+    // ob_lock();
     systick_config();
     gpio_config();
     nvic_config();
@@ -56,12 +61,15 @@ int main(void)
     tim_config();
     usart_config();
     st7735s_init();
+    bk4819_init();
+    
+    // usart_flash_run();
+
+
     jgfx_init(DISPLAY_W, DISPLAY_W);
 
-    // bk4819_init();
 
     // jgfx_test();
-    ui_init();
 
     vtasks_init();
     vTaskStartScheduler();
@@ -71,7 +79,6 @@ int main(void)
     // w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
     // w25q16jv_chip_erase();
     // w25q16jv_sector_erase(0x00);
-    // usart_flash_run();
     // flash_test();
     // w25q16jv_chip_erase();
     // w25q16jv_sector_erase(0x00);
