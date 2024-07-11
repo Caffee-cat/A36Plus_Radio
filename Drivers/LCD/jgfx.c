@@ -200,6 +200,7 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
         i += read_len;
 
         for (uint32_t j = 0; j < read_len; j += 2)
+
         {
             // temp =
             st7735s_send_data(*(uint8_t *)(jgfx->font_data + j));
@@ -209,9 +210,9 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
             // jgfx->draw_buf.buf_point++;
 
             // if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
-            // {	
-            //     if (jgfx->draw_buf	.buf_point >= jgfx->draw_buf.buf1_size)
-            //         jgfx_flush();+
+            // {
+            //     if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf1_size)
+            //         jgfx_flush();
             // }
 
             // else if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf2)
@@ -501,6 +502,17 @@ void jgfx_set_color(uint8_t red, uint8_t green, uint8_t blue)
         // color_rgb444.ch.g = green;
         // color_rgb444.ch.b = blue;
     }
+}
+
+uint16_t jgfx_measure_text_width(uint8_t *str)
+{
+    uint16_t len = 0;
+    while (*str != '\0')
+    {
+        len += jgfx->font.width;
+        str++;
+    }
+    return len;
 }
 
 void jgfx_set_color_hex(uint32_t color)
