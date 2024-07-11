@@ -14,7 +14,7 @@ message(STATUS "Use start c: ${USE_START_C}")
 
 # "Setting up OpenOCD based on system"
 if (WIN32)
-    set(OPENOCD_CFG_PATH "openocd")
+    set(OPENOCD_CFG_PATH "D:/2-Software/3-Env/xpack-openocd-0.12.0-3/openocd")
 else()
     set(OPENOCD_CFG_PATH "openocd")
 endif()
@@ -113,14 +113,14 @@ add_custom_command(
 
 
 add_custom_target(flash
-    COMMAND ${OPENOCD} -f ${OPENOCD_CFG_PATH}/scripts/interface/stlink.cfg -f ${CMAKE_CURRENT_SOURCE_DIR}/gd32f33x.cfg -c "program ${CMAKE_CURRENT_SOURCE_DIR}/build/${PROJECT_NAME}.bin verify reset exit 0x08000000"
+    COMMAND ${OPENOCD} -f ${OPENOCD_CFG_PATH}/scripts/interface/cmsis-dap.cfg -f ${CMAKE_CURRENT_SOURCE_DIR}/gd32f33x.cfg -c "program ${CMAKE_CURRENT_SOURCE_DIR}/build/${PROJECT_NAME}.bin verify reset exit 0x08000000"
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/build/${PROJECT_NAME}.bin
     COMMENT "Flashing ${CMAKE_CURRENT_SOURCE_DIR}/build/${PROJECT_NAME}.bin"
 )
 
 
 add_custom_target(debug
-    COMMAND ${OPENOCD} -f ${OPENOCD_CFG_PATH}/scripts/interface/stlink.cfg -f ${CMAKE_CURRENT_SOURCE_DIR}/gd32f33x.cfg
+    COMMAND ${OPENOCD} -f ${OPENOCD_CFG_PATH}/scripts/interface/cmsis-dap.cfg -f ${CMAKE_CURRENT_SOURCE_DIR}/gd32f33x.cfg
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/build/${PROJECT_NAME}.elf
     COMMENT "Debugging ${CMAKE_CURRENT_SOURCE_DIR}/build/${PROJECT_NAME}.elf"
 )
