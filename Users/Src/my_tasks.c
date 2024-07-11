@@ -29,9 +29,16 @@ void vTaskUIEvent(void)
     }
 }
 
+void vTaskUIInit(void)
+{
+    ui_init();
+    vTaskDelete(NULL);
+}
+
 void vtasks_init(void)
 {
+    xTaskCreate(vTaskUIInit, "UI Init", 128, NULL, 0, NULL);
     xTaskCreate(vTaskUIEvent, "Event handler", 128, NULL, 0, NULL);
-    xTaskCreate(vTaskUIRefresh, "LCD refresh", 128, NULL, 0, NULL);
+    // xTaskCreate(vTaskUIRefresh, "LCD refresh", 128, NULL, 0, NULL);
     timer_enable(TIMER1);
 }
