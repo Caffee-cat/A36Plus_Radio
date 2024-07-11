@@ -11,19 +11,21 @@ void ui_init(void)
     // splash
     jgfx_draw_img_byaddr(32, 0, 128, 128, FLASH_SPLASH_ADDR);
 
-    delay_1ms(30);
+    vTaskDelay(30);
     LCD_LIGHT_HIGH;
 
-    delay_1ms(1000);
+    vTaskDelay(1000);
     ui_main_initial();
     ui_menu_initial();
     uiStackInit(&ui_stack, UI_STACK_MAX_SIZE);
     uiStackPush(&ui_stack, &ui_main);
+    uiStackPush(&ui_stack, &ui_menu);
 
     temp_page = uiStackGetTop(&ui_stack);
     if (temp_page == NULL)
         return;
     temp_page->ui_init();
+    temp_page->ui_refresh();
 }
 
 void ui_refresh(void)
