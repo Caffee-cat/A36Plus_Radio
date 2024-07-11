@@ -1,4 +1,4 @@
-STACK_SIZE = DEFINED(STACK_SIZE) ? STACK_SIZE : 0x0800;
+STACK_SIZE = DEFINED(STACK_SIZE) ? STACK_SIZE : 0x00000400;
 
 ENTRY(Reset_Handler)
 
@@ -20,7 +20,6 @@ SECTIONS
 	} >FLASH
 	.data :
 	{
-		_sidata = LOADADDR(.data);
 		_sdata = .;
 		*(.data*)
 		. = ALIGN(4);
@@ -45,10 +44,9 @@ SECTIONS
 	.stack (NOLOAD) :
 	{
 		. = ALIGN(8);
-		KEEP(*(.stack*))
+		. = . + STACK_SIZE;
 		. = ALIGN(8);
 		_estack = .;
-		end = .;
 	} >RAM
 	_eheap = ORIGIN(RAM) + LENGTH(RAM);
 }
