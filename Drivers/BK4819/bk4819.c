@@ -250,10 +250,10 @@ void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
  */
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC)
 {
-    bk1080_write_reg(BK4819_REG_78, (RTSO << 8) | RTSC);
-    bk1080_write_reg(BK4819_REG_4F, (ETSC << 8) | ETSO);
-    bk1080_write_reg(BK4819_REG_4D, GTSC);
-    bk1080_write_reg(BK4819_REG_4E, GTSO);
+    bk4819_write_reg(BK4819_REG_78, (RTSO << 8) | RTSC);
+    bk4819_write_reg(BK4819_REG_4F, (ETSC << 8) | ETSO);
+    bk4819_write_reg(BK4819_REG_4D, GTSC);
+    bk4819_write_reg(BK4819_REG_4E, GTSO);
 }
 
 /**
@@ -286,7 +286,7 @@ void bk4819_CTDCSS_disable(void)
  */
 void bk4819_CDCSS_set(uint8_t sel, uint16_t code)
 {
-    bk1080_write_reg(BK4819_REG_08, (BK4819_REG_08, sel << 15) | code);
+    bk4819_write_reg(BK4819_REG_08, (BK4819_REG_08, sel << 15) | code);
 }
 
 /**
@@ -297,5 +297,5 @@ void bk4819_CDCSS_set(uint8_t sel, uint16_t code)
  */
 void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
 {
-    bk1080_write_reg(BK4819_REG_09, (number << 12) | (coeff));
+    bk4819_write_reg(BK4819_REG_09, (number << 12) | (coeff));
 }
