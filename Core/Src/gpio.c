@@ -40,6 +40,9 @@ static void bk4819_gpio_init(void)
 
 static void bk1080_gpio_init(void)
 {
+    gpio_mode_set(BK1080_GPIO_EN_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, BK1080_GPIO_EN_PIN);
+    gpio_output_options_set(BK1080_GPIO_EN_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, BK1080_GPIO_EN_PIN);
+
     gpio_mode_set(BK1080_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, BK1080_GPIO_SCK_PIN);
     gpio_output_options_set(BK1080_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, BK1080_GPIO_SCK_PIN);
 
@@ -71,7 +74,7 @@ void gpio_config(void)
     rcu_periph_clock_enable(BK4819_GPIO_RCU);
     rcu_periph_clock_enable(BK4819_GPIO_SCN_RCU);
     rcu_periph_clock_enable(BK1080_GPIO_RCU);
-    rcu_periph_clock_enable(BK1080_GPIO_SDA_PORT);
+    rcu_periph_clock_enable(BK1080_GPIO_SDA_EN_RCU);
     rcu_periph_clock_enable(KEY_GPIO_RCU);
     rcu_periph_clock_enable(KEY_GPIO_PTT_RCU);
     rcu_periph_clock_enable(MIC_EN_GPIO_RCU);
