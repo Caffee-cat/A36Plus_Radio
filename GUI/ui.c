@@ -9,9 +9,9 @@ void ui_init(void)
 {
 
     // splash
-    jgfx_draw_img_byaddr(32, 0, 128, 128, FLASH_SPLASH_ADDR);
+    // jgfx_draw_img_byaddr(32, 0, 128, 128, FLASH_SPLASH_ADDR);
 
-    vTaskDelay(30);
+    // vTaskDelay(30);
     LCD_LIGHT_HIGH;
 
     vTaskDelay(1000);
