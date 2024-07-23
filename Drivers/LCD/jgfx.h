@@ -148,6 +148,7 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
 void jgfx_set_font(jgfx_font_sel_t font);
 void jgfx_set_buff_size(uint32_t buf1_size, uint32_t buf2_size);
 uint16_t jgfx_measure_text_width(uint8_t *str);
+void jgfx_clear_screen(void);
 void jgfx_flush(void);
 
 static void jgfx_reset_area(void);                    //  reset window

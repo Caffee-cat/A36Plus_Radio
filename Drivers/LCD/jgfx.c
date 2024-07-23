@@ -5,7 +5,7 @@
  * @version 0.1
  * @date 2024-06-25
  *
- * @copyright MIT License
+* @copyright MIT License
 
 Copyright (c) 2024 (Jamiexu or Jamie793)
 
@@ -28,7 +28,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  *
  */
-
+// ********************************************************************************
 #include "jgfx.h"
 
 static jgfx_ptr jgfx;
@@ -115,7 +115,7 @@ void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
     {
         for (uint16_t i = 0; i < width; i++)
         {
-            ((jgfx->draw_buf.buf_act) + (jgfx->draw_buf.buf_point))->full = ((jgfx->color_front.full >> 8) | (jgfx->color_front.full << 8));
+            ((jgfx->draw_buf.buf_act) + (jgfx->draw_buf.buf_point))->full = ((jgfx->color_back.full >> 8) | (jgfx->color_back.full << 8));
             jgfx->draw_buf.buf_point++;
 
             if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
@@ -198,9 +198,9 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
         read_len = (byte_num - i < sizeof(jgfx->font_data)) ? (byte_num - i) : sizeof(jgfx->font_data);
         w25q16jv_read_num(addr + i, jgfx->font_data, read_len);
         i += read_len;
+        
 
         for (uint32_t j = 0; j < read_len; j += 2)
-
         {
             // temp =
             st7735s_send_data(*(uint8_t *)(jgfx->font_data + j));
@@ -457,6 +457,11 @@ void lcd_flush_finish_cb(void)
     spi_dma_disable(SPI1, SPI_DMA_TRANSMIT);
     dma_channel_disable(DMA_CH4);
     jgfx->flushing = 0;
+}
+
+void jgfx_clear_screen(void){
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_fill_react(32, 0, DISPLAY_W, DISPLAY_H);
 }
 
 void jgfx_flush()
