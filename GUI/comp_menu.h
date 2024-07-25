@@ -63,6 +63,7 @@ typedef struct jgfx_menu_t
 
     uint8_t index;
     uint8_t item_size;
+    uint8_t show_item_num;
 
     jgfx_menu_item_ptr head_item;
     jgfx_menu_item_ptr cur_item;
@@ -86,13 +87,15 @@ void jgfx_menu_set_title(jgfx_menu_ptr menu_ptr, uint8_t *str);
 
 void jgfx_menu_set_title_height(jgfx_menu_ptr menu_ptr, uint8_t height);
 
-void jgfx_menu_item_down(jgfx_menu_ptr menu_ptr);
+void jgfx_menu_item_next(jgfx_menu_ptr menu_ptr);
 
-void jgfx_menu_item_up(jgfx_menu_ptr menu_ptr);
+void jgfx_menu_item_previous(jgfx_menu_ptr menu_ptr);
 
 void jgfx_menu_update(jgfx_menu_ptr menu_ptr);
 
 void jgfx_menu_click(jgfx_menu_ptr menu_ptr);
+
+static void _menu_draw_items(jgfx_menu_ptr menu_ptr);
 
 static void _menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr);
 

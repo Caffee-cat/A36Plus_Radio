@@ -80,7 +80,7 @@ void jgfx_menu_append_text(jgfx_menu_ptr menu_ptr, uint8_t *str, jgfx_menu_item_
 void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
 {
     /** Init item selected */
-    jgfx_menu_item_ptr item = menu_ptr->head_item;
+    menu_ptr->show_item_num = (menu_ptr->menu_height - (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0)) / (menu_ptr->menu_item_height + menu_ptr->menu_divide_height);
     menu_ptr->cur_item = menu_ptr->head_item;
     menu_ptr->index = 0;
 
@@ -98,13 +98,8 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
         jgfx_draw_text_en(32 + menu_ptr->menu_x + (menu_ptr->menu_width / 2) - (jgfx_measure_text_width(menu_ptr->menu_title) / 2), menu_ptr->menu_y + 1, menu_ptr->menu_title);
     }
 
-    while (item != NULL)
-    {
-        _menu_draw_item(menu_ptr, item, JGFX_MENU_ITEM_STATUS_UNSELECTED, i++);
-        item = item->item_next;
-    }
-
-    _menu_draw_selector(menu_ptr);
+    /** Draw items */
+    _menu_draw_items(menu_ptr);
 }
 
 void jgfx_menu_set_title(jgfx_menu_ptr menu_ptr, uint8_t *str)
@@ -118,16 +113,23 @@ void jgfx_menu_set_title_height(jgfx_menu_ptr menu_ptr, uint8_t height)
     menu_ptr->menu_title_height = height;
 }
 
-void jgfx_menu_item_down(jgfx_menu_ptr menu_ptr)
+void jgfx_menu_item_next(jgfx_menu_ptr menu_ptr)
 {
     if (menu_ptr->index == menu_ptr->item_size - 1)
         return;
+
     menu_ptr->index++;
+
+    if ((menu_ptr->index % menu_ptr->show_item_num) == 0)
+    {
+        menu_ptr->head_item = menu_ptr->cur_item->item_next;
+        _menu_draw_items(menu_ptr);
+    }
     menu_ptr->cur_item = menu_ptr->cur_item->item_next;
     _menu_draw_selector(menu_ptr);
 }
 
-void jgfx_menu_item_up(jgfx_menu_ptr menu_ptr)
+void jgfx_menu_item_previous(jgfx_menu_ptr menu_ptr)
 {
     if (menu_ptr->index == 0)
         return;
@@ -162,6 +164,22 @@ void _menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr)
         menu_ptr->cur_item = item_ptr;
     }
     menu_ptr->item_size++;
+}
+
+static void _menu_draw_items(jgfx_menu_ptr menu_ptr)
+{
+    jgfx_menu_item_ptr item = menu_ptr->cur_item;
+    uint8_t i = 0;
+
+    while (item != NULL)
+    {
+        _menu_draw_item(menu_ptr, item, JGFX_MENU_ITEM_STATUS_UNSELECTED, i++);
+        item = item->item_next;
+        if (i >= menu_ptr->show_item_num)
+            break;
+    }
+
+    _menu_draw_selector(menu_ptr);
 }
 
 static void _menu_draw_selector(jgfx_menu_ptr menu_ptr)
