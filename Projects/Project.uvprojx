@@ -10193,6 +10193,11 @@
               <FileType>1</FileType>
               <FilePath>..\GUI\ui_main.c</FilePath>
             </File>
+            <File>
+              <FileName>comp_menu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\comp_menu.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
