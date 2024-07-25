@@ -53,6 +53,7 @@ int main(void)
     // ob_erase();
     // ob_reset();
     // ob_lock();
+
     systick_config();
     gpio_config();
     nvic_config();
@@ -60,8 +61,9 @@ int main(void)
     spi_config();
     tim_config();
     usart_config();
+   
     st7735s_init();
-    bk4819_init();
+    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
     
     // usart_flash_run();
 
@@ -85,8 +87,7 @@ int main(void)
 
     while (1)
     {
-
-        flash_dump();
+        // flash_dump();
         // delay_1ms(1000);
         // if (++time1_current_ms >= 1000){
         //     printf("1s...\r\n");
