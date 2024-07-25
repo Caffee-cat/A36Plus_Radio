@@ -107,7 +107,7 @@ void __attribute__((weak, alias("Null_Handler"))) DMA_Channel5_6_IRQHandler(void
 void __attribute__((weak, alias("Null_Handler"))) USBFS_IRQHandler(void);
 
 // Interrupt vector table
-const __attribute__((section(".vectors"))) uint32_t _VECTORS[] =
+const __attribute__((section(".isr_vector"))) uint32_t _VECTORS[] =
 	{
 		(uint32_t)&_estack,			  // Initial SP
 		(uint32_t)Reset_Handler,	  // Reset
@@ -117,11 +117,11 @@ const __attribute__((section(".vectors"))) uint32_t _VECTORS[] =
 		(uint32_t)BusFault_Handler,	  // Bus Fault
 		(uint32_t)UsageFault_Handler, // Usage Fault
 		0, 0, 0, 0,
-		(uint32_t)vPortSVCHandler,//SVC_Handler,		// SVC
+		(uint32_t)SVC_Handler,//SVC_Handler,		// SVC
 		(uint32_t)DebugMon_Handler, // Debug Monitor
 		0,
-		(uint32_t)xPortPendSVHandler,//PendSV_Handler,					// PendSV
-		(uint32_t)xPortSysTickHandler,//SysTick_Handler,					// SysTick
+		(uint32_t)PendSV_Handler,//PendSV_Handler,					// PendSV
+		(uint32_t)SysTick_Handler,//SysTick_Handler,					// SysTick
 		(uint32_t)WWDGT_IRQHandler,					// WDT
 		(uint32_t)LVD_IRQHandler,					// LVD
 		(uint32_t)RTC_IRQHandler,					// RTC
