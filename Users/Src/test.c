@@ -12913,7 +12913,7 @@ void jgfx_test(void)
     
 
     jgfx_set_font(JGFX_FONT_CN_16X16);
-    jgfx_draw_text_cn(32, 60, "Ã÷Ìì»á¸üºÃ£¡");
+    jgfx_draw_text_cn(32, 60, "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½");
 
     // jgfx_draw_img_byaddr(32, 0, 128, 128, FLASH_SPLASH_ADDR);
     // jgfx_set_color_hex(0x0000FF);
@@ -12975,13 +12975,13 @@ void bk4819_test(void)
     // printf("BK4819 REG_18: 0x%x\r\n", bk4819_read_reg(BK4819_REG_18));
     // printf("BK4819 REG_19: 0x%x\r\n", bk4819_read_reg(BK4819_REG_19));
 
-    printf("Running...\r\n");
-    bk4819_set_freq(46255000);
-    printf("Current frequency: %d", (bk4819_read_reg(0x38) << 16 + bk4819_read_reg(0x39)) * 10);
-    printf("RSSI: %d\r\n", bk4819_read_reg(0x67) & 0x0F);
-    printf("Ex-noise: %d\r\n", bk4819_read_reg(0x65) & 0x0b111111);
-    printf("Glitch: %d\r\n", bk4819_read_reg(0x63) & 0x0b01111111);
-    printf("Squelch: %d\r\n", bk4819_read_reg(0x0C) & 0x01);
+    // printf("Running...\r\n");
+    // bk4819_set_freq(46255000);
+    // printf("Current frequency: %d", (bk4819_read_reg(0x38) << 16 + bk4819_read_reg(0x39)) * 10);
+    // printf("RSSI: %d\r\n", bk4819_read_reg(0x67) & 0x0F);
+    // printf("Ex-noise: %d\r\n", bk4819_read_reg(0x65) & 0x0b111111);
+    // printf("Glitch: %d\r\n", bk4819_read_reg(0x63) & 0x0b01111111);
+    // printf("Squelch: %d\r\n", bk4819_read_reg(0x0C) & 0x01);
 }
 
 void bk1080_test(void)
