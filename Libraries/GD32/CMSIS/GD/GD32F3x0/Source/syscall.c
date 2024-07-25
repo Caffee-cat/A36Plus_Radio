@@ -37,10 +37,10 @@ extern uint32_t _estack, _eheap;
 int uart_getchar(void);
 void uart_putchar(uint8_t c);
 
-//Dummy CRT system call implementations
+// Dummy CRT system call implementations
 int __attribute__((weak)) _fstat(int fd, struct stat *st)
 {
-	st->st_mode=S_IFCHR;
+	st->st_mode = S_IFCHR;
 	return 0;
 }
 
@@ -76,26 +76,32 @@ int __attribute__((weak)) _write(int fd, char *buf, int len)
 	return len;
 }
 
-uint8_t* __attribute__((weak)) _sbrk(int inc)
+uint8_t *_sbrk(int inc)
 {
-	// static uint8_t *heap=NULL;
+	static uint8_t *heap = NULL;
 	uint8_t *prev;
-	// if(!heap) heap=(uint8_t*)&_estack;
-	// prev=heap;
-	// heap+=inc;
-	// if(heap>=(uint8_t*)&_eheap)
-	// {
-	// 	heap=prev;
-	// 	errno=ENOMEM;
-	// 	return (uint8_t*)-1;
-	// }
+	if (!heap)
+		heap = (uint8_t *)&_estack;
+	prev = heap;
+	heap += inc;
+	if (heap >= (uint8_t *)&_eheap)
+	{
+		heap = prev;
+		errno = ENOMEM;
+		return (uint8_t *)-1;
+	}
 	return prev;
 }
 
-int __attribute__((weak)) _isatty(int fd) {return 1;}
+int __attribute__((weak)) _isatty(int fd) { return 1; }
 
-int __attribute__((weak)) _getpid(void) {return -1;}
 
-void __attribute__((weak)) _kill(int pid, int sig) {return;}
+int __attribute__((weak)) _getpid(void) { return -1; }
 
-void __attribute__((weak)) _exit(int status) {while(1);}
+void __attribute__((weak)) _kill(int pid, int sig) { return; }
+
+void __attribute__((weak)) _exit(int status)
+{
+	while (1)
+		;
+}
