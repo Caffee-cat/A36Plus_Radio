@@ -30,6 +30,11 @@
 
 #include "comp_menu.h"
 
+/**
+ * @brief Init menu
+ * 
+ * @param menu_ptr menu pointer
+ */
 void jgfx_menu_init(jgfx_menu_ptr menu_ptr)
 {
     menu_ptr->menu_x = 0;
@@ -43,29 +48,63 @@ void jgfx_menu_init(jgfx_menu_ptr menu_ptr)
     menu_ptr->item_size = 0;
 }
 
+/**
+ * @brief Set menu size
+ * 
+ * @param menu_ptr menu pointer
+ * @param width menu width
+ * @param height menu height
+ */
 void jgfx_menu_set_size(jgfx_menu_ptr menu_ptr, uint16_t width, uint16_t height)
 {
     menu_ptr->menu_width = width;
     menu_ptr->menu_height = height;
 }
 
+/**
+ * @brief Set menu item size
+ * 
+ * @param menu_ptr menu pointer
+ * @param width item width
+ * @param height item height
+ */
 void jgfx_menu_set_item_size(jgfx_menu_ptr menu_ptr, uint16_t width, uint16_t height)
 {
     menu_ptr->menu_item_width = width;
     menu_ptr->menu_item_height = height;
 }
 
+/**
+ * @brief Set menu position
+ * 
+ * @param menu_ptr menu pointer
+ * @param x menu x 
+ * @param y meun y
+ */
 void jgfx_menu_set_position(jgfx_menu_ptr menu_ptr, uint16_t x, uint16_t y)
 {
     menu_ptr->menu_x = x;
     menu_ptr->menu_y = y;
 }
 
+/**
+ * @brief Set menu item divide height
+ * 
+ * @param menu_ptr menu pointer
+ * @param height divide height
+ */
 void jgfx_menu_set_divide(jgfx_menu_ptr menu_ptr, uint8_t height)
 {
     menu_ptr->menu_divide_height = height;
 }
 
+/**
+ * @brief Append text style menu
+ * 
+ * @param menu_ptr menu pointer
+ * @param str menu text
+ * @param cb click callback
+ */
 void jgfx_menu_append_text(jgfx_menu_ptr menu_ptr, uint8_t *str, jgfx_menu_item_event_cb cb)
 {
     jgfx_menu_item_ptr item = (jgfx_menu_item_ptr)malloc(sizeof(jgfx_menu_item_t));
@@ -77,6 +116,11 @@ void jgfx_menu_append_text(jgfx_menu_ptr menu_ptr, uint8_t *str, jgfx_menu_item_
     _menu_append_item(menu_ptr, item);
 }
 
+/**
+ * @brief Show menu
+ * 
+ * @param menu_ptr menu pointer
+ */
 void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
 {
     /** Init item selected */
@@ -98,21 +142,39 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
         jgfx_draw_text_en(32 + menu_ptr->menu_x + (menu_ptr->menu_width / 2) - (jgfx_measure_text_width(menu_ptr->menu_title) / 2), menu_ptr->menu_y + 1, menu_ptr->menu_title);
     }
 
+
     /** Draw items */
     _menu_draw_items(menu_ptr);
 }
 
+/**
+ * @brief Set menu title
+ * 
+ * @param menu_ptr menu pointer
+ * @param str title text
+ */
 void jgfx_menu_set_title(jgfx_menu_ptr menu_ptr, uint8_t *str)
 {
     menu_ptr->menu_use_tiltle = 1;
     memcpy(menu_ptr->menu_title, str, strlen(str));
 }
 
+/**
+ * @brief Set title height
+ * 
+ * @param menu_ptr menu pointer
+ * @param height title height
+ */
 void jgfx_menu_set_title_height(jgfx_menu_ptr menu_ptr, uint8_t height)
 {
     menu_ptr->menu_title_height = height;
 }
 
+/**
+ * @brief Set current item to next item
+ * 
+ * @param menu_ptr menu pointer
+ */
 void jgfx_menu_item_next(jgfx_menu_ptr menu_ptr)
 {
     if (menu_ptr->index == menu_ptr->item_size - 1)
@@ -129,6 +191,11 @@ void jgfx_menu_item_next(jgfx_menu_ptr menu_ptr)
     _menu_draw_selector(menu_ptr);
 }
 
+/**
+ * @brief Set current to previous item
+ * 
+ * @param menu_ptr menu pointer
+ */
 void jgfx_menu_item_previous(jgfx_menu_ptr menu_ptr)
 {
     if (menu_ptr->index == 0)
@@ -138,18 +205,34 @@ void jgfx_menu_item_previous(jgfx_menu_ptr menu_ptr)
     _menu_draw_selector(menu_ptr);
 }
 
+/**
+ * @brief Update status
+ * 
+ * @param menu_ptr menu pointer
+ */
 void jgfx_menu_update(jgfx_menu_ptr menu_ptr)
 {
     _menu_draw_selector(menu_ptr);
 }
 
+/**
+ * @brief Menu click listener
+ * 
+ * @param menu_ptr menu pointer
+ */
 void jgfx_menu_click(jgfx_menu_ptr menu_ptr)
 {
     if (menu_ptr->cur_item->item_event_cb != NULL)
         menu_ptr->cur_item->item_event_cb(menu_ptr);
 }
 
-void _menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr)
+/**
+ * @brief Append item to menu
+ * 
+ * @param menu_ptr menu pointer
+ * @param item_ptr item neeeded to append
+ */
+static void _menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr)
 {
     menu_ptr->head_item == NULL;
     if (menu_ptr->head_item == NULL)
@@ -166,6 +249,11 @@ void _menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr)
     menu_ptr->item_size++;
 }
 
+/**
+ * @brief Draw all of items
+ * 
+ * @param menu_ptr menu pointer
+ */
 static void _menu_draw_items(jgfx_menu_ptr menu_ptr)
 {
     jgfx_menu_item_ptr item = menu_ptr->cur_item;
@@ -182,6 +270,11 @@ static void _menu_draw_items(jgfx_menu_ptr menu_ptr)
     _menu_draw_selector(menu_ptr);
 }
 
+/**
+ * @brief Draw selector
+ * 
+ * @param menu_ptr menu pointer
+ */
 static void _menu_draw_selector(jgfx_menu_ptr menu_ptr)
 {
     if (menu_ptr->index != 0)
@@ -197,8 +290,17 @@ static void _menu_draw_selector(jgfx_menu_ptr menu_ptr)
     }
 }
 
+/**
+ * @brief Draw one item
+ * 
+ * @param menu_ptr menu pointer
+ * @param item_ptr item pointed to item structure
+ * @param status current item status
+ * @param index 
+ */
 static void _menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr, jgfx_menu_item_status_t status, uint8_t index)
 {
+    /** Draw item base on item status*/
     if (status == JGFX_MENU_ITEM_STATUS_SELECTED)
     {
         jgfx_set_color_hex(0x0000);
