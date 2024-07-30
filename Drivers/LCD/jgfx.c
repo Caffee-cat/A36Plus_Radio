@@ -36,11 +36,18 @@ static jgfx_ptr jgfx;
 void jgfx_init(uint16_t buf1_size, uint16_t buf2_size)
 {
     jgfx = (jgfx_t *)malloc(sizeof(jgfx_t));
-    if (jgfx == NULL || buf1_size == NULL || buf2_size == NULL)
+    if (jgfx == NULL)
         return;
 
-    jgfx->draw_buf.buf1 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE * sizeof(jgfx_color_rgb565));
-    jgfx->draw_buf.buf2 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE * sizeof(jgfx_color_rgb565));
+    if (buf1_size != 0)
+    {
+        jgfx->draw_buf.buf1 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE * sizeof(jgfx_color_rgb565));
+    }
+    if (buf1_size != 0 && buf2_size != 0)
+    {
+        jgfx->draw_buf.buf2 = (jgfx_color_rgb565 *)malloc(BUFFER_SIZE * sizeof(jgfx_color_rgb565));
+    }
+
     jgfx->draw_buf.buf1_size = BUFFER_SIZE;
     jgfx->draw_buf.buf2_size = BUFFER_SIZE;
     jgfx->draw_buf.buf_point = 0;
@@ -106,27 +113,32 @@ void jgfx_draw_pixel(uint8_t x, uint8_t y)
 
 void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
-    // jgfx_reset_area();
-    // jgfx_update_area(x, y);
-    // jgfx_update_area(x + width - 1, y + height - 1);
-    // st7735s_set_window(jgfx->area.xs, jgfx->area.xe, jgfx->area.ys, jgfx->area.ye);
     st7735s_set_window(x, x + width - 1, y, y + height - 1);
     for (uint16_t j = 0; j < height; j++)
     {
         for (uint16_t i = 0; i < width; i++)
         {
-            ((jgfx->draw_buf.buf_act) + (jgfx->draw_buf.buf_point))->full = ((jgfx->color_back.full >> 8) | (jgfx->color_back.full << 8));
-            jgfx->draw_buf.buf_point++;
-
-            if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
+            if (jgfx->draw_buf.buf_act == NULL)
             {
-                if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf1_size)
-                    jgfx_flush();
+                st7735s_send_data(((jgfx->color_back.full >> 8) & 0xFF));
+                st7735s_send_data(jgfx->color_back.full & 0xFF);
+                continue;
             }
-            else if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf2)
+            else
             {
-                if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf2_size)
-                    jgfx_flush();
+                ((jgfx->draw_buf.buf_act) + (jgfx->draw_buf.buf_point))->full = ((jgfx->color_back.full >> 8) | (jgfx->color_back.full << 8));
+                jgfx->draw_buf.buf_point++;
+
+                if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
+                {
+                    if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf1_size)
+                        jgfx_flush();
+                }
+                else if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf2)
+                {
+                    if (jgfx->draw_buf.buf_point >= jgfx->draw_buf.buf2_size)
+                        jgfx_flush();
+                }
             }
         }
     }
@@ -198,7 +210,6 @@ void jgfx_draw_img_byaddr(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32
         read_len = (byte_num - i < sizeof(jgfx->font_data)) ? (byte_num - i) : sizeof(jgfx->font_data);
         w25q16jv_read_num(addr + i, jgfx->font_data, read_len);
         i += read_len;
-        
 
         for (uint32_t j = 0; j < read_len; j += 2)
         {
@@ -459,7 +470,8 @@ void lcd_flush_finish_cb(void)
     jgfx->flushing = 0;
 }
 
-void jgfx_clear_screen(void){
+void jgfx_clear_screen(void)
+{
     jgfx_set_color_back_hex(0x0000);
     jgfx_fill_react(32, 0, DISPLAY_W, DISPLAY_H);
 }
@@ -478,10 +490,13 @@ void jgfx_flush()
     DMA_CHCNT(DMA_CH4) = jgfx->draw_buf.buf_point * 2;
     jgfx->draw_buf.buf_point = 0;
 
-    if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
-        jgfx->draw_buf.buf_act = jgfx->draw_buf.buf2;
-    else if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf2)
-        jgfx->draw_buf.buf_act = jgfx->draw_buf.buf1;
+    if (jgfx->draw_buf.buf2 != NULL)
+    {
+        if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf1)
+            jgfx->draw_buf.buf_act = jgfx->draw_buf.buf2;
+        else if (jgfx->draw_buf.buf_act == jgfx->draw_buf.buf2)
+            jgfx->draw_buf.buf_act = jgfx->draw_buf.buf1;
+    }
 
     spi_dma_enable(SPI1, SPI_DMA_TRANSMIT);
     dma_channel_enable(DMA_CH4);
