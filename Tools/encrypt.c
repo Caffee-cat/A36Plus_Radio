@@ -52,9 +52,9 @@ void xor_decrypt(unsigned char *data, unsigned char *key, int len)
 int main(int argc, char *argv[])
 {
     int flag = 1;
-    if (argc < 3 || argc > 4)
+    if (argc <= 3 || argc > 4)
     {
-        printf("Usage: %s <input file> <output file> <options>\n"
+        printf("Usage: %s <options> <input file> <output file>\n"
                "Options: \n-e  encrypt file\n-d   decrypt file\ndefault: encrypt",
                argv[0]);
         return 1;
@@ -67,13 +67,12 @@ int main(int argc, char *argv[])
         flag = 2;
     else if (opt == 'h')
     {
-        printf("Usage: %s <input file> <output file> <options>\n"
+        printf("Usage: %s <options> <input file> <output file>\n"
                "Options: \n-e  encrypt file\n-d   decrypt file\ndefault: encrypt",
                argv[0]);
     }
-
-    FILE *input = fopen(argv[1], "rb");
-    FILE *output = fopen(argv[2], "wb");
+    FILE *input = fopen(argv[2], "rb");
+    FILE *output = fopen(argv[3], "wb");
 
     if (!input || !output)
     {
@@ -126,6 +125,6 @@ int main(int argc, char *argv[])
     fclose(input);
     fclose(output);
 
-  printf("Output file: %s", argv[2]) ;
+  printf("Output file: %s", argv[3]) ;
   return 0;
 }
