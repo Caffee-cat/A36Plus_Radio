@@ -18,6 +18,7 @@ typedef enum
 {
     JGFX_MENU_ITEM_STATUS_SELECTED = 0x00,
     JGFX_MENU_ITEM_STATUS_UNSELECTED,
+    JGFX_MENU_ITEM_STATUS_CLICKED,
 }jgfx_menu_item_status_t;
 
 // typedef enum{
@@ -61,7 +62,7 @@ typedef struct jgfx_menu_t
     uint8_t menu_title[JGFX_MENU_STR_MAX_LEN];
     uint8_t menu_title_height;
 
-    uint8_t index;
+    uint8_t index;  
     uint8_t item_size;
     uint8_t show_item_num;
 
@@ -69,7 +70,7 @@ typedef struct jgfx_menu_t
     jgfx_menu_item_ptr cur_item;
 } jgfx_menu_t;
 
-void jgfx_menu_init(jgfx_menu_ptr menu_ptr);
+void jgfx_menu_init(jgfx_menu_t * menu_ptr);
 
 void jgfx_menu_set_size(jgfx_menu_ptr menu_ptr, uint16_t width, uint16_t height);
 
@@ -95,12 +96,18 @@ void jgfx_menu_update(jgfx_menu_ptr menu_ptr);
 
 void jgfx_menu_click(jgfx_menu_ptr menu_ptr);
 
-static void _menu_draw_items(jgfx_menu_ptr menu_ptr);
+void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
 
-static void _menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr);
+static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
-static void _menu_draw_selector(jgfx_menu_ptr menu_ptr);
+static void _r_menu_draw_items(jgfx_menu_ptr menu_ptr);
 
-static void _menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr, jgfx_menu_item_status_t status, uint8_t index);
+static void _l_menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr);
+
+static void _r_menu_draw_selector(jgfx_menu_ptr menu_ptr);
+
+static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr, jgfx_menu_item_status_t status, uint8_t index);
+
+static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 
 #endif
