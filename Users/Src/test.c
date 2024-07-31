@@ -12989,7 +12989,7 @@ void bk1080_test(void)
 
     // bk1080_write_reg(BK1080_REG2, 0x8508);
     // printf("Bk1080 REG0: 0x%x\r\n", bk1080_read_reg(BK1080_REG0));    // default 0x0006
-    printf("Bk1080 REG1: 0x%x\r\n", bk1080_read_reg(BK1080_REG1)); // default 0x1080
+    // printf("Bk1080 REG1: 0x%x\r\n", bk1080_read_reg(BK1080_REG1)); // default 0x1080
     // printf("Bk1080 REG2: 0x%x\r\n", bk1080_read_reg(BK1080_REG2));    // default 0x0000
     // printf("Bk1080 REG3: 0x%x\r\n", bk1080_read_reg(BK1080_REG3));    // default 0x0000
     // printf("Bk1080 REG4: 0x%x\r\n", bk1080_read_reg(BK1080_REG4));    // default 0x0000
