@@ -113,8 +113,8 @@ void jgfx_menu_append_text(jgfx_menu_ptr menu_ptr, uint8_t *str, jgfx_menu_item_
     memset(item, 0, sizeof(jgfx_menu_item_t));
     memcpy(item->item_name, str, strlen(str));
     item->parent = menu_ptr;
-    item->item_event_cb = cb;	
-
+    item->item_event_cb = cb;
+    item->item_id = menu_ptr->item_size;
     item->item_type = JGFX_MENU_TYPE_TXT;
     _l_menu_append_item(menu_ptr, item);
 }
@@ -127,7 +127,7 @@ void jgfx_menu_append_text(jgfx_menu_ptr menu_ptr, uint8_t *str, jgfx_menu_item_
 void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
 {
     /** Init item selected */
-    menu_ptr->show_item_num = (menu_ptr->menu_height - (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0)) / (menu_ptr->menu_item_height + menu_ptr->menu_divide_height);
+    menu_ptr->item_show_num = (menu_ptr->menu_height - (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0)) / (menu_ptr->menu_item_height + menu_ptr->menu_divide_height);
     menu_ptr->cur_item = menu_ptr->head_item;
     menu_ptr->index = 0;
 
@@ -135,7 +135,7 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
 
     /** Draw menue box*/
     jgfx_set_color_hex(0xFFFF);
-    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 30, menu_ptr->menu_y + menu_ptr->menu_height - 5);
+    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
 
     /** Show title if use title*/
     if (menu_ptr->menu_use_tiltle)
@@ -146,7 +146,10 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
     }
 
     /** Draw items */
-    _r_menu_draw_items(menu_ptr);
+    _r_menu_draw_items(menu_ptr, 0);
+
+    /** Draw selector */
+    _r_menu_draw_selector(menu_ptr);
 }
 
 /**
@@ -179,16 +182,19 @@ void jgfx_menu_set_title_height(jgfx_menu_ptr menu_ptr, uint8_t height)
  */
 void jgfx_menu_item_next(jgfx_menu_ptr menu_ptr)
 {
+    if (menu_ptr->status == JGFX_MENU_STATUS_CLICKED)
+        return;
+
     if (menu_ptr->cur_item->item_next == NULL)
         return;
 
-    menu_ptr->index++;
     menu_ptr->cur_item = menu_ptr->cur_item->item_next;
-    if (menu_ptr->index == menu_ptr->show_item_num)
+    menu_ptr->index++;
+    if (menu_ptr->index == menu_ptr->item_show_num)
     {
         menu_ptr->index = 0;
         _r_clear_item_area(menu_ptr);
-        _r_menu_draw_items(menu_ptr);
+        _r_menu_draw_items(menu_ptr, 0);
     }
     _r_menu_draw_selector(menu_ptr);
 }
@@ -200,17 +206,20 @@ void jgfx_menu_item_next(jgfx_menu_ptr menu_ptr)
  */
 void jgfx_menu_item_previous(jgfx_menu_ptr menu_ptr)
 {
+    if (menu_ptr->status == JGFX_MENU_STATUS_CLICKED)
+        return;
+
     if (menu_ptr->cur_item->item_pre == NULL)
         return;
 
     menu_ptr->cur_item = menu_ptr->cur_item->item_pre;
-    menu_ptr->index--;
     if (menu_ptr->index == 0)
     {
-        menu_ptr->index = menu_ptr->show_item_num;
+        menu_ptr->index = menu_ptr->item_show_num;
         _r_clear_item_area(menu_ptr);
-        _r_menu_draw_items(menu_ptr);
+        _r_menu_draw_items(menu_ptr, 1);
     }
+    menu_ptr->index--;
     _r_menu_draw_selector(menu_ptr);
 }
 
@@ -231,9 +240,52 @@ void jgfx_menu_update(jgfx_menu_ptr menu_ptr)
  */
 void jgfx_menu_click(jgfx_menu_ptr menu_ptr)
 {
-    _r_menu_draw_item(menu_ptr, menu_ptr->cur_item->item_pre, JGFX_MENU_ITEM_STATUS_CLICKED, menu_ptr->index - 1);
-    if (menu_ptr->cur_item->item_event_cb != NULL)
-        menu_ptr->cur_item->item_event_cb(menu_ptr);
+    if (menu_ptr->status != JGFX_MENU_STATUS_CLICKED)
+    {
+        menu_ptr->status = JGFX_MENU_STATUS_CLICKED;
+        _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_CLICKED, menu_ptr->index);
+        if (menu_ptr->cur_item->item_event_cb != NULL)
+            menu_ptr->cur_item->item_event_cb(menu_ptr);
+    }
+    else
+    {
+        menu_ptr->status = JGFX_MENU_STATUS_SELECTED;
+        _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_SELECTED, menu_ptr->index);
+    }
+}
+
+/**
+ * @brief Index menu item
+ *
+ * @param menu_ptr menu pointer
+ * @param index item index
+ */
+void jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index)
+{
+    if (menu_ptr == NULL || index > (menu_ptr->item_size - 1))
+        return;
+    uint8_t i;
+    jgfx_menu_item_ptr item = menu_ptr->head_item;
+    jgfx_menu_item_ptr item2;
+
+    for (i = 1; i < index; i++)
+    {
+        item = item2 = item->item_next;
+    }
+
+    i = (i % (menu_ptr->item_show_num )) - 1;
+    while (i--)
+    {
+        item2 = item2->item_pre;
+    }
+
+    menu_ptr->cur_item = item2;
+    menu_ptr->index = (index % menu_ptr->item_show_num) - 1;
+    _r_clear_item_area(menu_ptr);
+    _r_menu_draw_items(menu_ptr, 0);
+
+    menu_ptr->cur_item = item;
+    _r_menu_draw_selector(menu_ptr);
 }
 
 /**
@@ -322,24 +374,42 @@ static void _l_menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_
 }
 
 /**
- * @brief Draw all of items
+ * @brief Draw all of the items
  *
- * @param menu_ptr menu pointer
+ * @param menu_ptr
+ * @param order draw direction
+ *                             0: forward
+ *                             1: backward
  */
-static void _r_menu_draw_items(jgfx_menu_ptr menu_ptr)
+static void _r_menu_draw_items(jgfx_menu_ptr menu_ptr, uint8_t order)
 {
+    uint8_t i;
     jgfx_menu_item_ptr item = menu_ptr->cur_item;
-    uint8_t i = 0;
+
+    if (!order)
+        i = 0;
+    else
+        i = menu_ptr->item_show_num;
 
     while (item != NULL)
     {
-        _r_menu_draw_item(menu_ptr, item, JGFX_MENU_ITEM_STATUS_UNSELECTED, i++);
-        item = item->item_next;
-        if (i >= menu_ptr->show_item_num)
-            break;
+        if (!order)
+        {
+            _r_menu_draw_item(menu_ptr, item, JGFX_MENU_ITEM_STATUS_UNSELECTED, i);
+            item = item->item_next;
+            i++;
+            if (i >= menu_ptr->item_show_num)
+                break;
+        }
+        else
+        {
+            _r_menu_draw_item(menu_ptr, item, JGFX_MENU_ITEM_STATUS_UNSELECTED, i - 1);
+            item = item->item_pre;
+            i--;
+            if (i <= 0)
+                break;
+        }
     }
-
-    _r_menu_draw_selector(menu_ptr);
 }
 
 /**
@@ -356,7 +426,7 @@ static void _r_menu_draw_selector(jgfx_menu_ptr menu_ptr)
 
     _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_SELECTED, menu_ptr->index);
 
-    if (menu_ptr->index != menu_ptr->item_size - 1)
+    if ((menu_ptr->index + 1) < menu_ptr->item_show_num)
     {
         _r_menu_draw_item(menu_ptr, menu_ptr->cur_item->item_next, JGFX_MENU_ITEM_STATUS_UNSELECTED, menu_ptr->index + 1);
     }
@@ -373,6 +443,11 @@ static void _r_menu_draw_selector(jgfx_menu_ptr menu_ptr)
 static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr, jgfx_menu_item_status_t status, uint8_t index)
 {
     /** Draw item base on item status*/
+
+    // jgfx_set_color_back_hex(0x0000);
+    // jgfx_fill_react(32 + menu_ptr->menu_x,
+    //                 menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+    //                 menu_ptr->menu_width - 5, menu_ptr->menu_item_height + 5);
     if (status == JGFX_MENU_ITEM_STATUS_SELECTED)
     {
         jgfx_set_color_hex(0x0000);
@@ -387,12 +462,6 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
     {
         jgfx_set_color_hex(0xFFFF);
         jgfx_set_color_back_hex(0x0000);
-
-        /** Draw item box */
-        jgfx_draw_rect(35 + menu_ptr->menu_x,
-                       (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
-                       menu_ptr->menu_x + menu_ptr->menu_width + 30,
-                       menu_ptr->menu_y + menu_ptr->menu_item_height);
     }
 
     /** Draw item */
@@ -410,6 +479,16 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
     {
     }
 
+    if (status == JGFX_MENU_ITEM_STATUS_CLICKED)
+    {
+
+        /** Draw item box */
+        jgfx_draw_rect(32 + menu_ptr->menu_x,
+                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+                       32 + menu_ptr->menu_x + menu_ptr->menu_width,
+                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + menu_ptr->menu_item_height);
+    }
+
     // jgfx_draw_line(36 + menu_ptr->menu_x,
     //                menu_ptr->menu_item_height + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
     //                menu_ptr->menu_width + 30,
@@ -419,5 +498,5 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
 static void _r_clear_item_area(jgfx_menu_ptr menu_ptr)
 {
     jgfx_set_color_back_hex(0x0000);
-    jgfx_fill_react(33 + menu_ptr->menu_x, menu_ptr->menu_y + menu_ptr->menu_title_height + 2, menu_ptr->menu_width - 1, menu_ptr->menu_height - menu_ptr->menu_title_height);
+    jgfx_fill_react(35 + menu_ptr->menu_x, menu_ptr->menu_y + menu_ptr->menu_title_height + 5, menu_ptr->menu_width - 5, menu_ptr->menu_height - menu_ptr->menu_title_height - (menu_ptr->menu_divide_height * menu_ptr->item_show_num) - 10);
 }
