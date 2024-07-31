@@ -49,8 +49,8 @@ void ui_menu_init(void)
     jgfx_menu_init(&jgfx_menu);
     jgfx_menu_set_size(&jgfx_menu, DISPLAY_W, DISPLAY_H);
     jgfx_menu_set_title(&jgfx_menu, "Menu");
-    jgfx_menu_set_title_height(&jgfx_menu, 16);
-    // jgfx_menu_set_item_size(&jgfx_menu, 0, 10);
+    jgfx_menu_set_title_height(&jgfx_menu, 20);
+    // jgfx_menu_set_divide(&jgfx_menu, 10);
 
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing1", cb);
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing2", NULL);
@@ -59,8 +59,12 @@ void ui_menu_init(void)
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing5", NULL);
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing6", NULL);
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing7", NULL);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing8", NULL);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing9", NULL);
+    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing8", NULL);
+    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing9", NULL);
+    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing10", NULL);
+    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing11", NULL);
+    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing12", NULL);
+    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing13", NULL);
 
     jgfx_menu_show(&jgfx_menu);
 }
@@ -92,12 +96,22 @@ void ui_menu_event_cb(void)
         }
         else if (key == KEY_MAP_4)
         {
+            jgfx_menu_destory(&jgfx_menu);
             uiStackPop(&ui_stack);
             temp_page = uiStackGetTop(&ui_stack);
             if (temp_page != NULL)
                 temp_page->ui_refresh();
         }
+        else if (key == KEY_MAP_8)
+        {
+        }
+        else if (key == KEY_MAP_16)
+        {
+        }else{
+            jgfx_menu_index(&jgfx_menu, KEY_GET_NUM(key));
+        }
 
-        vTaskDelay(200);
+
+        vTaskDelay(500);
     }
 }
