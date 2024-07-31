@@ -2,7 +2,9 @@
   "name": "Project",
   "type": "ARM",
   "dependenceList": [],
-  "srcDirs": [],
+  "srcDirs": [
+    "../Libraries/GD32"
+  ],
   "virtualFolder": {
     "name": "<virtual_root>",
     "files": [],
@@ -12,110 +14,35 @@
         "files": [],
         "folders": [
           {
-            "name": "CORE",
+            "name": "USERS",
             "files": [],
             "folders": [
               {
                 "name": "SRC",
                 "files": [
                   {
-                    "path": "../Core/Src/dma.c"
+                    "path": "../Users/Src/boot.c"
                   },
                   {
-                    "path": "../Core/Src/gpio.c"
+                    "path": "../Users/Src/gd32f3x0_it.c"
                   },
                   {
-                    "path": "../Core/Src/nvic.c"
+                    "path": "../Users/Src/lv_port_disp.c"
                   },
                   {
-                    "path": "../Core/Src/spi.c"
+                    "path": "../Users/Src/main.c"
                   },
                   {
-                    "path": "../Core/Src/tim.c"
+                    "path": "../Users/Src/my_tasks.c"
                   },
                   {
-                    "path": "../Core/Src/usart.c"
-                  }
-                ],
-                "folders": []
-              }
-            ]
-          },
-          {
-            "name": "DRIVERS",
-            "files": [],
-            "folders": [
-              {
-                "name": "BK1080",
-                "files": [
-                  {
-                    "path": "../Drivers/BK1080/bk1080.c"
-                  }
-                ],
-                "folders": []
-              },
-              {
-                "name": "BK4819",
-                "files": [
-                  {
-                    "path": "../Drivers/BK4819/bk4819.c"
-                  }
-                ],
-                "folders": []
-              },
-              {
-                "name": "FLASH",
-                "files": [
-                  {
-                    "path": "../Drivers/Flash/w25q16jv.c"
-                  }
-                ],
-                "folders": []
-              },
-              {
-                "name": "KEY",
-                "files": [
-                  {
-                    "path": "../Drivers/Key/key.c"
-                  }
-                ],
-                "folders": []
-              },
-              {
-                "name": "LCD",
-                "files": [
-                  {
-                    "path": "../Drivers/LCD/fonts.c"
+                    "path": "../Users/Src/systick.c"
                   },
                   {
-                    "path": "../Drivers/LCD/jgfx.c"
+                    "path": "../Users/Src/test.c"
                   },
                   {
-                    "path": "../Drivers/LCD/st7735s_compat.c"
-                  },
-                  {
-                    "path": "../Drivers/LCD/st7735s.c"
-                  },
-                  {
-                    "path": "../Drivers/LCD/ugui.c"
-                  }
-                ],
-                "folders": []
-              }
-            ]
-          },
-          {
-            "name": "GUI",
-            "files": [],
-            "folders": [
-              {
-                "name": "SRC",
-                "files": [
-                  {
-                    "path": "../GUI/ui_menu.c"
-                  },
-                  {
-                    "path": "../GUI/ui.c"
+                    "path": "../Users/Src/usart_flash.c"
                   }
                 ],
                 "folders": []
@@ -127,443 +54,13 @@
             "files": [],
             "folders": [
               {
-                "name": "FREERTOS",
+                "name": "PRINTF",
                 "files": [
                   {
-                    "path": "../Libraries/FreeRTOS-Kernel/croutine.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/event_groups.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/list.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/portable/MemMang/heap_4.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/portable/RVDS/ARM_CM4F/port.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/queue.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/stream_buffer.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/tasks.c"
-                  },
-                  {
-                    "path": "../Libraries/FreeRTOS-Kernel/timers.c"
+                    "path": "../Libraries/printf/printf.c"
                   }
                 ],
                 "folders": []
-              },
-              {
-                "name": "GD32",
-                "files": [],
-                "folders": [
-                  {
-                    "name": "CMSIS",
-                    "files": [],
-                    "folders": [
-                      {
-                        "name": "GD",
-                        "files": [],
-                        "folders": [
-                          {
-                            "name": "GD32F3X0",
-                            "files": [],
-                            "folders": [
-                              {
-                                "name": "SOURCE",
-                                "files": [
-                                  {
-                                    "path": "../Libraries/GD32/CMSIS/GD/GD32F3x0/Source/system_gd32f3x0.c"
-                                  }
-                                ],
-                                "folders": [
-                                  {
-                                    "name": "IAR",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/CMSIS/GD/GD32F3x0/Source/IAR/startup_gd32f3x0.s"
-                                      }
-                                    ],
-                                    "folders": []
-                                  },
-                                  {
-                                    "name": "GNU",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/CMSIS/GD/GD32F3x0/Source/GNU/startup_gd32f3x0.s"
-                                      }
-                                    ],
-                                    "folders": []
-                                  },
-                                  {
-                                    "name": "ARM",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/CMSIS/GD/GD32F3x0/Source/ARM/startup_gd32f3x0.s"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "name": "GD32F3X0_STANDARD_PERIPHERAL",
-                    "files": [],
-                    "folders": [
-                      {
-                        "name": "SOURCE",
-                        "files": [
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_adc.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_cec.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_cmp.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_crc.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_ctc.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_dac.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_dbg.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_dma.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_exti.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_fmc.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_fwdgt.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_gpio.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_i2c.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_misc.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_pmu.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_rcu.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_rtc.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_spi.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_syscfg.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_timer.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_tsi.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_usart.c"
-                          },
-                          {
-                            "path": "../Libraries/GD32/GD32F3x0_standard_peripheral/Source/gd32f3x0_wwdgt.c"
-                          }
-                        ],
-                        "folders": []
-                      }
-                    ]
-                  },
-                  {
-                    "name": "GD32F3X0_USBFS_LIBRARY",
-                    "files": [],
-                    "folders": [
-                      {
-                        "name": "DEVICE",
-                        "files": [],
-                        "folders": [
-                          {
-                            "name": "CORE",
-                            "files": [],
-                            "folders": [
-                              {
-                                "name": "SOURCE",
-                                "files": [
-                                  {
-                                    "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/core/Source/usbd_core.c"
-                                  },
-                                  {
-                                    "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/core/Source/usbd_enum.c"
-                                  },
-                                  {
-                                    "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/core/Source/usbd_transc.c"
-                                  }
-                                ],
-                                "folders": []
-                              }
-                            ]
-                          },
-                          {
-                            "name": "CLASS",
-                            "files": [],
-                            "folders": [
-                              {
-                                "name": "PRINTER",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/printer/Source/printer_core.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "MSC",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/msc/Source/usbd_msc_bbb.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/msc/Source/usbd_msc_core.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/msc/Source/usbd_msc_scsi.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "IAP",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/iap/Source/usb_iap_core.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "HID",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/hid/Source/custom_hid_core.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/hid/Source/standard_hid_core.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "DFU",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/dfu/Source/dfu_core.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/dfu/Source/dfu_mem.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "CDC",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/cdc/Source/cdc_acm_core.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "AUDIO",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/audio/Source/audio_core.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/device/class/audio/Source/audio_out_itf.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "DRIVER",
-                        "files": [],
-                        "folders": [
-                          {
-                            "name": "SOURCE",
-                            "files": [
-                              {
-                                "path": "../Libraries/GD32/GD32F3x0_usbfs_library/driver/Source/drv_usbd_int.c"
-                              },
-                              {
-                                "path": "../Libraries/GD32/GD32F3x0_usbfs_library/driver/Source/drv_usbh_int.c"
-                              },
-                              {
-                                "path": "../Libraries/GD32/GD32F3x0_usbfs_library/driver/Source/drv_usb_core.c"
-                              },
-                              {
-                                "path": "../Libraries/GD32/GD32F3x0_usbfs_library/driver/Source/drv_usb_dev.c"
-                              },
-                              {
-                                "path": "../Libraries/GD32/GD32F3x0_usbfs_library/driver/Source/drv_usb_host.c"
-                              }
-                            ],
-                            "folders": []
-                          }
-                        ]
-                      },
-                      {
-                        "name": "HOST",
-                        "files": [],
-                        "folders": [
-                          {
-                            "name": "CORE",
-                            "files": [],
-                            "folders": [
-                              {
-                                "name": "SOURCE",
-                                "files": [
-                                  {
-                                    "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/core/Source/usbh_core.c"
-                                  },
-                                  {
-                                    "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/core/Source/usbh_enum.c"
-                                  },
-                                  {
-                                    "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/core/Source/usbh_pipe.c"
-                                  },
-                                  {
-                                    "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/core/Source/usbh_transc.c"
-                                  }
-                                ],
-                                "folders": []
-                              }
-                            ]
-                          },
-                          {
-                            "name": "CLASS",
-                            "files": [],
-                            "folders": [
-                              {
-                                "name": "MSC",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/class/msc/Source/usbh_msc_bbb.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/class/msc/Source/usbh_msc_core.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/class/msc/Source/usbh_msc_fatfs.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/class/msc/Source/usbh_msc_scsi.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              },
-                              {
-                                "name": "HID",
-                                "files": [],
-                                "folders": [
-                                  {
-                                    "name": "SOURCE",
-                                    "files": [
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/class/hid/Source/usbh_hid_core.c"
-                                      },
-                                      {
-                                        "path": "../Libraries/GD32/GD32F3x0_usbfs_library/host/class/hid/Source/usbh_standard_hid.c"
-                                      }
-                                    ],
-                                    "folders": []
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
               },
               {
                 "name": "LVGL",
@@ -573,279 +70,6 @@
                     "name": "SRC",
                     "files": [],
                     "folders": [
-                      {
-                        "name": "LV_CORE",
-                        "files": [
-                          {
-                            "path": "../Libraries/lvgl/src/lv_core/lv_disp.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_core/lv_group.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_core/lv_indev.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_core/lv_obj.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_core/lv_refr.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_core/lv_style.c"
-                          }
-                        ],
-                        "folders": []
-                      },
-                      {
-                        "name": "LV_DRAW",
-                        "files": [
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_arc.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_blend.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_img.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_label.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_line.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_mask.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_rect.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_triangle.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_img_buf.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_img_cache.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_draw/lv_img_decoder.c"
-                          }
-                        ],
-                        "folders": []
-                      },
-                      {
-                        "name": "LV_FONT",
-                        "files": [
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_dejavu_16_persian_hebrew.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_fmt_txt.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_loader.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_10.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_12_subpx.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_12.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_14.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_16.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_18.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_20.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_22.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_24.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_26.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_28_compressed.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_28.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_30.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_32.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_34.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_36.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_38.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_40.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_42.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_44.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_46.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_48.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_8.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_simsun_16_cjk.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_unscii_16.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font_unscii_8.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_font/lv_font.c"
-                          }
-                        ],
-                        "folders": []
-                      },
-                      {
-                        "name": "LV_GPU",
-                        "files": [
-                          {
-                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_nxp_pxp_osa.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_nxp_pxp.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_nxp_vglite.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_stm32_dma2d.c"
-                          }
-                        ],
-                        "folders": []
-                      },
-                      {
-                        "name": "LV_HAL",
-                        "files": [
-                          {
-                            "path": "../Libraries/lvgl/src/lv_hal/lv_hal_disp.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_hal/lv_hal_indev.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_hal/lv_hal_tick.c"
-                          }
-                        ],
-                        "folders": []
-                      },
-                      {
-                        "name": "LV_MISC",
-                        "files": [
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_anim.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_area.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_async.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_bidi.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_color.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_debug.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_fs.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_gc.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_ll.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_log.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_math.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_mem.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_printf.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_task.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_templ.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_txt_ap.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_txt.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_misc/lv_utils.c"
-                          }
-                        ],
-                        "folders": []
-                      },
-                      {
-                        "name": "LV_THEMES",
-                        "files": [
-                          {
-                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_empty.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_material.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_mono.c"
-                          },
-                          {
-                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_template.c"
-                          }
-                        ],
-                        "folders": []
-                      },
                       {
                         "name": "LV_WIDGETS",
                         "files": [
@@ -953,16 +177,313 @@
                           }
                         ],
                         "folders": []
+                      },
+                      {
+                        "name": "LV_THEMES",
+                        "files": [
+                          {
+                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_empty.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_material.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_mono.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_themes/lv_theme_template.c"
+                          }
+                        ],
+                        "folders": []
+                      },
+                      {
+                        "name": "LV_MISC",
+                        "files": [
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_anim.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_area.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_async.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_bidi.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_color.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_debug.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_fs.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_gc.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_ll.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_log.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_math.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_mem.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_printf.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_task.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_templ.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_txt_ap.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_txt.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_misc/lv_utils.c"
+                          }
+                        ],
+                        "folders": []
+                      },
+                      {
+                        "name": "LV_HAL",
+                        "files": [
+                          {
+                            "path": "../Libraries/lvgl/src/lv_hal/lv_hal_disp.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_hal/lv_hal_indev.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_hal/lv_hal_tick.c"
+                          }
+                        ],
+                        "folders": []
+                      },
+                      {
+                        "name": "LV_GPU",
+                        "files": [
+                          {
+                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_nxp_pxp_osa.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_nxp_pxp.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_nxp_vglite.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_gpu/lv_gpu_stm32_dma2d.c"
+                          }
+                        ],
+                        "folders": []
+                      },
+                      {
+                        "name": "LV_FONT",
+                        "files": [
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_dejavu_16_persian_hebrew.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_fmt_txt.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_loader.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_10.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_12_subpx.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_12.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_14.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_16.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_18.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_20.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_22.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_24.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_26.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_28_compressed.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_28.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_30.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_32.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_34.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_36.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_38.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_40.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_42.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_44.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_46.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_48.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_montserrat_8.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_simsun_16_cjk.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_unscii_16.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font_unscii_8.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_font/lv_font.c"
+                          }
+                        ],
+                        "folders": []
+                      },
+                      {
+                        "name": "LV_DRAW",
+                        "files": [
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_arc.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_blend.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_img.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_label.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_line.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_mask.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_rect.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_draw_triangle.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_img_buf.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_img_cache.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_draw/lv_img_decoder.c"
+                          }
+                        ],
+                        "folders": []
+                      },
+                      {
+                        "name": "LV_CORE",
+                        "files": [
+                          {
+                            "path": "../Libraries/lvgl/src/lv_core/lv_disp.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_core/lv_group.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_core/lv_indev.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_core/lv_obj.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_core/lv_refr.c"
+                          },
+                          {
+                            "path": "../Libraries/lvgl/src/lv_core/lv_style.c"
+                          }
+                        ],
+                        "folders": []
                       }
                     ]
                   }
                 ]
               },
               {
-                "name": "PRINTF",
+                "name": "FREERTOS",
                 "files": [
                   {
-                    "path": "../Libraries/printf/printf.c"
+                    "path": "../Libraries/FreeRTOS-Kernel/croutine.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/event_groups.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/list.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/portable/MemMang/heap_4.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/portable/RVDS/ARM_CM4F/port.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/queue.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/stream_buffer.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/tasks.c"
+                  },
+                  {
+                    "path": "../Libraries/FreeRTOS-Kernel/timers.c"
                   }
                 ],
                 "folders": []
@@ -970,32 +491,110 @@
             ]
           },
           {
-            "name": "USERS",
+            "name": "GUI",
             "files": [],
             "folders": [
               {
                 "name": "SRC",
                 "files": [
                   {
-                    "path": "../Users/Src/boot.c"
+                    "path": "../GUI/ui_menu.c"
                   },
                   {
-                    "path": "../Users/Src/gd32f3x0_it.c"
+                    "path": "../GUI/ui.c"
                   },
                   {
-                    "path": "../Users/Src/lv_port_disp.c"
+                    "path": "../GUI/ui_stack.c"
                   },
                   {
-                    "path": "../Users/Src/main.c"
+                    "path": "../GUI/ui_main.c"
                   },
                   {
-                    "path": "../Users/Src/my_tasks.c"
+                    "path": "../GUI/comp_menu.c"
+                  }
+                ],
+                "folders": []
+              }
+            ]
+          },
+          {
+            "name": "DRIVERS",
+            "files": [],
+            "folders": [
+              {
+                "name": "LCD",
+                "files": [
+                  {
+                    "path": "../Drivers/LCD/jgfx.c"
                   },
                   {
-                    "path": "../Users/Src/systick.c"
+                    "path": "../Drivers/LCD/st7735s.c"
+                  }
+                ],
+                "folders": []
+              },
+              {
+                "name": "KEY",
+                "files": [
+                  {
+                    "path": "../Drivers/Key/key.c"
+                  }
+                ],
+                "folders": []
+              },
+              {
+                "name": "FLASH",
+                "files": [
+                  {
+                    "path": "../Drivers/Flash/w25q16jv.c"
+                  }
+                ],
+                "folders": []
+              },
+              {
+                "name": "BK4819",
+                "files": [
+                  {
+                    "path": "../Drivers/BK4819/bk4819.c"
+                  }
+                ],
+                "folders": []
+              },
+              {
+                "name": "BK1080",
+                "files": [
+                  {
+                    "path": "../Drivers/BK1080/bk1080.c"
+                  }
+                ],
+                "folders": []
+              }
+            ]
+          },
+          {
+            "name": "CORE",
+            "files": [],
+            "folders": [
+              {
+                "name": "SRC",
+                "files": [
+                  {
+                    "path": "../Core/Src/dma.c"
                   },
                   {
-                    "path": "../Users/Src/test.c"
+                    "path": "../Core/Src/gpio.c"
+                  },
+                  {
+                    "path": "../Core/Src/nvic.c"
+                  },
+                  {
+                    "path": "../Core/Src/spi.c"
+                  },
+                  {
+                    "path": "../Core/Src/tim.c"
+                  },
+                  {
+                    "path": "../Core/Src/usart.c"
                   }
                 ],
                 "folders": []
@@ -1015,81 +614,173 @@
   "targets": {
     "Project": {
       "excludeList": [
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_enum.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_pipe.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_transc.c",
+        "USERS/SRC/lv_port_disp.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_arc.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_bar.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_btn.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_btnmatrix.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_calendar.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_canvas.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_chart.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_checkbox.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_cont.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_cpicker.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_dropdown.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_gauge.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_img.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_imgbtn.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_keyboard.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_label.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_led.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_line.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_linemeter.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_list.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_msgbox.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_objmask.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_objx_templ.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_page.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_roller.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_slider.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_spinbox.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_spinner.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_switch.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_table.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_tabview.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_textarea.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_tileview.c",
+        "LIBRARIES/LVGL/SRC/LV_WIDGETS/lv_win.c",
+        "LIBRARIES/LVGL/SRC/LV_THEMES",
+        "LIBRARIES/LVGL/SRC/LV_THEMES/lv_theme.c",
+        "LIBRARIES/LVGL/SRC/LV_THEMES/lv_theme_empty.c",
+        "LIBRARIES/LVGL/SRC/LV_THEMES/lv_theme_material.c",
+        "LIBRARIES/LVGL/SRC/LV_THEMES/lv_theme_mono.c",
+        "LIBRARIES/LVGL/SRC/LV_THEMES/lv_theme_template.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_anim.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_area.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_async.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_bidi.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_color.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_debug.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_fs.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_gc.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_ll.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_log.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_math.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_mem.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_printf.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_task.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_templ.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_txt_ap.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_txt.c",
+        "LIBRARIES/LVGL/SRC/LV_MISC/lv_utils.c",
+        "LIBRARIES/LVGL/SRC/LV_HAL",
+        "LIBRARIES/LVGL/SRC/LV_HAL/lv_hal_disp.c",
+        "LIBRARIES/LVGL/SRC/LV_HAL/lv_hal_indev.c",
+        "LIBRARIES/LVGL/SRC/LV_HAL/lv_hal_tick.c",
+        "LIBRARIES/LVGL/SRC/LV_GPU",
+        "LIBRARIES/LVGL/SRC/LV_GPU/lv_gpu_nxp_pxp_osa.c",
+        "LIBRARIES/LVGL/SRC/LV_GPU/lv_gpu_nxp_pxp.c",
+        "LIBRARIES/LVGL/SRC/LV_GPU/lv_gpu_nxp_vglite.c",
+        "LIBRARIES/LVGL/SRC/LV_GPU/lv_gpu_stm32_dma2d.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_dejavu_16_persian_hebrew.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_fmt_txt.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_loader.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_10.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_12_subpx.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_12.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_14.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_16.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_18.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_20.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_22.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_24.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_26.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_28_compressed.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_28.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_30.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_32.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_34.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_36.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_38.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_40.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_42.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_44.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_46.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_48.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_8.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_simsun_16_cjk.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_unscii_16.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_unscii_8.c",
+        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_arc.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_blend.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_img.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_label.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_line.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_mask.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_rect.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_draw_triangle.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_img_buf.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_img_cache.c",
+        "LIBRARIES/LVGL/SRC/LV_DRAW/lv_img_decoder.c",
+        "LIBRARIES/LVGL/SRC/LV_CORE",
+        "LIBRARIES/LVGL/SRC/LV_CORE/lv_disp.c",
+        "LIBRARIES/LVGL/SRC/LV_CORE/lv_group.c",
+        "LIBRARIES/LVGL/SRC/LV_CORE/lv_indev.c",
+        "LIBRARIES/LVGL/SRC/LV_CORE/lv_obj.c",
+        "LIBRARIES/LVGL/SRC/LV_CORE/lv_refr.c",
+        "LIBRARIES/LVGL/SRC/LV_CORE/lv_style.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/HID/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/HID/SOURCE/usbh_hid_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/HID/SOURCE/usbh_standard_hid.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/MSC/SOURCE",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/MSC/SOURCE/usbh_msc_bbb.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/MSC/SOURCE/usbh_msc_core.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/MSC/SOURCE/usbh_msc_fatfs.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/MSC/SOURCE/usbh_msc_scsi.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/HID/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/HID/SOURCE/usbh_hid_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CLASS/HID/SOURCE/usbh_standard_hid.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_enum.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_pipe.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/HOST/CORE/SOURCE/usbh_transc.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DRIVER/SOURCE",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DRIVER/SOURCE/drv_usbd_int.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DRIVER/SOURCE/drv_usbh_int.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DRIVER/SOURCE/drv_usb_core.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DRIVER/SOURCE/drv_usb_dev.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DRIVER/SOURCE/drv_usb_host.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE/usbd_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE/usbd_enum.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE/usbd_transc.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/PRINTER/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/PRINTER/SOURCE/printer_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/AUDIO/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/AUDIO/SOURCE/audio_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/AUDIO/SOURCE/audio_out_itf.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/CDC/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/CDC/SOURCE/cdc_acm_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/DFU/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/DFU/SOURCE/dfu_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/DFU/SOURCE/dfu_mem.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/HID/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/HID/SOURCE/custom_hid_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/HID/SOURCE/standard_hid_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/IAP/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/IAP/SOURCE/usb_iap_core.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/MSC/SOURCE",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/MSC/SOURCE/usbd_msc_bbb.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/MSC/SOURCE/usbd_msc_core.c",
         "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/MSC/SOURCE/usbd_msc_scsi.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/IAP/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/IAP/SOURCE/usb_iap_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/HID/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/HID/SOURCE/custom_hid_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/HID/SOURCE/standard_hid_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/DFU/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/DFU/SOURCE/dfu_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/DFU/SOURCE/dfu_mem.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/CDC/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/CDC/SOURCE/cdc_acm_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/AUDIO/SOURCE",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/AUDIO/SOURCE/audio_core.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/AUDIO/SOURCE/audio_out_itf.c",
-        "LIBRARIES/GD32/CMSIS/GD/GD32F3X0/SOURCE/IAR",
-        "LIBRARIES/GD32/CMSIS/GD/GD32F3X0/SOURCE/IAR/startup_gd32f3x0.s",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/PRINTER/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CLASS/PRINTER/SOURCE/printer_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE/usbd_core.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE/usbd_enum.c",
+        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY/DEVICE/CORE/SOURCE/usbd_transc.c",
         "LIBRARIES/GD32/CMSIS/GD/GD32F3X0/SOURCE/GNU",
         "LIBRARIES/GD32/CMSIS/GD/GD32F3X0/SOURCE/GNU/startup_gd32f3x0.s",
-        "DRIVERS/LCD/fonts.c",
-        "DRIVERS/LCD/st7735s_compat.c",
-        "LIBRARIES/GD32/GD32F3X0_STANDARD_PERIPHERAL/SOURCE/gd32f3x0_fmc.c",
-        "LIBRARIES/GD32/GD32F3X0_USBFS_LIBRARY",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_unscii_8.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_unscii_16.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_simsun_16_cjk.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_8.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_48.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_44.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_46.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_42.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_40.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_38.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_36.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_34.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_32.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_30.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_28.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_28_compressed.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_26.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_24.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_22.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_20.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_18.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_16.c",
-        "LIBRARIES/LVGL/SRC/LV_FONT/lv_font_montserrat_12_subpx.c",
-        "LIBRARIES/LVGL",
-        "USERS/SRC/lv_port_disp.c"
+        "LIBRARIES/GD32/CMSIS/GD/GD32F3X0/SOURCE/IAR",
+        "LIBRARIES/GD32/CMSIS/GD/GD32F3X0/SOURCE/IAR/startup_gd32f3x0.s",
+        "LIBRARIES/GD32"
       ],
       "toolchain": "AC5",
       "compileConfig": {
@@ -1221,11 +912,8 @@
       "custom_dep": {
         "name": "default",
         "incList": [
-          "../Libraries/GD32/CMSIS/GD/GD32F3x0/Include",
           "../Libraries/GD32/CMSIS/Keil",
           "../Users/Inc",
-          "../Libraries/GD32/CMSIS/GD/GD32F3x0/Source/ARM",
-          "../Libraries/GD32/GD32F3x0_standard_peripheral/Include",
           ".cmsis/include",
           "RTE/_GD32F330",
           ".eide/deps",
@@ -1238,15 +926,18 @@
           "../Drivers/Key",
           "../Libraries/FreeRTOS-Kernel/include",
           "../Libraries/FreeRTOS-Kernel/portable/RVDS/ARM_CM4F",
+          "../Libraries/lvgl/src",
+          "../GUI",
           "RTE/_Project",
-          "../GUI"
+          "../Libraries/GD32/CMSIS/GD/GD32F30x/Source/ARM",
+          "../Libraries/GD32/CMSIS/GD/GD32F30x/Include",
+          "../Libraries/GD32/GD32F30x_standard_peripheral/Include"
         ],
         "libList": [],
         "defineList": [
           "USE_STDPERIPH_DRIVER",
-          "GD32F3X0",
-          "GD32F330",
-          "LV_CONF_INCLUDE_SIMPLE"
+          "LV_CONF_INCLUDE_SIMPLE",
+          "GD32F30X_HD"
         ]
       }
     }
