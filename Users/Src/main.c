@@ -45,15 +45,16 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask,
     (void)pcTaskName;
 }
 
+
 int main(void)
 {
-    // get the unit brick
+    /** Enable IRQ, it is disabled in boot */
+    // __enable_irq();
 
-    // ob_unlock();
-    // ob_erase();
-    // ob_reset();
-    // ob_lock();
+    /** Set NVIC vector table start address and offset*/
+    // nvic_vector_table_set(0x08001000, 0x00);
 
+    /** Init core peripherals*/
     systick_config();
     gpio_config();
     nvic_config();
@@ -61,15 +62,15 @@ int main(void)
     spi_config();
     tim_config();
     usart_config();
-   
+
+    /* Init ST7735S driver*/
     st7735s_init();
-    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
     
+    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+
     // usart_flash_run();
 
-
-    jgfx_init(DISPLAY_W, DISPLAY_W);
-
+    jgfx_init(0, 0);
 
     // jgfx_test();
 
