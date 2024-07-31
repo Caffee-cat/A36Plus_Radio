@@ -64,18 +64,18 @@ int main(void)
     usart_config();
 
     /* Init ST7735S driver*/
-    // st7735s_init();
+    st7735s_init();
     
     // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
 
-    usart_flash_run();
+    // usart_flash_run();
 
-    // jgfx_init(0, 0);
+    jgfx_init(0, 0);
 
     // jgfx_test();
 
-    // vtasks_init();
-    // vTaskStartScheduler();
+    vtasks_init();
+    vTaskStartScheduler();
 
     // delay_1ms(30000);
     // printf("Running...\r\n");
