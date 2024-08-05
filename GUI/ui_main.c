@@ -69,6 +69,7 @@ void ui_main_refresh(void)
 {
     // clear screen
     jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+    jgfx_set_color_back_hex(0x0000);
     jgfx_fill_react(32, 0, DISPLAY_W, DISPLAY_H + 1);
 
     // draw title
