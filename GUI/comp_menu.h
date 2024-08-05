@@ -109,6 +109,8 @@ void jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index);
 
 void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
 
+uint8_t menu_item_show(jgfx_menu_ptr menu_ptr,uint8_t index);
+
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
 static void _r_menu_draw_items(jgfx_menu_ptr menu_ptr, uint8_t order);
@@ -120,5 +122,7 @@ static void _r_menu_draw_selector(jgfx_menu_ptr menu_ptr);
 static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr, jgfx_menu_item_status_t status, uint8_t index);
 
 static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
+
+static void draw_menu_item_selector(jgfx_menu_ptr menu_ptr, uint8_t index);
 
 #endif

@@ -30,6 +30,10 @@
 
 #include "comp_menu.h"
 
+extern uint8_t ui_menu_init_flag;
+
+#define ITEM_HEIGHT menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height)
+
 /**
  * @brief Init menu
  *
@@ -266,24 +270,24 @@ void jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index)
         return;
     uint8_t i;
     jgfx_menu_item_ptr item = menu_ptr->head_item;
-    jgfx_menu_item_ptr item2;
-
+    jgfx_menu_item_ptr item2 = item;
+    // pointing the item and item2 to the wanted item.
     for (i = 1; i < index; i++)
     {
         item = item2 = item->item_next;
     }
-
-    i = (i % (menu_ptr->item_show_num )) - 1;
+    //
+    i = ((i - 1) % (menu_ptr->item_show_num));
     while (i--)
     {
         item2 = item2->item_pre;
     }
-
+    // use item2 to point to the first item on the page for drawing list.
     menu_ptr->cur_item = item2;
-    menu_ptr->index = (index % menu_ptr->item_show_num) - 1;
     _r_clear_item_area(menu_ptr);
     _r_menu_draw_items(menu_ptr, 0);
 
+    menu_ptr->index = ((index - 1) % menu_ptr->item_show_num);
     menu_ptr->cur_item = item;
     _r_menu_draw_selector(menu_ptr);
 }
@@ -309,7 +313,7 @@ void jgfx_menu_destory(jgfx_menu_ptr menu_ptr)
     }
 
     _l_destory_menu_item(menu_ptr->head_item);
-    _l_destory_menu_item(menu_ptr->cur_item);
+    // _l_destory_menu_item(menu_ptr->cur_item);
 
     // free(menu_ptr);
 }
@@ -358,10 +362,11 @@ static void _l_destory_menu_item(jgfx_menu_item_ptr item)
  */
 static void _l_menu_append_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr)
 {
-    menu_ptr->head_item == NULL;
-    if (menu_ptr->head_item == NULL)
+    // menu_ptr->head_item == NULL;
+    if (ui_menu_init_flag == 1)
     {
         menu_ptr->head_item = menu_ptr->cur_item = item_ptr;
+        ui_menu_init_flag = 0;
     }
     else
     {
@@ -499,4 +504,51 @@ static void _r_clear_item_area(jgfx_menu_ptr menu_ptr)
 {
     jgfx_set_color_back_hex(0x0000);
     jgfx_fill_react(35 + menu_ptr->menu_x, menu_ptr->menu_y + menu_ptr->menu_title_height + 5, menu_ptr->menu_width - 5, menu_ptr->menu_height - menu_ptr->menu_title_height - (menu_ptr->menu_divide_height * menu_ptr->item_show_num) - 10);
+}
+
+/**
+ * @brief Avoid dynamic creation and refresh the screen directly,more safely and more efficiently
+ *
+ * @param menu_ptr menu pointer
+ */
+uint8_t menu_item_show(jgfx_menu_ptr menu_ptr, uint8_t index)
+{
+    // draw item menu's title
+    _r_clear_item_area(menu_ptr);
+    _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_UNSELECTED, 0);
+
+    // draw items
+    draw_menu_item_selector(menu_ptr, index);
+
+    // redraw the line in the botton to fix some error
+    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
+    return 3;
+}
+
+static void draw_menu_item_selector(jgfx_menu_ptr menu_ptr, uint8_t index)
+{
+    uint8_t item_num = 3;
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_draw_text_en(36 + menu_ptr->menu_x, ITEM_HEIGHT * 1, " menu_item1");
+    jgfx_draw_text_en(36 + menu_ptr->menu_x, ITEM_HEIGHT * 2, " menu_item2");
+    jgfx_draw_text_en(36 + menu_ptr->menu_x, ITEM_HEIGHT * 3, " menu_item3");
+    jgfx_set_color_hex(0x0000);
+    jgfx_set_color_back_hex(0xFFFF);
+    switch (index)
+    {
+    case 1:
+        jgfx_draw_text_en(36 + menu_ptr->menu_x, ITEM_HEIGHT * 1, " menu_item1");
+        break;
+    case 2:
+
+        jgfx_draw_text_en(36 + menu_ptr->menu_x, ITEM_HEIGHT * 2, " menu_item2");
+        break;
+    case 3:
+
+        jgfx_draw_text_en(36 + menu_ptr->menu_x, ITEM_HEIGHT * 3, " menu_item3");
+        break;
+    }
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
 }
