@@ -5,6 +5,7 @@
 
 typedef struct jgfx_menu_item_t *jgfx_menu_item_ptr;
 typedef struct jgfx_menu_t *jgfx_menu_ptr;
+typedef struct submenu_item_t *submenu_item_ptr;
 typedef void (*jgfx_menu_item_event_cb)(jgfx_menu_ptr);
 
 typedef enum
@@ -14,19 +15,20 @@ typedef enum
     JGFX_MENU_TYPE_SWITCH
 } jgfx_menu_item_type_t;
 
-typedef enum{
+typedef enum
+{
     JGFX_MENU_STATUS_SELECTED = 0x00,
     JGFX_MENU_STATUS_UNSELECTED,
     JGFX_MENU_STATUS_CLICKED,
     JGFX_MENU_STATUS_SHUMENU,
-}jgfx_menu_status_t;
+} jgfx_menu_status_t;
 
 typedef enum
 {
     JGFX_MENU_ITEM_STATUS_SELECTED = 0x00,
     JGFX_MENU_ITEM_STATUS_UNSELECTED,
     JGFX_MENU_ITEM_STATUS_CLICKED,
-}jgfx_menu_item_status_t;
+} jgfx_menu_item_status_t;
 
 // typedef enum{
 //     JGFX_MENU_STATUS_
@@ -70,16 +72,24 @@ typedef struct jgfx_menu_t
     uint8_t menu_title[JGFX_MENU_STR_MAX_LEN];
     uint8_t menu_title_height;
 
-    uint8_t index;  
+    uint8_t index;
     uint8_t item_size;
     uint8_t item_show_num;
+    uint8_t Initial_flag;
     jgfx_menu_status_t status;
 
     jgfx_menu_item_ptr head_item;
     jgfx_menu_item_ptr cur_item;
 } jgfx_menu_t;
 
-void jgfx_menu_init(jgfx_menu_t * menu_ptr);
+typedef struct submenu_item_t
+{
+    uint8_t *item_name[5];
+    uint16_t line_height;
+    uint8_t itemlist_num;
+} submenu_item_t;
+
+void jgfx_menu_init(jgfx_menu_t *menu_ptr);
 
 void jgfx_menu_set_size(jgfx_menu_ptr menu_ptr, uint16_t width, uint16_t height);
 
@@ -109,7 +119,7 @@ void jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index);
 
 void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
 
-uint8_t menu_item_show(jgfx_menu_ptr menu_ptr,uint8_t index);
+void menu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...);
 
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
@@ -123,6 +133,10 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
 
 static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 
-static void draw_menu_item_selector(jgfx_menu_ptr menu_ptr, uint8_t index);
+static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, uint8_t num);
+
+static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
+
+uint8_t calcute_test(jgfx_menu_ptr menu_ptr);
 
 #endif
