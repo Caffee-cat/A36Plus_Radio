@@ -7,9 +7,6 @@ ui_page_t ui_menu;
 extern ui_stack_t ui_stack;
 extern ui_page_ptr temp_page;
 static jgfx_menu_t jgfx_menu;
-uint8_t ui_menu_init_flag = 0;
-uint8_t index_jump_count = 0;
-uint8_t index_num1, index_num2;
 
 uint8_t *menu_list[MENU_MAX] = {
     "Common",
@@ -35,52 +32,23 @@ static void draw_slider(void)
 
 void cb1(jgfx_menu_ptr ptr)
 {
+    // The original method of creating a new object has fail.function malloc return NULL.
+    //  jgfx_menu_t m;
+    //  jgfx_menu_init(&m);
+    //  jgfx_menu_set_position(&m, 50, 80);
+    //  jgfx_menu_set_size(&m, 50, 50);
+    //  jgfx_menu_append_text(&m, "Submenu1", NULL);
+    //  jgfx_menu_append_text(&m, "Submenu2", NULL);
+    //  jgfx_menu_append_text(&m, "Submenu3", NULL);
+    //  jgfx_menu_show(&m);
 
-    // jgfx_menu_t m;
-    // jgfx_menu_init(&m);
-    // jgfx_menu_set_position(&m, 50, 80);
-    // jgfx_menu_set_size(&m, 50, 50);
-    // jgfx_menu_append_text(&m, "Submenu1", NULL);
-    // jgfx_menu_append_text(&m, "Submenu2", NULL);
-    // jgfx_menu_append_text(&m, "Submenu3", NULL);
-    // jgfx_menu_show(&m);
-    uint8_t index = 1;
-    uint8_t item_num = menu_item_show(&jgfx_menu, index);
-    while (1)
-    {
-        key_map_t key = key_get();
-        if (key != KEY_MAP_NONE)
-        {
-            if (key == KEY_MAP_1)
-            {
-            }
-            else if (key == KEY_MAP_2 && (index - 1) != 0)
-            {
-                menu_item_show(&jgfx_menu, --index);
-                while (key_get() != KEY_MAP_NONE)
-                    ;
-                delay_1us(10);
-            }
-            else if (key == KEY_MAP_3 && (index + 1) <= item_num)
-            {
-                menu_item_show(&jgfx_menu, ++index);
-                while (key_get() != KEY_MAP_NONE)
-                    ;
-                delay_1us(10);
-            }
-            else if (key == KEY_MAP_4)
-            {
-                jgfx_menu_show(&jgfx_menu);
-                jgfx_menu.status = JGFX_MENU_STATUS_SELECTED;
-                break;
-            }
-        }
-    }
+    submenu_item_t sub_menu;
+    uint8_t index = 1, submenu_list_num = 3;
+    menu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " menu_item1", " menu_item2", " menu_item3");
 }
 
 void ui_menu_init(void)
 {
-    ui_menu_init_flag = 1;
     jgfx_clear_screen();
     vTaskDelay(100);
     jgfx_menu_init(&jgfx_menu);
@@ -116,6 +84,8 @@ void ui_menu_destory(void)
 
 void ui_menu_event_cb(void)
 {
+    static uint8_t index_num1 = 0, index_num2 = 0;
+    static uint16_t index_jump_count = 0;
     if (index_jump_count != 0)
         index_jump_count -= 1;
     else
@@ -151,14 +121,15 @@ void ui_menu_event_cb(void)
         }
         else
         {
+            //use index_num1 and index_num2 to realize jumping function,and use time counter to realize Two-digit jump.
             if (index_jump_count == 0)
             {
-                index_jump_count = 100;
+                index_jump_count = 10000;
                 index_num1 = KEY_GET_NUM(key);
             }
             else
             {
-                delay_1us(10);
+                delay_1us(100);
                 index_num2 = KEY_GET_NUM(key);
                 index_num1 = index_num1 * 10 + index_num2;
             }
