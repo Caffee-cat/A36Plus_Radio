@@ -6,6 +6,7 @@
 typedef struct jgfx_menu_item_t *jgfx_menu_item_ptr;
 typedef struct jgfx_menu_t *jgfx_menu_ptr;
 typedef struct submenu_item_t *submenu_item_ptr;
+typedef struct corner_index_num_t *corner_index_num_ptr;
 typedef void (*jgfx_menu_item_event_cb)(jgfx_menu_ptr);
 
 typedef enum
@@ -75,6 +76,7 @@ typedef struct jgfx_menu_t
     uint8_t index;
     uint8_t item_size;
     uint8_t item_show_num;
+    uint8_t page;
     uint8_t Initial_flag;
     jgfx_menu_status_t status;
 
@@ -88,6 +90,15 @@ typedef struct submenu_item_t
     uint16_t line_height;
     uint8_t itemlist_num;
 } submenu_item_t;
+
+typedef struct corner_index_num_t
+{
+    uint8_t index_num1;
+    uint8_t index_num2;
+    uint16_t index_jump_count1;
+    uint16_t index_jump_count2;
+    void (*refresh)(void);
+} corner_index_num_t;
 
 void jgfx_menu_init(jgfx_menu_t *menu_ptr);
 
@@ -115,11 +126,21 @@ void jgfx_menu_update(jgfx_menu_ptr menu_ptr);
 
 void jgfx_menu_click(jgfx_menu_ptr menu_ptr);
 
-void jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index);
+bool jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index);
 
 void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
 
-void menu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...);
+void submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...);
+
+void index_num_display(jgfx_menu_ptr menu_ptr);
+
+void corner_index_init(corner_index_num_ptr corner_ptr);
+
+void corner_index_refresh(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_ptr);
+
+void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_ptr);
+
+uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key);
 
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
@@ -136,7 +157,5 @@ static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, uint8_t num);
 
 static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
-
-uint8_t calcute_test(jgfx_menu_ptr menu_ptr);
 
 #endif

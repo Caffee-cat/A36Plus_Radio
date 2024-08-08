@@ -47,6 +47,7 @@ void jgfx_menu_init(jgfx_menu_ptr menu_ptr)
     menu_ptr->index = 0;
     menu_ptr->item_size = 0;
     menu_ptr->Initial_flag = 1;
+    menu_ptr->page = 0;
 }
 
 /**
@@ -147,6 +148,8 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
         jgfx_draw_text_en(32 + menu_ptr->menu_x + (menu_ptr->menu_width / 2) - (jgfx_measure_text_width(menu_ptr->menu_title) / 2), menu_ptr->menu_y + 1, menu_ptr->menu_title);
     }
 
+    // index_num_display(menu_ptr);
+
     /** Draw items */
     _r_menu_draw_items(menu_ptr, 0);
 
@@ -195,6 +198,7 @@ void jgfx_menu_item_next(jgfx_menu_ptr menu_ptr)
     if (menu_ptr->index == menu_ptr->item_show_num)
     {
         menu_ptr->index = 0;
+        menu_ptr->page += 1;
         _r_clear_item_area(menu_ptr);
         _r_menu_draw_items(menu_ptr, 0);
     }
@@ -218,6 +222,7 @@ void jgfx_menu_item_previous(jgfx_menu_ptr menu_ptr)
     if (menu_ptr->index == 0)
     {
         menu_ptr->index = menu_ptr->item_show_num;
+        menu_ptr->page -= 1;
         _r_clear_item_area(menu_ptr);
         _r_menu_draw_items(menu_ptr, 1);
     }
@@ -262,10 +267,11 @@ void jgfx_menu_click(jgfx_menu_ptr menu_ptr)
  * @param menu_ptr menu pointer
  * @param index item index
  */
-void jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index)
+bool jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index)
 {
-    if (menu_ptr == NULL || index > (menu_ptr->item_size - 1))
-        return;
+    if (menu_ptr == NULL || index > (menu_ptr->item_size))
+        return FALSE;
+
     uint8_t i;
     jgfx_menu_item_ptr item = menu_ptr->head_item;
     jgfx_menu_item_ptr item2 = item;
@@ -288,6 +294,8 @@ void jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index)
     menu_ptr->index = ((index - 1) % menu_ptr->item_show_num);
     menu_ptr->cur_item = item;
     _r_menu_draw_selector(menu_ptr);
+
+    return TRUE;
 }
 
 /**
@@ -313,6 +321,183 @@ void jgfx_menu_destory(jgfx_menu_ptr menu_ptr)
     //  _l_destory_menu_item(menu_ptr->cur_item);
 
     // free(menu_ptr);
+}
+
+/**
+ * @brief show submenu when click from menu items
+ *
+ * @param menu_ptr menu pointer
+ * @param index current selector
+ * @return uint8_t
+ */
+void submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...)
+{
+    uint8_t index = 1, i;
+    uint8_t *data;
+
+    // Clean index num on the top right corner
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_fill_react(130, 5, 16, 16);
+
+    submenu_init(menu_ptr, submenu_ptr, item_num);
+    // draw item menu's title in the first line
+    _r_clear_item_area(menu_ptr);
+    _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_UNSELECTED, 0);
+
+    // draw items
+    va_list pointer;
+    va_start(pointer, submenu_ptr);
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
+    for (i = 0; i < submenu_ptr->itemlist_num; i++)
+    {
+        data = va_arg(pointer, uint8_t *);
+        if (data == NULL)
+            return;
+        submenu_ptr->item_name[i] = data;
+        jgfx_draw_text_en(36 + menu_ptr->menu_x,
+                          submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
+                          submenu_ptr->item_name[i]);
+    }
+    va_end(pointer);
+
+    // draw selector
+    jgfx_set_color_hex(0x0000);
+    jgfx_set_color_back_hex(0xFFFF);
+    jgfx_draw_text_en(36 + menu_ptr->menu_x,
+                      submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * 1,
+                      submenu_ptr->item_name[0]);
+
+    // redraw the line in the botton to fix some error
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
+
+    submenu_cb(menu_ptr, submenu_ptr);
+}
+
+/**
+ * @brief By means of cur_item' id  to draw index number on the top right corner,but dont know why when (curitem+1)%5 == 0,this function doesnt work and draw nothing
+ *
+ * @param menu_ptr menu pointer
+ */
+void index_num_display(jgfx_menu_ptr menu_ptr)
+{
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_fill_react(130, 5, 16, 16);
+    jgfx_set_font(JGFX_FONT_EN_8X16_BLOD);
+    int i = 0;
+    char count_num_str[3];
+    snprintf(count_num_str, sizeof(count_num_str), "%02d", menu_ptr->cur_item->item_id + 1);
+    count_num_str[2] = '\0';
+    jgfx_draw_text_en(130, 3, count_num_str);
+}
+
+/**
+ * @brief Reset corner_ptr's parameters
+ * 
+ * @param corner_ptr corner pointer
+ */
+void corner_index_init(corner_index_num_ptr corner_ptr)
+{
+    corner_ptr->index_num1 = 0;
+    corner_ptr->index_num2 = 0;
+    corner_ptr->index_jump_count1 = 0;
+    corner_ptr->index_jump_count2 = 0;
+}
+
+/**
+ * @brief Reset the jump by counting down the refresh time,also flicker continuously during the countdown of the jump
+ * 
+ * @param menu_ptr menu pointer
+ * @param corner_ptr corner pointer
+ */
+void corner_index_refresh(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_ptr)
+{
+    if (corner_ptr->index_jump_count1 == 0 && corner_ptr->index_jump_count2 == 0)
+    {
+        corner_ptr->index_num1 = corner_ptr->index_num2 = 0;
+        return;
+    }
+    else
+    {
+        corner_ptr->index_jump_count1--;
+        if (corner_ptr->index_jump_count1 == 0 && corner_ptr->index_jump_count2 != 0)
+        {
+            corner_ptr->index_jump_count1 == 65535;
+            corner_ptr->index_jump_count2--;
+            if (corner_ptr->index_jump_count2 % 2 != 0)
+            {
+                jgfx_set_color_back_hex(0x0000);
+                jgfx_fill_react(130, 5, 16, 16);
+            }
+            else
+            {
+                index_num_display(menu_ptr);
+            }
+        }
+    }
+}
+
+/**
+ * @brief Flicker continuously during the countdown of the jump
+ * 
+ * @param menu_ptr menu pointer
+ * @param corner_ptr corner pointer
+ */
+void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_ptr)
+{
+    if (corner_ptr->index_jump_count1 == 0 && corner_ptr->index_jump_count2 == 0)
+        return;
+
+    if (corner_ptr->index_jump_count2 % 2 != 0)
+    {
+        jgfx_set_color_back_hex(0x0000);
+        jgfx_fill_react(130, 5, 16, 16);
+    }
+    else
+    {
+        index_num_display(menu_ptr);
+    }
+}
+
+/**
+ * @brief Use the dual cache mechanism to achieve page jumping.
+ *        The arguments index_jump_count1 and index_jump_count2 are used to count backwards.
+ * 
+ * @param corner_ptr corner pointer
+ * @param menu_ptr menu pointer
+ * @param key The key value passed in
+ * @return uint8_t Page needed to jump
+ */
+uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key)
+{
+    if (corner_ptr->index_jump_count1 == 0 && corner_ptr->index_jump_count2 == 0)
+    {
+        corner_ptr->index_jump_count1 = 65535;
+        corner_ptr->index_jump_count2 = 6;
+        corner_ptr->index_num1 = key;
+        if (corner_ptr->index_num1 > menu_ptr->item_size / 10)
+        {
+            corner_ptr->index_jump_count1 = corner_ptr->index_jump_count2 = 0;
+        }
+        return corner_ptr->index_num1;
+    }
+    else
+    {
+        delay_1us(100);
+        corner_ptr->index_num2 = key;
+        if (corner_ptr->index_num1 * 10 + corner_ptr->index_num2 > menu_ptr->item_size)
+        {
+            corner_ptr->index_jump_count1 = 65535;
+            corner_ptr->index_jump_count2 = 6;
+            corner_ptr->index_num1 = key;
+            corner_ptr->index_num2 = 0;
+            return corner_ptr->index_num1;
+        }
+        corner_ptr->index_jump_count1 = corner_ptr->index_jump_count2 = 0;
+        return corner_ptr->index_num1 * 10 + corner_ptr->index_num2;
+    }
 }
 
 /**
@@ -471,7 +656,7 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
     if (item_ptr->item_type == JGFX_MENU_TYPE_TXT)
     {
         jgfx_draw_text_en(36 + menu_ptr->menu_x,
-                          menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+                          menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
                           item_ptr->item_name);
     }
     else if (item_ptr->item_type == JGFX_MENU_TYPE_COMBOBOX)
@@ -485,10 +670,10 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
     {
 
         /** Draw item box */
-        jgfx_draw_rect(32 + menu_ptr->menu_x,
-                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
-                       32 + menu_ptr->menu_x + menu_ptr->menu_width,
-                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + menu_ptr->menu_item_height);
+        jgfx_draw_rect(36 + menu_ptr->menu_x,
+                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+                       36 + menu_ptr->menu_x + 104 - 1,
+                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + 15);
     }
 
     // jgfx_draw_line(36 + menu_ptr->menu_x,
@@ -501,52 +686,6 @@ static void _r_clear_item_area(jgfx_menu_ptr menu_ptr)
 {
     jgfx_set_color_back_hex(0x0000);
     jgfx_fill_react(35 + menu_ptr->menu_x, menu_ptr->menu_y + menu_ptr->menu_title_height + 5, menu_ptr->menu_width - 5, menu_ptr->menu_height - menu_ptr->menu_title_height - (menu_ptr->menu_divide_height * menu_ptr->item_show_num) - 10);
-}
-
-/**
- * @brief show submenu only for Menu_Testing1 now.
- *
- * @param menu_ptr menu pointer
- * @param index current selector
- * @return uint8_t
- */
-void menu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...)
-{
-    uint8_t index = 1, i;
-    uint8_t *data;
-    submenu_init(menu_ptr, submenu_ptr, item_num);
-    // draw item menu's title in the first line
-    _r_clear_item_area(menu_ptr);
-    _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_UNSELECTED, 0);
-
-    // draw items
-    va_list pointer;
-    va_start(pointer, submenu_ptr);
-    jgfx_set_color_hex(0xFFFF);
-    jgfx_set_color_back_hex(0x0000);
-    for (i = 0; i < submenu_ptr->itemlist_num; i++)
-    {
-        data = va_arg(pointer, uint8_t *);
-        if (data == NULL)
-            return;
-        submenu_ptr->item_name[i] = data;
-        jgfx_draw_text_en(36 + menu_ptr->menu_x,
-                          submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
-                          submenu_ptr->item_name[i]);
-    }
-    va_end(pointer);
-
-    // draw selector
-    jgfx_set_color_hex(0x0000);
-    jgfx_set_color_back_hex(0xFFFF);
-    jgfx_draw_text_en(36 + menu_ptr->menu_x,
-                      submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * 1,
-                      submenu_ptr->item_name[0]);
-
-    // redraw the line in the botton to fix some error
-    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
-
-    submenu_cb(menu_ptr, submenu_ptr);
 }
 
 /**
