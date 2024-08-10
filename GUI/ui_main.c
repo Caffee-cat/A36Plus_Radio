@@ -3,15 +3,18 @@
 ui_page_t ui_main;
 extern ui_stack_t ui_stack;
 extern ui_page_t ui_menu;
+ui_main_channel_t jgfx_channel;
 
 uint8_t tmp[100];
 uint8_t input_state = 0;
 
-uint32_t ch1 = 437067;
+uint32_t ch1 = 430000;
 uint32_t ch2 = 439460;
 uint32_t ch_bak = 0;
 uint32_t *cur_ch = &ch1;
 uint8_t step = 1;
+uint8_t input_num = 0;
+bool confirm = 0;
 
 void ui_main_initial(void)
 {
@@ -26,14 +29,18 @@ static void draw_main(void)
     if (cur_ch == &ch1)
     {
         jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+        jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
         jgfx_fill_react(DISPLAY_W, DISPLAY_H / 2 + 12, 31, 12);
         jgfx_draw_img_byaddr(DISPLAY_W, DISPLAY_H / 10 + 5, 31, 10, FLASH_ICON_MAIN_ADDR);
+        jgfx_channel.channel = 1;
     }
     else if (cur_ch == &ch2)
     {
         jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+        jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
         jgfx_fill_react(DISPLAY_W, DISPLAY_H / 10 + 5, 31, 12);
         jgfx_draw_img_byaddr(DISPLAY_W, DISPLAY_H / 2 + 12, 31, 10, FLASH_ICON_MAIN_ADDR);
+        jgfx_channel.channel = 0;
     }
 }
 
@@ -50,13 +57,49 @@ static void draw_channel(void)
     jgfx_set_font(JGFX_FONT_EN_16X32);
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
     jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
-    sprintf(tmp, "%03d.%03d", ch1 / 1000, ch1 % 1000);
-    jgfx_draw_text_en(32 + 5, DISPLAY_H / 10 + 20, tmp);
+
+    // Determine the number of digits to draw MHZ differently
+    if (ch1 / (1000 * 1000) == 1)
+    {
+        sprintf(tmp, "%04d", ch1 / 1000);
+        jgfx_draw_text_en(32 + 3, DISPLAY_H / 10 + 20, tmp);
+    }
+    else
+    {
+        sprintf(tmp, "%03d", ch1 / 1000);
+        jgfx_draw_text_en(32 + 3 + 16, DISPLAY_H / 10 + 20, tmp);
+    }
+
+    // draw point
+    jgfx_set_font(JGFX_FONT_EN_8X16);
+    jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 10 + 20 + 13, ".");
+
+    // draw khz
+    jgfx_set_font(JGFX_FONT_EN_16X32);
+    sprintf(tmp, "%03d", ch1 % 1000);
+    jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 20, tmp);
 
     // draw channel B
     jgfx_set_font(JGFX_FONT_EN_16X32);
-    sprintf(tmp, "%03d.%03d", ch2 / 1000, ch2 % 1000);
-    jgfx_draw_text_en(32 + 5, DISPLAY_H / 2 + 22, tmp);
+    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+    jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+    if (ch2 / (1000 * 1000) == 1)
+    {
+        sprintf(tmp, "%04d", ch2 / 1000);
+        jgfx_draw_text_en(32 + 3, DISPLAY_H / 2 + 22, tmp);
+    }
+    else
+    {
+        sprintf(tmp, "%03d", ch2 / 1000);
+        jgfx_draw_text_en(32 + 3 + 16, DISPLAY_H / 2 + 22, tmp);
+    }
+
+    jgfx_set_font(JGFX_FONT_EN_8X16);
+    jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 2 + 22 + 13, ".");
+
+    jgfx_set_font(JGFX_FONT_EN_16X32);
+    sprintf(tmp, "%03d", ch2 % 1000);
+    jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 2 + 22, tmp);
 
     draw_satus();
 }
@@ -94,6 +137,9 @@ void ui_main_refresh(void)
 
     draw_main();
     draw_channel();
+    jgfx_channel.flash_count_num1 = jgfx_channel.flash_count_num2 = 0;
+    jgfx_channel.block_height1 = DISPLAY_H / 10 + 20;
+    jgfx_channel.block_height2 = DISPLAY_H / 2 + 22;
 }
 
 void ui_main_destory(void)
@@ -102,16 +148,55 @@ void ui_main_destory(void)
 
 void ui_main_event_cb(void)
 {
+    if (input_state == 1)
+    {
+        jgfx_channel.flash_count_num1 -= 1;
+        if (jgfx_channel.flash_count_num1 == 0)
+        {
+            jgfx_channel.flash_count_num1 = 65535;
+            jgfx_channel.flash_count_num2 = !jgfx_channel.flash_count_num2;
+            if (jgfx_channel.flash_count_num2 == 1)
+            {
+                draw_channel();
+            }
+            else
+            {
+                jgfx_set_color_back_hex(0x0000);
+                jgfx_fill_react(32 + 3, cur_ch == &ch1 ? (jgfx_channel.block_height1 + 1) : (jgfx_channel.block_height2 + 5), 128, 26);
+            }
+        }
+    }
     key_map_t key = key_get();
     if (key != KEY_MAP_NONE)
     {
         if (key == KEY_MAP_1)
         {
-            uiStackPush(&ui_stack, &ui_menu);
-            ui_page_ptr page = uiStackGetTop(&ui_stack);
-            if (page != NULL)
+            if (confirm == 1)
             {
-                page->ui_init();
+                confirm = 0;
+                input_state = 0;
+                draw_channel();
+            }
+            else if (input_state == 1)
+            {
+                input_state = 0;
+                if (*cur_ch == 0)
+                    *cur_ch = ch_bak;
+                else
+                {
+                    while (!(*cur_ch / (100 * 1000)))
+                        *cur_ch *= 10;
+                }
+                draw_channel();
+            }
+            else
+            {
+                uiStackPush(&ui_stack, &ui_menu);
+                ui_page_ptr page = uiStackGetTop(&ui_stack);
+                if (page != NULL)
+                {
+                    page->ui_init();
+                }
             }
         }
         else if (key == KEY_MAP_2)
@@ -128,6 +213,14 @@ void ui_main_event_cb(void)
         }
         else if (key == KEY_MAP_8)
         {
+            if (input_state == 1)
+            {
+                *cur_ch = ch_bak;
+                input_state = 0;
+                confirm = 0;
+                main_channel_init(&jgfx_channel);
+                draw_channel();
+            }
             if (cur_ch == &ch1)
                 cur_ch = &ch2;
             else if (cur_ch == &ch2)
@@ -149,8 +242,11 @@ void ui_main_event_cb(void)
         }
         else if (key != KEY_MAP_16)
         {
+            jgfx_channel.flash_count_num1 = 65535, jgfx_channel.flash_count_num2 = 1;
             if (input_state == 0)
             {
+                jgfx_set_color_back_hex(0x0000);
+                jgfx_fill_react(32 + 3, cur_ch == &ch1 ? (jgfx_channel.block_height1 + 1) : (jgfx_channel.block_height2 + 5), 128, 26);
                 input_state = 1;
                 ch_bak = *cur_ch;
                 *cur_ch = KEY_GET_NUM(key);
@@ -158,8 +254,21 @@ void ui_main_event_cb(void)
             else
             {
                 *cur_ch = *cur_ch * 10 + KEY_GET_NUM(key);
-                if (*cur_ch > 100000)
+                if (*cur_ch >= (200 * 1000))
+                {
                     input_state = 0;
+                    confirm = 0;
+                }
+                else if (*cur_ch > 100 * 1000)
+                {
+                    // input_state = 0;
+                    confirm = 1;
+                }
+                if (*cur_ch > (1300 * 1000))
+                {
+                    *cur_ch = ch_bak;
+                    input_state = 0;
+                }
             }
             draw_channel();
         }
