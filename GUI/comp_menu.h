@@ -8,6 +8,7 @@ typedef struct jgfx_menu_t *jgfx_menu_ptr;
 typedef struct submenu_item_t *submenu_item_ptr;
 typedef struct corner_index_num_t *corner_index_num_ptr;
 typedef void (*jgfx_menu_item_event_cb)(jgfx_menu_ptr);
+typedef struct ui_main_channel_t *ui_main_channel_ptr;
 
 typedef enum
 {
@@ -82,6 +83,7 @@ typedef struct jgfx_menu_t
 
     jgfx_menu_item_ptr head_item;
     jgfx_menu_item_ptr cur_item;
+    ui_main_channel_ptr channel_ptr;
 } jgfx_menu_t;
 
 typedef struct submenu_item_t
@@ -100,7 +102,19 @@ typedef struct corner_index_num_t
     void (*refresh)(void);
 } corner_index_num_t;
 
-void jgfx_menu_init(jgfx_menu_t *menu_ptr);
+typedef struct ui_main_channel_t
+{
+    uint16_t num1;
+    uint16_t num2;
+    uint8_t block_height1;
+    uint8_t block_height2;
+    uint8_t block_width;
+    uint16_t flash_count_num1;
+    uint16_t flash_count_num2;
+    bool channel; //1:A,0:B
+} ui_main_channel_t;
+
+void jgfx_menu_init(jgfx_menu_ptr menu_ptr,ui_main_channel_ptr main_channel);
 
 void jgfx_menu_set_size(jgfx_menu_ptr menu_ptr, uint16_t width, uint16_t height);
 
@@ -141,6 +155,8 @@ void corner_index_refresh(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_pt
 void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_ptr);
 
 uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key);
+
+void main_channel_init(ui_main_channel_ptr channel_ptr);
 
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
