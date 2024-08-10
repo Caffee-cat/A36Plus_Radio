@@ -3,12 +3,13 @@
 
 #define MENU_MAX 3
 
+// static uint8_t i = 0;
 ui_page_t ui_menu;
-// static corner_index_num_t corner;
 extern ui_stack_t ui_stack;
 extern ui_page_ptr temp_page;
 static jgfx_menu_t jgfx_menu;
-extern corner_index_num_t jgfx_menu_corner;
+corner_index_num_t jgfx_menu_corner;
+extern ui_main_channel_t jgfx_channel;
 
 uint8_t *menu_list[MENU_MAX] = {
     "Common",
@@ -116,7 +117,7 @@ void ui_menu_init(void)
 {
     jgfx_clear_screen();
     vTaskDelay(100);
-    jgfx_menu_init(&jgfx_menu);
+    jgfx_menu_init(&jgfx_menu, &jgfx_channel);
     jgfx_menu_set_size(&jgfx_menu, DISPLAY_W, DISPLAY_H);
     jgfx_menu_set_title(&jgfx_menu, "Menu");
     jgfx_menu_set_title_height(&jgfx_menu, 20);
@@ -132,9 +133,9 @@ void ui_menu_init(void)
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing8", cb8);
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing9", cb9);
     jgfx_menu_append_text(&jgfx_menu, "Menu_Testing10", cb10);
-    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing11", NULL);
-    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing12", NULL);
-    jgfx_menu_append_text(&jgfx_menu, "Menu_Testing13", NULL);
+    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing11", NULL);
+    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing12", NULL);
+    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing13", NULL);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing14", NULL);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing15", NULL);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing16", NULL);
@@ -142,6 +143,7 @@ void ui_menu_init(void)
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing18", NULL);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing19", NULL);
 
+    main_channel_init(&jgfx_channel);
     jgfx_menu_show(&jgfx_menu);
 
     corner_index_init(&jgfx_menu_corner);
