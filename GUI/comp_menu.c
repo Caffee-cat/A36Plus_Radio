@@ -381,8 +381,7 @@ void submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_pt
 }
 
 /**
- * @brief By means of cur_item' id  to draw index number on the top right corner,but dont know why when (curitem+1)%5 == 0,this function doesnt work and draw nothing
- *
+ * @brief By means of cur_item' id  to draw index number on the top right corner.
  * @param menu_ptr menu pointer
  */
 void index_num_display(jgfx_menu_ptr menu_ptr)
@@ -478,27 +477,37 @@ void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_pt
  */
 uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key)
 {
+    // Give a value to index_num1 when the first time trigger this func.
     if (corner_ptr->index_jump_count1 == 0 && corner_ptr->index_jump_count2 == 0)
     {
         corner_ptr->index_jump_count1 = 30000;
         corner_ptr->index_jump_count2 = 6;
         corner_ptr->index_num1 = key;
+        // Check whether the flicker can be triggered
         if (corner_ptr->index_num1 > menu_ptr->item_size / 10)
         {
             corner_ptr->index_jump_count1 = corner_ptr->index_jump_count2 = 0;
         }
         return corner_ptr->index_num1;
     }
+    // Give a value to index_num1 when the second time trigger this func and clear countdown timer.
     else
     {
         delay_1us(100);
         corner_ptr->index_num2 = key;
+        //check whether the combination value out of zone
         if (corner_ptr->index_num1 * 10 + corner_ptr->index_num2 > menu_ptr->item_size)
         {
             corner_ptr->index_jump_count1 = 30000;
             corner_ptr->index_jump_count2 = 6;
             corner_ptr->index_num1 = key;
             corner_ptr->index_num2 = 0;
+
+            if (corner_ptr->index_num1 > menu_ptr->item_size / 10)
+            {
+                corner_ptr->index_jump_count1 = corner_ptr->index_jump_count2 = 0;
+            }
+
             return corner_ptr->index_num1;
         }
         corner_ptr->index_jump_count1 = corner_ptr->index_jump_count2 = 0;
@@ -781,15 +790,7 @@ static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
 static void return_to_menu(jgfx_menu_ptr menu_ptr)
 {
 
-    jgfx_set_color_hex(JGFXF_COLOR_BLACK);
-    jgfx_set_color_back_hex(0x0000);
-    jgfx_fill_react(32+2, menu_ptr->menu_y + menu_ptr->menu_title_height + 4, DISPLAY_W-5, DISPLAY_H - 29);
-
-    // jgfx_set_color_hex(JGFXF_COLOR_BLACK);
-    // // Reset the background color to avoid background color draw error.
-    // jgfx_set_color_back_hex(0x0000);
-    // jgfx_fill_react(32, 0, DISPLAY_W, DISPLAY_H + 1);
-
+    _r_clear_item_area(menu_ptr);
     jgfx_menu_item_ptr cur_item = menu_ptr->cur_item;
     jgfx_menu_item_ptr tem_item = cur_item;
     uint8_t i = 0;
