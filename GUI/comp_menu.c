@@ -147,15 +147,14 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
         jgfx_set_font(JGFX_FONT_EN_8X16);
         jgfx_draw_text_en(32 + menu_ptr->menu_x + (menu_ptr->menu_width / 2) - (jgfx_measure_text_width(menu_ptr->menu_title) / 2), menu_ptr->menu_y + 1, menu_ptr->menu_title);
         // printf("%d",menu_ptr->channel_ptr->channel == 1?(FLASH_ICON_CHANNELA_ADDR) : (FLASH_ICON_CHANNELB_ADDR));
-        // delay_1us(10);
-        // uint32_t addr = menu_ptr->channel_ptr->channel == 1?(FLASH_ICON_CHANNELA_ADDR) : (FLASH_ICON_CHANNELB_ADDR);
-        // delay_1us(10);
-        // jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, addr);
-        // delay_1us(10);
-        jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, FLASH_ICON_CHANNELA_ADDR);
+        // delay_1ms(1);
+        uint32_t addr = menu_ptr->channel_ptr->channel == 1 ? (FLASH_ICON_CHANNELA_ADDR) : (FLASH_ICON_CHANNELB_ADDR);
+        jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, addr);
+        // jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, FLASH_ICON_CHANNELA_ADDR);
     }
 
     /** Draw items */
+    delay_1us(10);
     _r_menu_draw_items(menu_ptr, 0);
 
     /** Draw selector */
@@ -511,7 +510,7 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
 {
     channel_ptr->flash_count_num1 = 0;
     channel_ptr->flash_count_num2 = 0;
-    channel_ptr->channel = TRUE;
+    channel_ptr->channel = (cur_ch == &ch1 ? TRUE : FALSE);
 }
 
 /**
@@ -596,8 +595,9 @@ static void _r_menu_draw_items(jgfx_menu_ptr menu_ptr, uint8_t order)
     {
         if (!order)
         {
+            delay_1us(5);
             _r_menu_draw_item(menu_ptr, item, JGFX_MENU_ITEM_STATUS_UNSELECTED, i);
-
+            delay_1us(10);
             // delay_1ms(1);
             item = item->item_next;
             i++;
@@ -765,10 +765,41 @@ static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
             }
             else if (key == 4)
             {
-                jgfx_menu_show(menu_ptr);
+                return_to_menu(menu_ptr);
                 menu_ptr->status = JGFX_MENU_STATUS_SELECTED;
                 break;
             }
         }
     }
+}
+
+/**
+ * @brief Redraw the main menu when returning from the submenu,making sure that the selector points to the original location
+ *
+ * @param menu_ptr menu pointer
+ */
+static void return_to_menu(jgfx_menu_ptr menu_ptr)
+{
+
+    jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_fill_react(32+2, menu_ptr->menu_y + menu_ptr->menu_title_height + 4, DISPLAY_W-5, DISPLAY_H - 29);
+
+    // jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+    // // Reset the background color to avoid background color draw error.
+    // jgfx_set_color_back_hex(0x0000);
+    // jgfx_fill_react(32, 0, DISPLAY_W, DISPLAY_H + 1);
+
+    jgfx_menu_item_ptr cur_item = menu_ptr->cur_item;
+    jgfx_menu_item_ptr tem_item = cur_item;
+    uint8_t i = 0;
+    while ((tem_item->item_id) % 5 != 0)
+    {
+        i += 1;
+        tem_item = tem_item->item_pre;
+    }
+    menu_ptr->cur_item = tem_item;
+    _r_menu_draw_items(menu_ptr, 0);
+    menu_ptr->cur_item = cur_item;
+    _r_menu_draw_selector(menu_ptr);
 }

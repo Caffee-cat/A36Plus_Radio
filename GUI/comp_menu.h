@@ -9,6 +9,7 @@ typedef struct submenu_item_t *submenu_item_ptr;
 typedef struct corner_index_num_t *corner_index_num_ptr;
 typedef void (*jgfx_menu_item_event_cb)(jgfx_menu_ptr);
 typedef struct ui_main_channel_t *ui_main_channel_ptr;
+extern uint32_t *cur_ch, ch1, ch2;
 
 typedef enum
 {
@@ -173,5 +174,7 @@ static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, uint8_t num);
 
 static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
+
+static void return_to_menu(jgfx_menu_ptr menu_ptr);
 
 #endif
