@@ -334,7 +334,7 @@ void jgfx_menu_destory(jgfx_menu_ptr menu_ptr)
  * @param index current selector
  * @return uint8_t
  */
-void submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...)
+uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...)
 {
     uint8_t index = 1, i;
     uint8_t *data;
@@ -357,7 +357,7 @@ void submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_pt
     {
         data = va_arg(pointer, uint8_t *);
         if (data == NULL)
-            return;
+            return -1;
         submenu_ptr->item_name[i] = data;
         jgfx_draw_text_en(36 + menu_ptr->menu_x,
                           submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
@@ -365,19 +365,23 @@ void submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_pt
     }
     va_end(pointer);
 
+    // jgfx_draw_text_en(28 + menu_ptr->menu_x + 128 - (8 * 7),
+    //                   submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * 1,
+    //                   "12.5KHZ");
+
     // draw selector
     jgfx_set_color_hex(0x0000);
     jgfx_set_color_back_hex(0xFFFF);
     jgfx_draw_text_en(36 + menu_ptr->menu_x,
-                      submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * 1,
-                      submenu_ptr->item_name[0]);
+                      submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * submenu_ptr->cur_item,
+                      submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
 
     // redraw the line in the botton to fix some error
     jgfx_set_color_hex(0xFFFF);
     jgfx_set_color_back_hex(0x0000);
     jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
 
-    submenu_cb(menu_ptr, submenu_ptr);
+    return submenu_cb(menu_ptr, submenu_ptr);
 }
 
 /**
@@ -495,7 +499,7 @@ uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, ui
     {
         delay_1us(100);
         corner_ptr->index_num2 = key;
-        //check whether the combination value out of zone
+        // check whether the combination value out of zone
         if (corner_ptr->index_num1 * 10 + corner_ptr->index_num2 > menu_ptr->item_size)
         {
             corner_ptr->index_jump_count1 = 30000;
@@ -520,6 +524,75 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->flash_count_num1 = 0;
     channel_ptr->flash_count_num2 = 0;
     channel_ptr->channel = (cur_ch == &ch1 ? TRUE : FALSE);
+    channel_ptr->step = 10; // 10.0KHZ
+}
+
+void menu_draw_rightside(uint8_t *string)
+{
+}
+
+/**
+ * @brief Redraw the main menu when returning from the submenu,making sure that the selector points to the original location
+ *
+ * @param menu_ptr menu pointer
+ */
+void return_to_menu(jgfx_menu_ptr menu_ptr)
+{
+
+    _r_clear_item_area(menu_ptr);
+    jgfx_menu_item_ptr cur_item = menu_ptr->cur_item;
+    jgfx_menu_item_ptr tem_item = cur_item;
+    uint8_t i = 0;
+    while ((tem_item->item_id) % 5 != 0)
+    {
+        i += 1;
+        tem_item = tem_item->item_pre;
+    }
+    menu_ptr->cur_item = tem_item;
+    _r_menu_draw_items(menu_ptr, 0);
+    menu_ptr->cur_item = cur_item;
+    _r_menu_draw_selector(menu_ptr);
+}
+
+void Display_Timer_Init(Display_Timer_ptr Timer_ptr)
+{
+    Timer_ptr->Timer_limit = 33;
+    Timer_ptr->Timer_count = 0;
+    Timer_ptr->Second_count = 0;
+    Timer_ptr->screen_off = 30;
+    Timer_ptr->Timer_init_flag = TRUE;
+}
+
+void Display_Timer_count(Display_Timer_ptr Timer_ptr)
+{
+    if (Timer_ptr->Timer_init_flag == FALSE)
+        return;
+    timer_interrupt_disable(TIMER16, TIMER_INT_UP);
+    if (Timer_ptr->Timer_count >= Timer_ptr->Timer_limit)
+    {
+        Timer_ptr->Second_count += 1;
+        Timer_ptr->Timer_count = 0;
+        // printf("refresh now!\n");
+        if (Timer_ptr->Second_count >= Timer_ptr->screen_off)
+        {
+            timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 20);
+        }
+    }
+    timer_interrupt_enable(TIMER16, TIMER_INT_UP);
+}
+
+/**
+ * @brief Light up the screen when trigger any key press
+ *
+ * @param Brightness_ptr Brightness pointer
+ * @param Timer_ptr     Timer pointer
+ */
+void wakeup_screen(Brigthtness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr)
+{
+    // waiting for setting back true brightness by using  brightness_ptr here
+    timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 200);
+    Timer_ptr->Second_count = 0;
+    Timer_ptr->Timer_count = 0;
 }
 
 /**
@@ -732,9 +805,9 @@ static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, u
  * @param menu_ptr menu pointer
  * @param index current selector
  */
-static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
+static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
 {
-    uint8_t item_num = submenu_ptr->itemlist_num, cur_item = 1;
+    uint8_t item_num = submenu_ptr->itemlist_num;
     while (1)
     {
         key_map_t key = key_get();
@@ -742,65 +815,50 @@ static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
         {
             if (key == 1)
             {
-                // return cur_item;
+                while (key_get() != KEY_MAP_NONE)
+                    ;
+                delay_1us(10);
+                return submenu_ptr->cur_item;
             }
-            else if (key == 2 && cur_item != 1)
+            else if (key == 2 && submenu_ptr->cur_item != 1)
             {
                 {
                     jgfx_set_color_hex(0xFFFF);
                     jgfx_set_color_back_hex(0x0000);
-                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (cur_item), submenu_ptr->item_name[cur_item - 1]);
+                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
                     jgfx_set_color_hex(0x0000);
                     jgfx_set_color_back_hex(0xFFFF);
-                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (cur_item - 1), submenu_ptr->item_name[cur_item - 2]);
+                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item - 1), submenu_ptr->item_name[submenu_ptr->cur_item - 2]);
                     while (key_get() != KEY_MAP_NONE)
                         ;
                     delay_1us(10);
-                    cur_item -= 1;
+                    submenu_ptr->cur_item -= 1;
                 }
             }
-            else if (key == 3 && cur_item != submenu_ptr->itemlist_num)
+            else if (key == 3 && submenu_ptr->cur_item != submenu_ptr->itemlist_num)
             {
                 jgfx_set_color_hex(0xFFFF);
                 jgfx_set_color_back_hex(0x0000);
-                jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (cur_item), submenu_ptr->item_name[cur_item - 1]);
+                jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
                 jgfx_set_color_hex(0x0000);
                 jgfx_set_color_back_hex(0xFFFF);
-                jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (cur_item + 1), submenu_ptr->item_name[cur_item]);
+                jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item + 1), submenu_ptr->item_name[submenu_ptr->cur_item]);
                 while (key_get() != KEY_MAP_NONE)
                     ;
                 delay_1us(10);
-                cur_item += 1;
+                submenu_ptr->cur_item += 1;
             }
             else if (key == 4)
             {
-                return_to_menu(menu_ptr);
+                // return_to_menu(menu_ptr);
                 menu_ptr->status = JGFX_MENU_STATUS_SELECTED;
-                break;
+                while (key_get() != KEY_MAP_NONE)
+                    ;
+                delay_1us(10);
+                return 0;
+                // break;
             }
         }
     }
-}
-
-/**
- * @brief Redraw the main menu when returning from the submenu,making sure that the selector points to the original location
- *
- * @param menu_ptr menu pointer
- */
-static void return_to_menu(jgfx_menu_ptr menu_ptr)
-{
-
-    _r_clear_item_area(menu_ptr);
-    jgfx_menu_item_ptr cur_item = menu_ptr->cur_item;
-    jgfx_menu_item_ptr tem_item = cur_item;
-    uint8_t i = 0;
-    while ((tem_item->item_id) % 5 != 0)
-    {
-        i += 1;
-        tem_item = tem_item->item_pre;
-    }
-    menu_ptr->cur_item = tem_item;
-    _r_menu_draw_items(menu_ptr, 0);
-    menu_ptr->cur_item = cur_item;
-    _r_menu_draw_selector(menu_ptr);
+    return -1;
 }

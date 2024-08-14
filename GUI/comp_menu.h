@@ -9,6 +9,8 @@ typedef struct submenu_item_t *submenu_item_ptr;
 typedef struct corner_index_num_t *corner_index_num_ptr;
 typedef void (*jgfx_menu_item_event_cb)(jgfx_menu_ptr);
 typedef struct ui_main_channel_t *ui_main_channel_ptr;
+typedef struct Display_Timer_t *Display_Timer_ptr;
+typedef struct Brigthtness_setting_t *Brigthtness_setting_ptr;
 extern uint32_t *cur_ch, ch1, ch2;
 
 typedef enum
@@ -92,6 +94,7 @@ typedef struct submenu_item_t
     uint8_t *item_name[5];
     uint16_t line_height;
     uint8_t itemlist_num;
+    uint8_t cur_item;
 } submenu_item_t;
 
 typedef struct corner_index_num_t
@@ -112,10 +115,25 @@ typedef struct ui_main_channel_t
     uint8_t block_width;
     uint16_t flash_count_num1;
     uint16_t flash_count_num2;
-    bool channel; //1:A,0:B
+    uint16_t step;
+    bool channel; // 1:A,0:B
 } ui_main_channel_t;
 
-void jgfx_menu_init(jgfx_menu_ptr menu_ptr,ui_main_channel_ptr main_channel);
+typedef struct Brigthtness_setting_t
+{
+    uint8_t temp;
+}Brigthtness_setting_t;
+
+typedef struct Display_Timer_t
+{
+    uint16_t Timer_count;
+    uint16_t Timer_limit;
+    uint16_t Second_count;
+    uint8_t screen_off;
+    bool Timer_init_flag;
+} Display_Timer_t;
+
+void jgfx_menu_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr main_channel);
 
 void jgfx_menu_set_size(jgfx_menu_ptr menu_ptr, uint16_t width, uint16_t height);
 
@@ -145,7 +163,7 @@ bool jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index);
 
 void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
 
-void submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...);
+uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...);
 
 void index_num_display(jgfx_menu_ptr menu_ptr);
 
@@ -158,6 +176,14 @@ void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_pt
 uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key);
 
 void main_channel_init(ui_main_channel_ptr channel_ptr);
+
+void return_to_menu(jgfx_menu_ptr menu_ptr);
+
+void Display_Timer_Init(Display_Timer_ptr Timer_ptr);
+
+void Display_Timer_count(Display_Timer_ptr Timer_ptr);
+
+void wakeup_screen(Brigthtness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr);
 
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
@@ -173,8 +199,6 @@ static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 
 static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, uint8_t num);
 
-static void submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
-
-static void return_to_menu(jgfx_menu_ptr menu_ptr);
+static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 
 #endif

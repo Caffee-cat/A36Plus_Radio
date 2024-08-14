@@ -12,4 +12,9 @@ void ui_menu_destory(void);
 
 void ui_menu_event_cb(void);
 
+void Step_callback();
+void Brightness_callback();
+
+void Timer_callback();
+
 #endif
