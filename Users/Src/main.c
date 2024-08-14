@@ -45,11 +45,10 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask,
     (void)pcTaskName;
 }
 
-
 int main(void)
 {
     /** Enable IRQ, it is disabled in boot */
-    // __enable_irq();
+    __enable_irq();
 
     /** Set NVIC vector table start address and offset*/
     // nvic_vector_table_set(0x08001000, 0x00);
@@ -63,19 +62,35 @@ int main(void)
     tim_config();
     usart_config();
 
-    /* Init ST7735S driver*/
-    st7735s_init();
-    
-    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+
+    // while(1)
+    // {
+    //     printf("%d\n",timer_interrupt_flag_get(TIMER16,TIMER_INT_UP));
+    //     if(timer_interrupt_flag_get(TIMER16,TIMER_INT_UP))break;
+    // }
+    // backlight_terminate();
 
     // usart_flash_run();
 
+    // bk4819_init();
+    // bk4819_test();
+
+    // while(1)
+    // {
+    //     printf("%d\n",(uint32_t)KEY_GET_NUM(key_get()));
+    // }
+
+
+    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+
+
+    /* Init ST7735S driver*/
+    st7735s_init();
     jgfx_init(0, 0);
-
-    // jgfx_test();
-
     vtasks_init();
     vTaskStartScheduler();
+
+    // jgfx_test();
 
     // delay_1ms(30000);
     // printf("Running...\r\n");
