@@ -105,33 +105,35 @@ void bk4819_init(void)
     uint8_t data;
     bk4819_write_reg(BK4819_REG_00, 0x8000); // reset
     bk4819_delay(1000);
-    bk4819_write_reg(BK4819_REG_00, 0x00);
+    bk4819_write_reg(BK4819_REG_00, 0x00);  //maybe for clear reset bit
 
-    bk4819_write_reg(BK4819_REG_37, 0x1d0f); //
-    bk4819_write_reg(BK4819_REG_13, 0x3be);
-    bk4819_write_reg(BK4819_REG_12, 0x37b);
-    bk4819_write_reg(BK4819_REG_53, 59000);
-    bk4819_write_reg(BK4819_REG_09, 0x603a);
-    bk4819_write_reg(BK4819_REG_11, 0x27b);
-    bk4819_write_reg(BK4819_REG_10, 0x7a);
-    bk4819_write_reg(BK4819_REG_14, 0x19);
-    bk4819_write_reg(BK4819_REG_49, 0x2a38);
-    bk4819_write_reg(BK4819_REG_7B, 0x8420);
-    bk4819_write_reg(BK4819_REG_48, 0xb3ff);
-    bk4819_write_reg(BK4819_REG_1E, 0x4c58);
-    bk4819_write_reg(BK4819_REG_1F, 0xa656);
-    bk4819_write_reg(BK4819_REG_3E, 0xa037);
-    bk4819_write_reg(BK4819_REG_3F, 0x7fe);
-    bk4819_write_reg(BK4819_REG_2A, 0x7fff);
-    bk4819_write_reg(BK4819_REG_28, 0x6b00);
-    bk4819_write_reg(BK4819_REG_7D, 0xe952);
-    bk4819_write_reg(BK4819_REG_2C, 0x5705);
-    bk4819_write_reg(BK4819_REG_4B, 0x7102);
-    bk4819_write_reg(BK4819_REG_77, 0x88ef);
-    bk4819_write_reg(BK4819_REG_26, 0x13a0);
-    bk4819_write_reg(BK4819_REG_4E, 0x6f15);
-    bk4819_write_reg(BK4819_REG_4F, 0x3f3e);
-    bk4819_write_reg(BK4819_REG_09, 0x6f);
+    bk4819_write_reg(BK4819_REG_37, 0x1d0f);        // DSP voltage setting
+    // BK4819_write_reg(BK4819_REG_36, 0x0022);     //less an option for PA setting,may will cause an error
+    // BK4819_write_reg(BK4819_REG_7E, 0x302e);     //use default setting here for using auto AGC Fix mode
+    bk4819_write_reg(BK4819_REG_13, 0x3be);         //Set RX AGC Gain Table[3] as default setting.<9:8>LNA Gain Short 0db.<7:5>LNA Gain -2dB.<4:3>MIXER Gain -3dB.<2:0>PGA Gain -3dB.
+    bk4819_write_reg(BK4819_REG_12, 0x37b);         //Set RX AGC Gain Table[2] as default setting.
+    bk4819_write_reg(BK4819_REG_53, 59000);         //****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_09, 0x603a);        //DTMF/SelCall Symbol Coefficient for Detection.<15:12>Symbol number=0b110  <7:0>Coefficient = 0b 0011 1010
+    bk4819_write_reg(BK4819_REG_11, 0x27b);         //Set RX AGC Gain Table[1]
+    bk4819_write_reg(BK4819_REG_10, 0x7a);          //Set RX AGC Gain Table[0]
+    bk4819_write_reg(BK4819_REG_14, 0x19);          //Set RX AGC Gain Table[-1] for no use of amModulation with setting BK4819_REG_49.
+    bk4819_write_reg(BK4819_REG_49, 0x2a38);        //Auto lo selection.Set RF AGC High/Low Threshold.
+    bk4819_write_reg(BK4819_REG_7B, 0x8420);        //Set RSSI table.****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_48, 0xb3ff);        //Set AF RX Gain1/2 and AF DAC Gain
+    bk4819_write_reg(BK4819_REG_1E, 0x4c58);        //****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_1F, 0xa656);        //Set rf PLL
+    bk4819_write_reg(BK4819_REG_3E, 0xa037);        //Band Selection Threshold.~=VCO Max Frequency(Hz)/96/640
+    bk4819_write_reg(BK4819_REG_3F, 0x7fe);         //Set FSK,DTMF/5TONE,CTCSS/CDCSSTail,CDCSS,CTCSS,VoX,Squelch.
+    bk4819_write_reg(BK4819_REG_2A, 0x7fff);        //****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_28, 0x6b00);        //Set Expander (AF Rx).
+    bk4819_write_reg(BK4819_REG_7D, 0xe952);        //Set MIC Sensitivity Tuning.****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_2C, 0x5705);        //****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_4B, 0x7102);        //AF Level Controller(ALC) Disable.****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_77, 0x88ef);        //Squelch mode select.parameters are choices about RSSI,noise,Glitch combination
+    bk4819_write_reg(BK4819_REG_26, 0x13a0);        //****Haven't show detail in Rsgisters note.****
+    bk4819_write_reg(BK4819_REG_4E, 0x6f15);        //Set Squelch and Giltch.
+    bk4819_write_reg(BK4819_REG_4F, 0x3f3e);        //Set Ex-noise threshold for Squelch 
+    bk4819_write_reg(BK4819_REG_09, 0x6f);          
     bk4819_write_reg(BK4819_REG_09, 0x106b);
     bk4819_write_reg(BK4819_REG_09, 0x2067);
     bk4819_write_reg(BK4819_REG_09, 0x3062);
@@ -140,19 +142,19 @@ void bk4819_init(void)
     bk4819_write_reg(BK4819_REG_09, 0x702c);
     bk4819_write_reg(BK4819_REG_09, 0x8041);
     bk4819_write_reg(BK4819_REG_09, 0x9037);
-    bk4819_write_reg(BK4819_REG_28, 0x6b38);
+    bk4819_write_reg(BK4819_REG_28, 0x6b38);        //Set Expander (AF Rx) back to default setting.  
     bk4819_write_reg(BK4819_REG_09, 0xa025);
     bk4819_write_reg(BK4819_REG_09, 0xb017);
     bk4819_write_reg(BK4819_REG_09, 0xc0e4);
     bk4819_write_reg(BK4819_REG_09, 0xd0cb);
     bk4819_write_reg(BK4819_REG_09, 0xe0b5);
     bk4819_write_reg(BK4819_REG_09, 0xf09f);
-    bk4819_write_reg(BK4819_REG_74, 0xfa02);
-    bk4819_write_reg(BK4819_REG_44, 0x8f88);
-    bk4819_write_reg(BK4819_REG_45, 0x3201);
-    bk4819_write_reg(BK4819_REG_29, 0xb4cb);
-    bk4819_write_reg(BK4819_REG_40, bk4819_read_reg(BK4819_REG_40) & 0xf000 | 0x4d2);
-    bk4819_write_reg(BK4819_REG_31, bk4819_read_reg(BK4819_REG_31) & 0xfffffff7);
+    bk4819_write_reg(BK4819_REG_74, 0xfa02);        //3000Hz AF Response coefficient for Tx when it's 0xf50b
+    bk4819_write_reg(BK4819_REG_44, 0x8f88);        //300Hz AF Response coefficient for Tx when it's 0x9009
+    bk4819_write_reg(BK4819_REG_45, 0x3201);        //300Hz AF Response coefficient for Tx. when it's 0x31a9
+    bk4819_write_reg(BK4819_REG_29, 0xb4cb);        //Set Compress (AF Tx).
+    bk4819_write_reg(BK4819_REG_40, bk4819_read_reg(BK4819_REG_40) & 0xf000 | 0x4d2);//RF Tx Deviation Tuning (Apply for both in-band signal andsub-audio signal).
+    bk4819_write_reg(BK4819_REG_31, bk4819_read_reg(BK4819_REG_31) & 0xfffffff7);//disEnable Compander Function.Remain VOX detection,Scramble Function as defalult(dlsable).
     bk4819_set_freq(43949500);
     bk4819_CTDCSS_enable(1);
     bk4819_CTDCSS_set(0, 1485);
