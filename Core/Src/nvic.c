@@ -3,6 +3,7 @@
 void tim_nvic_config(void)
 {
     nvic_irq_enable(TIMER1_IRQn, 1, 1);
+    nvic_irq_enable(TIMER16_IRQn, 1, 1);
 }
 
 void dma_nvic_config(void)
