@@ -12,7 +12,7 @@ uint32_t ch1 = 430000;
 uint32_t ch2 = 439460;
 uint32_t ch_bak = 0;
 uint32_t *cur_ch = &ch1;
-uint8_t step = 1;
+// uint8_t step = 1;
 uint8_t input_num = 0;
 bool confirm = 0;
 
@@ -202,14 +202,20 @@ void ui_main_event_cb(void)
         else if (key == KEY_MAP_2)
         {
             if (*cur_ch < 999999)
-                *cur_ch += step;
+                *cur_ch += jgfx_channel.step;
             draw_channel();
+
+            printf("%d\n",*cur_ch);
+
         }
         else if (key == KEY_MAP_3)
         {
             if (*cur_ch > 100000)
-                *cur_ch -= step;
+                *cur_ch -= jgfx_channel.step;
             draw_channel();
+
+            printf("%d\n",*cur_ch);
+            
         }
         else if (key == KEY_MAP_8)
         {
