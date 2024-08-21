@@ -210,6 +210,8 @@ void bk4819_rx_on(void);
 
 void bk4819_tx_on(void);
 
+void bk4819_tx_off(void);
+
 void bk4819_CTDCSS_enable(uint8_t sel);
 
 void bk4819_CTDCSS_disable(void);
