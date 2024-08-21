@@ -29,7 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdint.h>
 
 
-extern uint32_t _sdata, _edata, _rdata, _sbss, _ebss, _estack;
+extern uint32_t _sdata, _edata, _sidata, _sbss, _ebss, _estack;
 
 void main(void);
 
@@ -41,7 +41,7 @@ extern void vPortSVCHandler( void ) __attribute__( ( naked ) );
 void Reset_Handler(void)
 {
 	uint32_t *src, *dst;
-	src = &_rdata;
+	src = &_sidata;
 	dst = &_sdata;
 	while (dst < &_edata)
 		*dst++ = *src++;

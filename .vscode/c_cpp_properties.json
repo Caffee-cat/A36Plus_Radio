@@ -10,7 +10,9 @@
                 "UNICODE",
                 "_UNICODE"
             ],
-            "configurationProvider": "ms-vscode.cmake-tools"
+            "configurationProvider": "ms-vscode.cmake-tools",
+            "compilerPath": "D:/2-Software/3-Env/msys64/usr/bin/gcc.exe",
+            "intelliSenseMode": "gcc-arm"
         }
     ],
     "version": 4
