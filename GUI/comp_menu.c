@@ -30,6 +30,11 @@
 
 #include "comp_menu.h"
 
+uint32_t main_channel_step[] = {10, 15, 20, 25, 30, 35, 40, 45};
+uint32_t brightness_param[] = {5, 20, 100, 200, 500};
+uint16_t Display_Timer_param[] = {10, 30, 60, 120};
+uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
+
 /**
  * @brief Init menu
  *
@@ -251,6 +256,9 @@ void jgfx_menu_update(jgfx_menu_ptr menu_ptr)
  */
 void jgfx_menu_click(jgfx_menu_ptr menu_ptr)
 {
+    while (key_get() != KEY_MAP_NONE)
+        ;
+    delay_1us(10);
     if (menu_ptr->status != JGFX_MENU_STATUS_CLICKED)
     {
         menu_ptr->status = JGFX_MENU_STATUS_CLICKED;
@@ -348,7 +356,7 @@ uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item
     _r_clear_item_area(menu_ptr);
     _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_UNSELECTED, 0);
 
-    // draw items
+    // Init items
     va_list pointer;
     va_start(pointer, submenu_ptr);
     jgfx_set_color_hex(0xFFFF);
@@ -359,22 +367,14 @@ uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item
         if (data == NULL)
             return -1;
         submenu_ptr->item_name[i] = data;
-        jgfx_draw_text_en(36 + menu_ptr->menu_x,
-                          submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
-                          submenu_ptr->item_name[i]);
+        // jgfx_draw_text_en(36 + menu_ptr->menu_x,
+        //                   submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
+        //                   submenu_ptr->item_name[i]);
     }
     va_end(pointer);
 
-    // jgfx_draw_text_en(28 + menu_ptr->menu_x + 128 - (8 * 7),
-    //                   submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * 1,
-    //                   "12.5KHZ");
-
-    // draw selector
-    jgfx_set_color_hex(0x0000);
-    jgfx_set_color_back_hex(0xFFFF);
-    jgfx_draw_text_en(36 + menu_ptr->menu_x,
-                      submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * submenu_ptr->cur_item,
-                      submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
+    // Draw items
+    submenu_items_refresh(menu_ptr, submenu_ptr);
 
     // redraw the line in the botton to fix some error
     jgfx_set_color_hex(0xFFFF);
@@ -521,14 +521,41 @@ uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, ui
 
 void main_channel_init(ui_main_channel_ptr channel_ptr)
 {
+    if (channel_ptr->Initial_flag == TRUE)
+        return;
+    channel_ptr->Initial_flag = TRUE;
+    // Achieve flicker the selected channel number
     channel_ptr->flash_count_num1 = 0;
     channel_ptr->flash_count_num2 = 0;
-    channel_ptr->channel = (cur_ch == &ch1 ? TRUE : FALSE);
+
+    channel_ptr->channel_1 = 430000;
+    channel_ptr->channel_2 = 439460;
+    channel_ptr->ch_bak = 0;
+    bk4819_set_freq(43000000);
+
+    // Point to channel 1 for initial setup
+    channel_ptr->cur_channel = &channel_ptr->channel_1;
+
+    channel_ptr->channel = (channel_ptr->cur_channel == &channel_ptr->channel_1 ? TRUE : FALSE);
     channel_ptr->step = 10; // 10.0KHZ
+    channel_ptr->cur_index = 1;
+    channel_ptr->ch_pra = main_channel_step;
+    channel_ptr->ch_val = channel_ptr->ch_pra;
+}
+
+void jgfx_channel_change(ui_main_channel_ptr channel_ptr, jgfx_channel_step_t step)
+{
+    if (step == MAIN_CHANNEL_NONE)
+        return;
+    channel_ptr->cur_index = step;
+    channel_ptr->step = channel_ptr->ch_pra[step - 1];
 }
 
 void menu_draw_rightside(uint8_t *string)
 {
+    // jgfx_draw_text_en(36 + menu_ptr->menu_x,
+    //                       submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
+    //                       submenu_ptr->item_name[i]);
 }
 
 /**
@@ -554,13 +581,39 @@ void return_to_menu(jgfx_menu_ptr menu_ptr)
     _r_menu_draw_selector(menu_ptr);
 }
 
+void Brightness_init(Brightness_setting_ptr bri_ptr)
+{
+    bri_ptr->cur_bri = 3;
+    bri_ptr->bri_pra = brightness_param;
+    bri_ptr->bri_val = bri_ptr->bri_pra;
+    bri_ptr->bri_val += 3;
+    // printf("Brightness vlaue now is %d\n",*(bri_ptr->bri_val));
+}
+
+void Brightness_change(Brightness_setting_ptr bri_ptr, uint8_t bri_num)
+{
+    if (bri_num == 0)
+        return;
+    bri_ptr->cur_bri = bri_num;
+    bri_ptr->bri_val = &bri_ptr->bri_pra[bri_num];
+    // printf("%d", bri_ptr->bri_val);
+    timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, *bri_ptr->bri_val);
+}
+
 void Display_Timer_Init(Display_Timer_ptr Timer_ptr)
 {
-    Timer_ptr->Timer_limit = 33;
+    // Init for only once in the hole program
+    if (Timer_ptr->Timer_init_flag == TRUE)
+        return;
+    Timer_ptr->index = 1;
+    Timer_ptr->Timer_limit = 33; // count 33 times for one second
     Timer_ptr->Timer_count = 0;
     Timer_ptr->Second_count = 0;
-    Timer_ptr->screen_off = 30;
+    Timer_ptr->screen_off = 30; // 30 seconds
     Timer_ptr->Timer_init_flag = TRUE;
+    Timer_ptr->Tim_pra = Display_Timer_param;
+    Timer_ptr->Tim_val = Timer_ptr->Tim_pra;
+    Timer_ptr->Tim_val += 1;
 }
 
 void Display_Timer_count(Display_Timer_ptr Timer_ptr)
@@ -575,10 +628,19 @@ void Display_Timer_count(Display_Timer_ptr Timer_ptr)
         // printf("refresh now!\n");
         if (Timer_ptr->Second_count >= Timer_ptr->screen_off)
         {
-            timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 20);
+            timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 5);
         }
     }
     timer_interrupt_enable(TIMER16, TIMER_INT_UP);
+}
+
+void Display_Timer_change(Display_Timer_ptr Timer_ptr, uint8_t Tim_num)
+{
+    if (Tim_num == 0)
+        return;
+    Timer_ptr->index = Tim_num;
+    Timer_ptr->screen_off = Timer_ptr->Tim_pra[Tim_num - 1];
+    // Display_Timer.screen_off = 10;
 }
 
 /**
@@ -587,12 +649,81 @@ void Display_Timer_count(Display_Timer_ptr Timer_ptr)
  * @param Brightness_ptr Brightness pointer
  * @param Timer_ptr     Timer pointer
  */
-void wakeup_screen(Brigthtness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr)
+void wakeup_screen(Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr)
 {
     // waiting for setting back true brightness by using  brightness_ptr here
-    timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, 200);
+    timer_channel_output_pulse_value_config(TIMER16, TIMER_CH_0, *Brightness_ptr->bri_val);
     Timer_ptr->Second_count = 0;
     Timer_ptr->Timer_count = 0;
+}
+
+/**
+ * @brief Create an input window for add channel freatue
+ *
+ * @param menu_ptr
+ */
+void input_window_init(jgfx_menu_ptr menu_ptr)
+{
+    _r_clear_item_area(menu_ptr);
+
+    jgfx_set_font(JGFX_FONT_EN_16X32);
+    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+    jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+
+    jgfx_draw_text_en(32 + 3, DISPLAY_H / 10 + 25, "----");
+    jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 10 + 25 + 13, ".");
+    jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 25, "---");
+}
+
+void create_channel_draw(uint32_t input_channel)
+{
+    uint8_t input_window[8];
+    // jgfx_draw_text_en(32 + 3, DISPLAY_H / 10 + 25, "----");
+    // jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 10 + 25 + 13, ".");
+    // jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 25, "---");
+    jgfx_set_font(JGFX_FONT_EN_16X32);
+    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+    jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+
+    sprintf(input_window, "%03d", input_channel / 1000);
+    jgfx_draw_text_en(32 + 3 + 16, DISPLAY_H / 10 + 25, input_window);
+
+    // draw point
+    jgfx_set_font(JGFX_FONT_EN_8X16);
+    jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 10 + 25 + 13, ".");
+
+    // draw khz
+    jgfx_set_font(JGFX_FONT_EN_16X32);
+    sprintf(input_window, "%03d", input_channel % 1000);
+    jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 25, input_window);
+}
+
+void draw_info(jgfx_add_channel_status_t status)
+{
+    jgfx_set_font(JGFX_FONT_EN_8X16);
+    if (status == ADD_CHANNEL_CANCEL)
+    {
+        jgfx_set_color_hex(JGFXF_COLOR_CYAN);
+        jgfx_set_color_back_hex(JGFXF_COLOR_YELLOW);
+        jgfx_draw_text_en(32 + 8, DISPLAY_H - 35, "  Add cancel  ");
+    }
+
+    delay_1ms(10);
+}
+
+/**
+ * @brief set TxCTCSS1 for temporarily
+ *
+ * @param channel_ptr main channel pointer
+ * @param prarm CTCSS status needed to be set,refer to CTCSS_param
+ */
+void channel_CTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param)
+{
+    if (param - 1 != 0)
+        bk4819_CTDCSS_enable(1);
+    else
+        bk4819_CTDCSS_disable();
+    bk4819_CTDCSS_set(0, CTCSS_param[param - 1]);
 }
 
 /**
@@ -768,10 +899,18 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
     {
 
         /** Draw item box */
-        jgfx_draw_rect(36 + menu_ptr->menu_x,
-                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
-                       36 + menu_ptr->menu_x + 104 - 1,
-                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + 15);
+
+        // draw box cling to the items
+        //  jgfx_draw_rect(36 + menu_ptr->menu_x,
+        //                 menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+        //                 36 + menu_ptr->menu_x + 104 - 1,
+        //                 menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + 15);
+
+        // draw box cling to the right side of the screen
+        jgfx_draw_rect(32 + menu_ptr->menu_x,
+                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+                       32 + menu_ptr->menu_x + menu_ptr->menu_width,
+                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + menu_ptr->menu_item_height);
     }
 
     // jgfx_draw_line(36 + menu_ptr->menu_x,
@@ -797,6 +936,38 @@ static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, u
 {
     submenu_ptr->line_height = menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y;
     submenu_ptr->itemlist_num = num;
+    submenu_ptr->num_in_page = 4;
+    submenu_ptr->cur_page = ((submenu_ptr->cur_item - 1) / submenu_ptr->num_in_page) + 1; // Count from 1
+}
+
+/**
+ * @brief Redraw submenu when trigger page-turn
+ *
+ * @param menu_ptr menu pointer
+ * @param submenu_ptr   submenu pointer
+ */
+static void submenu_items_refresh(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
+{
+
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_fill_react(35 + menu_ptr->menu_x, menu_ptr->menu_y + menu_ptr->menu_title_height + 5 + 17, menu_ptr->menu_width - 5, menu_ptr->menu_height - menu_ptr->menu_title_height - (menu_ptr->menu_divide_height * menu_ptr->item_show_num) - 4);
+    // Draw items
+    for (uint8_t i = 0; i < submenu_ptr->num_in_page; i++)
+    {
+        if (((submenu_ptr->cur_page - 1) * submenu_ptr->num_in_page + i + 1) > submenu_ptr->itemlist_num)
+            break;
+        jgfx_draw_text_en(36 + menu_ptr->menu_x,
+                          submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
+                          submenu_ptr->item_name[((submenu_ptr->cur_page - 1) * submenu_ptr->num_in_page + i)]);
+    }
+
+    // draw selector
+    jgfx_set_color_hex(0x0000);
+    jgfx_set_color_back_hex(0xFFFF);
+    jgfx_draw_text_en(36 + menu_ptr->menu_x,
+                      submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * ((submenu_ptr->cur_item - 1) % submenu_ptr->num_in_page + 1),
+                      submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
 }
 
 /**
@@ -808,6 +979,7 @@ static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, u
 static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
 {
     uint8_t item_num = submenu_ptr->itemlist_num;
+    uint8_t index = submenu_ptr->cur_item % 4;
     while (1)
     {
         key_map_t key = key_get();
@@ -822,31 +994,50 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
             }
             else if (key == 2 && submenu_ptr->cur_item != 1)
             {
+                submenu_ptr->cur_item -= 1;
+                index -= 1;
+                if (submenu_ptr->cur_item % 4 == 0)
+                {
+                    submenu_ptr->cur_page -= 1;
+                    submenu_items_refresh(menu_ptr, submenu_ptr);
+                    index = 4;
+                }
+                else
                 {
                     jgfx_set_color_hex(0xFFFF);
                     jgfx_set_color_back_hex(0x0000);
-                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
+                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (index + 1), submenu_ptr->item_name[submenu_ptr->cur_item]);
                     jgfx_set_color_hex(0x0000);
                     jgfx_set_color_back_hex(0xFFFF);
-                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item - 1), submenu_ptr->item_name[submenu_ptr->cur_item - 2]);
-                    while (key_get() != KEY_MAP_NONE)
-                        ;
-                    delay_1us(10);
-                    submenu_ptr->cur_item -= 1;
+                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (index), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
                 }
-            }
-            else if (key == 3 && submenu_ptr->cur_item != submenu_ptr->itemlist_num)
-            {
-                jgfx_set_color_hex(0xFFFF);
-                jgfx_set_color_back_hex(0x0000);
-                jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
-                jgfx_set_color_hex(0x0000);
-                jgfx_set_color_back_hex(0xFFFF);
-                jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (submenu_ptr->cur_item + 1), submenu_ptr->item_name[submenu_ptr->cur_item]);
                 while (key_get() != KEY_MAP_NONE)
                     ;
                 delay_1us(10);
+            }
+            else if (key == 3 && submenu_ptr->cur_item != submenu_ptr->itemlist_num)
+            {
                 submenu_ptr->cur_item += 1;
+                index += 1;
+                if (submenu_ptr->cur_item % (4 + 1) == 0)
+                {
+                    submenu_ptr->cur_page += 1;
+                    submenu_items_refresh(menu_ptr, submenu_ptr);
+                    index = 1;
+                }
+                else
+                {
+
+                    jgfx_set_color_hex(0xFFFF);
+                    jgfx_set_color_back_hex(0x0000);
+                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (index - 1), submenu_ptr->item_name[submenu_ptr->cur_item - 2]);
+                    jgfx_set_color_hex(0x0000);
+                    jgfx_set_color_back_hex(0xFFFF);
+                    jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (index), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
+                }
+                while (key_get() != KEY_MAP_NONE)
+                    ;
+                delay_1us(10);
             }
             else if (key == 4)
             {

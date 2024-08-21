@@ -10,7 +10,7 @@ typedef struct corner_index_num_t *corner_index_num_ptr;
 typedef void (*jgfx_menu_item_event_cb)(jgfx_menu_ptr);
 typedef struct ui_main_channel_t *ui_main_channel_ptr;
 typedef struct Display_Timer_t *Display_Timer_ptr;
-typedef struct Brigthtness_setting_t *Brigthtness_setting_ptr;
+typedef struct Brightness_setting_t *Brightness_setting_ptr;
 extern uint32_t *cur_ch, ch1, ch2;
 
 typedef enum
@@ -38,6 +38,21 @@ typedef enum
 // typedef enum{
 //     JGFX_MENU_STATUS_
 // }
+
+typedef enum
+{
+    MAIN_CHANNEL_NONE = 0x00,
+    MAIN_CHANNEL_10KHZ,
+    MAIN_CHANNEL_15KHZ,
+    MAIN_CHANNEL_20KHZ
+} jgfx_channel_step_t;
+
+typedef enum
+{
+    ADD_CHANNEL_CANCEL = 0x00,
+    ADD_CHANNEL_SUCCESS,
+    ADD_CHANNEL_ERROR
+} jgfx_add_channel_status_t;
 
 typedef struct jgfx_menu_item_t
 {
@@ -91,10 +106,12 @@ typedef struct jgfx_menu_t
 
 typedef struct submenu_item_t
 {
-    uint8_t *item_name[5];
+    uint8_t *item_name[50];
     uint16_t line_height;
     uint8_t itemlist_num;
     uint8_t cur_item;
+    uint8_t cur_page;
+    uint8_t num_in_page;
 } submenu_item_t;
 
 typedef struct corner_index_num_t
@@ -108,29 +125,50 @@ typedef struct corner_index_num_t
 
 typedef struct ui_main_channel_t
 {
-    uint16_t num1;
-    uint16_t num2;
+
+    uint32_t channel_1;
+    uint32_t channel_2;
+    uint16_t Tx_CTCSS1;
+    uint16_t Tx_CTCSS2;
+    uint16_t Rx_CTCSS1;
+    uint16_t Rx_CTCSS2;
+    
+    uint32_t ch_bak;
+    uint32_t *cur_channel;
+
+    uint8_t cur_index;
+    uint32_t *ch_pra;
+    uint32_t *ch_val;
+
     uint8_t block_height1;
     uint8_t block_height2;
     uint8_t block_width;
+    // count for flicker
     uint16_t flash_count_num1;
     uint16_t flash_count_num2;
     uint16_t step;
     bool channel; // 1:A,0:B
+    bool Initial_flag;
 } ui_main_channel_t;
 
-typedef struct Brigthtness_setting_t
+typedef struct Brightness_setting_t
 {
-    uint8_t temp;
-}Brigthtness_setting_t;
+    uint8_t cur_bri;   // as a parameter for submenu index
+    uint32_t *bri_pra; // point to the configurable parameters
+    uint32_t *bri_val; // point to the current brightness setting
+} Brightness_setting_t;
 
 typedef struct Display_Timer_t
 {
     uint16_t Timer_count;
     uint16_t Timer_limit;
     uint16_t Second_count;
+    uint8_t index;
     uint8_t screen_off;
     bool Timer_init_flag;
+
+    uint16_t *Tim_pra;
+    uint16_t *Tim_val;
 } Display_Timer_t;
 
 void jgfx_menu_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr main_channel);
@@ -177,13 +215,27 @@ uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, ui
 
 void main_channel_init(ui_main_channel_ptr channel_ptr);
 
+void jgfx_channel_change(ui_main_channel_ptr channel_ptr, jgfx_channel_step_t step);
+
+void channel_CTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t prarm);
+
 void return_to_menu(jgfx_menu_ptr menu_ptr);
+
+void Brightness_init(Brightness_setting_ptr bri_ptr);
+
+void Brightness_change(Brightness_setting_ptr bri_ptr, uint8_t bri_num);
 
 void Display_Timer_Init(Display_Timer_ptr Timer_ptr);
 
 void Display_Timer_count(Display_Timer_ptr Timer_ptr);
 
-void wakeup_screen(Brigthtness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr);
+void Display_Timer_change(Display_Timer_ptr Timer_ptr, uint8_t Tim_num);
+
+void wakeup_screen(Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr);
+
+void input_window_init(jgfx_menu_ptr menu_ptr);
+
+void draw_info(jgfx_add_channel_status_t status);
 
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
@@ -198,6 +250,8 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
 static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 
 static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, uint8_t num);
+
+static void submenu_items_refresh(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 
 static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 

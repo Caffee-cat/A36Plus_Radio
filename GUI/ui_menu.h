@@ -13,7 +13,14 @@ void ui_menu_destory(void);
 void ui_menu_event_cb(void);
 
 void Step_callback();
-void Brightness_callback();
+
+void Brightness_callback_v1();
+
+void Brightness_callback_v2();
+
+void create_channel_callback();
+
+void all_channel_callback();
 
 void Timer_callback();
 

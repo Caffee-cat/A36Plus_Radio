@@ -4,15 +4,12 @@ ui_page_t ui_main;
 extern ui_stack_t ui_stack;
 extern ui_page_t ui_menu;
 ui_main_channel_t jgfx_channel;
+extern Display_Timer_t Display_Timer;
+extern Brightness_setting_t Display_brightness;
 
 uint8_t tmp[100];
 uint8_t input_state = 0;
 
-uint32_t ch1 = 430000;
-uint32_t ch2 = 439460;
-uint32_t ch_bak = 0;
-uint32_t *cur_ch = &ch1;
-// uint8_t step = 1;
 uint8_t input_num = 0;
 bool confirm = 0;
 
@@ -26,7 +23,7 @@ void ui_main_initial(void)
 
 static void draw_main(void)
 {
-    if (cur_ch == &ch1)
+    if (jgfx_channel.cur_channel == &jgfx_channel.channel_1)
     {
         jgfx_set_color_hex(JGFXF_COLOR_BLACK);
         jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
@@ -34,7 +31,7 @@ static void draw_main(void)
         jgfx_draw_img_byaddr(DISPLAY_W, DISPLAY_H / 10 + 5, 31, 10, FLASH_ICON_MAIN_ADDR);
         jgfx_channel.channel = 1;
     }
-    else if (cur_ch == &ch2)
+    else if (jgfx_channel.cur_channel == &jgfx_channel.channel_2)
     {
         jgfx_set_color_hex(JGFXF_COLOR_BLACK);
         jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
@@ -59,14 +56,14 @@ static void draw_channel(void)
     jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
 
     // Determine the number of digits to draw MHZ differently
-    if (ch1 / (1000 * 1000) == 1)
+    if (jgfx_channel.channel_1 / (1000 * 1000) == 1)
     {
-        sprintf(tmp, "%04d", ch1 / 1000);
+        sprintf(tmp, "%04d", jgfx_channel.channel_1 / 1000);
         jgfx_draw_text_en(32 + 3, DISPLAY_H / 10 + 20, tmp);
     }
     else
     {
-        sprintf(tmp, "%03d", ch1 / 1000);
+        sprintf(tmp, "%03d", jgfx_channel.channel_1 / 1000);
         jgfx_draw_text_en(32 + 3 + 16, DISPLAY_H / 10 + 20, tmp);
     }
 
@@ -76,21 +73,21 @@ static void draw_channel(void)
 
     // draw khz
     jgfx_set_font(JGFX_FONT_EN_16X32);
-    sprintf(tmp, "%03d", ch1 % 1000);
+    sprintf(tmp, "%03d", jgfx_channel.channel_1 % 1000);
     jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 20, tmp);
 
     // draw channel B
     jgfx_set_font(JGFX_FONT_EN_16X32);
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
     jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
-    if (ch2 / (1000 * 1000) == 1)
+    if (jgfx_channel.channel_2 / (1000 * 1000) == 1)
     {
-        sprintf(tmp, "%04d", ch2 / 1000);
+        sprintf(tmp, "%04d", jgfx_channel.channel_2 / 1000);
         jgfx_draw_text_en(32 + 3, DISPLAY_H / 2 + 22, tmp);
     }
     else
     {
-        sprintf(tmp, "%03d", ch2 / 1000);
+        sprintf(tmp, "%03d", jgfx_channel.channel_2 / 1000);
         jgfx_draw_text_en(32 + 3 + 16, DISPLAY_H / 2 + 22, tmp);
     }
 
@@ -98,7 +95,7 @@ static void draw_channel(void)
     jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 2 + 22 + 13, ".");
 
     jgfx_set_font(JGFX_FONT_EN_16X32);
-    sprintf(tmp, "%03d", ch2 % 1000);
+    sprintf(tmp, "%03d", jgfx_channel.channel_2 % 1000);
     jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 2 + 22, tmp);
 
     draw_satus();
@@ -110,6 +107,7 @@ void ui_main_init(void)
 
 void ui_main_refresh(void)
 {
+
     // clear screen
     jgfx_set_color_hex(JGFXF_COLOR_BLACK);
     // Reset the background color to avoid background color draw error.
@@ -148,6 +146,9 @@ void ui_main_destory(void)
 
 void ui_main_event_cb(void)
 {
+    Display_Timer_count(&Display_Timer);
+
+    // detect whether in the input state and flicker the selected channel number
     if (input_state == 1)
     {
         jgfx_channel.flash_count_num1 -= 1;
@@ -162,13 +163,15 @@ void ui_main_event_cb(void)
             else
             {
                 jgfx_set_color_back_hex(0x0000);
-                jgfx_fill_react(32 + 3, cur_ch == &ch1 ? (jgfx_channel.block_height1 + 1) : (jgfx_channel.block_height2 + 5), 128, 26);
+                jgfx_fill_react(32 + 3, jgfx_channel.cur_channel == &jgfx_channel.channel_1 ? (jgfx_channel.block_height1 + 1) : (jgfx_channel.block_height2 + 5), 128, 26);
             }
         }
     }
+
     key_map_t key = key_get();
     if (key != KEY_MAP_NONE)
     {
+        wakeup_screen(&Display_brightness, &Display_Timer);
         if (key == KEY_MAP_1)
         {
             if (confirm == 1)
@@ -180,12 +183,12 @@ void ui_main_event_cb(void)
             else if (input_state == 1)
             {
                 input_state = 0;
-                if (*cur_ch == 0)
-                    *cur_ch = ch_bak;
+                if (*jgfx_channel.cur_channel == 0)
+                    *jgfx_channel.cur_channel = jgfx_channel.ch_bak;
                 else
                 {
-                    while (!(*cur_ch / (100 * 1000)))
-                        *cur_ch *= 10;
+                    while (!(*jgfx_channel.cur_channel / (100 * 1000)))
+                        *jgfx_channel.cur_channel *= 10;
                 }
                 draw_channel();
             }
@@ -201,50 +204,55 @@ void ui_main_event_cb(void)
         }
         else if (key == KEY_MAP_2)
         {
-            if (*cur_ch < 999999)
-                *cur_ch += jgfx_channel.step;
+            if (*jgfx_channel.cur_channel < 1300000)
+                *jgfx_channel.cur_channel += jgfx_channel.step;
             draw_channel();
 
-            printf("%d\n",*cur_ch);
-
+            printf("%d\n", *jgfx_channel.cur_channel);
         }
         else if (key == KEY_MAP_3)
         {
-            if (*cur_ch > 100000)
-                *cur_ch -= jgfx_channel.step;
+            if (*jgfx_channel.cur_channel > 100000)
+                *jgfx_channel.cur_channel -= jgfx_channel.step;
             draw_channel();
 
-            printf("%d\n",*cur_ch);
-            
+            printf("%d\n", *jgfx_channel.cur_channel);
         }
         else if (key == KEY_MAP_8)
         {
             if (input_state == 1)
             {
-                *cur_ch = ch_bak;
+                *jgfx_channel.cur_channel = jgfx_channel.ch_bak;
                 input_state = 0;
                 confirm = 0;
                 main_channel_init(&jgfx_channel);
                 draw_channel();
             }
-            if (cur_ch == &ch1)
-                cur_ch = &ch2;
-            else if (cur_ch == &ch2)
-                cur_ch = &ch1;
+            if (jgfx_channel.cur_channel == &jgfx_channel.channel_1)
+                jgfx_channel.cur_channel = &jgfx_channel.channel_2;
+            else if (jgfx_channel.cur_channel == &jgfx_channel.channel_2)
+                jgfx_channel.cur_channel = &jgfx_channel.channel_1;
             draw_main();
         }
         else if (key == 4)
         {
             if (input_state == 1)
             {
-                *cur_ch /= 10;
-                if (*cur_ch == 0)
+                *jgfx_channel.cur_channel /= 10;
+                if (*jgfx_channel.cur_channel == 0)
                 {
                     input_state = 0;
-                    *cur_ch = ch_bak;
+                    *jgfx_channel.cur_channel = jgfx_channel.ch_bak;
                 }
             }
             draw_channel();
+        }
+        else if (key == 18)
+        {
+            bk4819_tx_on();
+            while (key_get() != 0)
+                ;
+            bk4819_tx_off();
         }
         else if (key != KEY_MAP_16)
         {
@@ -252,27 +260,27 @@ void ui_main_event_cb(void)
             if (input_state == 0)
             {
                 jgfx_set_color_back_hex(0x0000);
-                jgfx_fill_react(32 + 3, cur_ch == &ch1 ? (jgfx_channel.block_height1 + 1) : (jgfx_channel.block_height2 + 5), 128, 26);
+                jgfx_fill_react(32 + 3, jgfx_channel.cur_channel == &jgfx_channel.channel_1 ? (jgfx_channel.block_height1 + 1) : (jgfx_channel.block_height2 + 5), 128, 26);
                 input_state = 1;
-                ch_bak = *cur_ch;
-                *cur_ch = KEY_GET_NUM(key);
+                jgfx_channel.ch_bak = *jgfx_channel.cur_channel;
+                *jgfx_channel.cur_channel = KEY_GET_NUM(key);
             }
             else
             {
-                *cur_ch = *cur_ch * 10 + KEY_GET_NUM(key);
-                if (*cur_ch >= (200 * 1000))
+                *jgfx_channel.cur_channel = *jgfx_channel.cur_channel * 10 + KEY_GET_NUM(key);
+                if (*jgfx_channel.cur_channel >= (200 * 1000))
                 {
                     input_state = 0;
                     confirm = 0;
                 }
-                else if (*cur_ch > 100 * 1000)
+                else if (*jgfx_channel.cur_channel > 100 * 1000)
                 {
                     // input_state = 0;
                     confirm = 1;
                 }
-                if (*cur_ch > (1300 * 1000))
+                if (*jgfx_channel.cur_channel > (1300 * 1000))
                 {
-                    *cur_ch = ch_bak;
+                    *jgfx_channel.cur_channel = jgfx_channel.ch_bak;
                     input_state = 0;
                 }
             }
