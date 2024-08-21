@@ -28,14 +28,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  *
  */
-// ********************************************************************************
+
+
 #include "jgfx.h"
 
 static jgfx_ptr jgfx;
+extern uint8_t font8x16[][16];
+
+static void use_font_8x16_for_temp(uint16_t offset, uint8_t *readData, uint32_t num)
+{
+    for (uint16_t i = 0; i < num; i++)
+        readData[i] = font8x16[offset][i];
+}
 
 void jgfx_init(uint16_t buf1_size, uint16_t buf2_size)
 {
     jgfx = (jgfx_t *)malloc(sizeof(jgfx_t));
+    memset(jgfx, 0, sizeof(jgfx_t));
+
     if (jgfx == NULL)
         return;
 
@@ -313,6 +323,11 @@ void jgfx_draw_text_en(uint16_t x, uint16_t y, uint8_t *str)
 
         offset = *str - jgfx->font.index;
         w25q16jv_read_num(jgfx->font.addr + offset * jgfx->font.size, jgfx->font_data, jgfx->font.size);
+
+        if (jgfx->font.addr == FLASH_FONT_EN_8X16_ADDR)
+        {
+            use_font_8x16_for_temp(offset + jgfx->font.index, jgfx->font_data, jgfx->font.size);
+        }
 
         for (uint16_t i = 0; i < font_height * font_width; i++)
         {
