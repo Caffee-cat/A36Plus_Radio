@@ -8,6 +8,7 @@ typedef struct jgfx_menu_t *jgfx_menu_ptr;
 typedef struct submenu_item_t *submenu_item_ptr;
 typedef struct corner_index_num_t *corner_index_num_ptr;
 typedef void (*jgfx_menu_item_event_cb)(jgfx_menu_ptr);
+typedef struct sub_channel_t *sub_channel_ptr;
 typedef struct ui_main_channel_t *ui_main_channel_ptr;
 typedef struct Display_Timer_t *Display_Timer_ptr;
 typedef struct Brightness_setting_t *Brightness_setting_ptr;
@@ -49,10 +50,17 @@ typedef enum
 
 typedef enum
 {
-    ADD_CHANNEL_CANCEL = 0x00,
-    ADD_CHANNEL_SUCCESS,
-    ADD_CHANNEL_ERROR
+    ADD_OFFSET_CANCEL = 0x00,
+    ADD_OFFSET_SUCCESS,
+    ADD_OFFSET_ERROR
 } jgfx_add_channel_status_t;
+
+typedef enum
+{
+    ONOE_CHANNEL_SPEAKING = 0x00,
+    CHANNAL_A_SPEAKING,
+    CHANNEL_B_SPEAKING
+} main_channel_speak_t;
 
 typedef struct jgfx_menu_item_t
 {
@@ -97,6 +105,8 @@ typedef struct jgfx_menu_t
     uint8_t item_show_num;
     uint8_t page;
     uint8_t Initial_flag;
+    bool menu_draw_complete;
+    bool sys_start;
     jgfx_menu_status_t status;
 
     jgfx_menu_item_ptr head_item;
@@ -123,22 +133,29 @@ typedef struct corner_index_num_t
     void (*refresh)(void);
 } corner_index_num_t;
 
+typedef struct sub_channel_t
+{
+    uint32_t frequency;
+    uint16_t Tx_CTCSS;
+    uint16_t Rx_CTCSS;
+    uint16_t Tx_CDCSS;
+    uint16_t Rx_CDCSS;
+    uint16_t offset;
+} sub_channel_t;
+
 typedef struct ui_main_channel_t
 {
 
-    uint32_t channel_1;
-    uint32_t channel_2;
-    uint16_t Tx_CTCSS1;
-    uint16_t Tx_CTCSS2;
-    uint16_t Rx_CTCSS1;
-    uint16_t Rx_CTCSS2;
-    
+    sub_channel_t channel_1;
+    sub_channel_t channel_2;
+
+    // for main channel input logic
     uint32_t ch_bak;
-    uint32_t *cur_channel;
+    sub_channel_t *cur_channel;
 
     uint8_t cur_index;
-    uint32_t *ch_pra;
-    uint32_t *ch_val;
+    const uint32_t *ch_pra;
+    const uint32_t *ch_val;
 
     uint8_t block_height1;
     uint8_t block_height2;
@@ -148,14 +165,15 @@ typedef struct ui_main_channel_t
     uint16_t flash_count_num2;
     uint16_t step;
     bool channel; // 1:A,0:B
+    bool dual_channel; // 1:A,0:B
     bool Initial_flag;
 } ui_main_channel_t;
 
 typedef struct Brightness_setting_t
 {
     uint8_t cur_bri;   // as a parameter for submenu index
-    uint32_t *bri_pra; // point to the configurable parameters
-    uint32_t *bri_val; // point to the current brightness setting
+    const uint32_t *bri_pra; // point to the configurable parameters
+    const uint32_t *bri_val; // point to the current brightness setting
 } Brightness_setting_t;
 
 typedef struct Display_Timer_t
@@ -167,8 +185,8 @@ typedef struct Display_Timer_t
     uint8_t screen_off;
     bool Timer_init_flag;
 
-    uint16_t *Tim_pra;
-    uint16_t *Tim_val;
+    const uint16_t *Tim_pra;
+    const uint16_t *Tim_val;
 } Display_Timer_t;
 
 void jgfx_menu_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr main_channel);
@@ -213,11 +231,21 @@ void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_pt
 
 uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key);
 
+void sub_channel_init(sub_channel_ptr sub_ch);
+
 void main_channel_init(ui_main_channel_ptr channel_ptr);
 
 void jgfx_channel_change(ui_main_channel_ptr channel_ptr, jgfx_channel_step_t step);
 
+void main_channel_speaking(ui_main_channel_ptr channel_ptr);
+
+main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr);
+
+void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t status);
+
 void channel_CTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t prarm);
+
+void channel_CDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 void return_to_menu(jgfx_menu_ptr menu_ptr);
 
@@ -233,7 +261,11 @@ void Display_Timer_change(Display_Timer_ptr Timer_ptr, uint8_t Tim_num);
 
 void wakeup_screen(Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr);
 
-void input_window_init(jgfx_menu_ptr menu_ptr);
+void input_window_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr);
+
+void offset_setting(ui_main_channel_ptr channel_ptr);
+
+void channel_offset_draw(uint32_t input_channel);
 
 void draw_info(jgfx_add_channel_status_t status);
 

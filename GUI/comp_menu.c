@@ -30,10 +30,11 @@
 
 #include "comp_menu.h"
 
-uint32_t main_channel_step[] = {10, 15, 20, 25, 30, 35, 40, 45};
-uint32_t brightness_param[] = {5, 20, 100, 200, 500};
-uint16_t Display_Timer_param[] = {10, 30, 60, 120};
-uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
+const uint32_t main_channel_step[] = {10, 15, 20, 25, 30, 35, 40, 45};
+const uint32_t brightness_param[] = {5, 20, 100, 200, 500};
+const uint16_t Display_Timer_param[] = {10, 30, 60, 120};
+const uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
+extern uint8_t channel_A[];
 
 /**
  * @brief Init menu
@@ -54,6 +55,7 @@ void jgfx_menu_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr main_channel)
     menu_ptr->Initial_flag = 1;
     menu_ptr->page = 0;
     menu_ptr->channel_ptr = main_channel;
+    menu_ptr->menu_draw_complete = FALSE;
 }
 
 /**
@@ -135,6 +137,7 @@ void jgfx_menu_append_text(jgfx_menu_ptr menu_ptr, uint8_t *str, jgfx_menu_item_
 void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
 {
 
+    menu_ptr->menu_draw_complete = TRUE;
     /** Init item selected */
     menu_ptr->item_show_num = (menu_ptr->menu_height - (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0)) / (menu_ptr->menu_item_height + menu_ptr->menu_divide_height);
     menu_ptr->cur_item = menu_ptr->head_item;
@@ -154,8 +157,11 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
         // printf("%d",menu_ptr->channel_ptr->channel == 1?(FLASH_ICON_CHANNELA_ADDR) : (FLASH_ICON_CHANNELB_ADDR));
         // delay_1ms(1);
         uint32_t addr = menu_ptr->channel_ptr->channel == 1 ? (FLASH_ICON_CHANNELA_ADDR) : (FLASH_ICON_CHANNELB_ADDR);
+#ifdef USE_FONT_LOADED_IN_MCU
+        jgfx_draw_img(32 + 5, 5, 10, 10, channel_A);
+#elif
         jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, addr);
-        // jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, FLASH_ICON_CHANNELA_ADDR);
+#endif
     }
 
     /** Draw items */
@@ -394,7 +400,7 @@ void index_num_display(jgfx_menu_ptr menu_ptr)
     jgfx_fill_react(130, 5, 16, 16);
     jgfx_set_color_hex(0xFFFF);
     jgfx_set_color_back_hex(0x0000);
-    jgfx_set_font(JGFX_FONT_EN_8X16_BLOD);
+    jgfx_set_font(JGFX_FONT_EN_8X16);
     int i = 0;
     char count_num_str[3];
     snprintf(count_num_str, sizeof(count_num_str), "%02d", menu_ptr->cur_item->item_id + 1);
@@ -433,7 +439,7 @@ void corner_index_refresh(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_pt
         corner_ptr->index_jump_count1--;
         if (corner_ptr->index_jump_count1 == 0 && corner_ptr->index_jump_count2 != 0)
         {
-            corner_ptr->index_jump_count1 == 65535;
+            corner_ptr->index_jump_count1 = 30;
             corner_ptr->index_jump_count2--;
             if (corner_ptr->index_jump_count2 % 2 != 0)
             {
@@ -484,7 +490,7 @@ uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, ui
     // Give a value to index_num1 when the first time trigger this func.
     if (corner_ptr->index_jump_count1 == 0 && corner_ptr->index_jump_count2 == 0)
     {
-        corner_ptr->index_jump_count1 = 30000;
+        corner_ptr->index_jump_count1 = 30;
         corner_ptr->index_jump_count2 = 6;
         corner_ptr->index_num1 = key;
         // Check whether the flicker can be triggered
@@ -502,7 +508,7 @@ uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, ui
         // check whether the combination value out of zone
         if (corner_ptr->index_num1 * 10 + corner_ptr->index_num2 > menu_ptr->item_size)
         {
-            corner_ptr->index_jump_count1 = 30000;
+            corner_ptr->index_jump_count1 = 30;
             corner_ptr->index_jump_count2 = 6;
             corner_ptr->index_num1 = key;
             corner_ptr->index_num2 = 0;
@@ -519,6 +525,15 @@ uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, ui
     }
 }
 
+void sub_channel_init(sub_channel_ptr sub_ch)
+{
+    sub_ch->offset = 0;
+    sub_ch->Rx_CTCSS = 0;
+    sub_ch->Tx_CTCSS = 0;
+    sub_ch->Rx_CDCSS = 0;
+    sub_ch->Tx_CDCSS = 0;
+}
+
 void main_channel_init(ui_main_channel_ptr channel_ptr)
 {
     if (channel_ptr->Initial_flag == TRUE)
@@ -528,13 +543,17 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->flash_count_num1 = 0;
     channel_ptr->flash_count_num2 = 0;
 
-    channel_ptr->channel_1 = 430000;
-    channel_ptr->channel_2 = 439460;
+    sub_channel_init(&channel_ptr->channel_1);
+    sub_channel_init(&channel_ptr->channel_2);
+    channel_ptr->channel_1.frequency = 430250;
+    channel_ptr->channel_2.frequency = 439460;
     channel_ptr->ch_bak = 0;
-    bk4819_set_freq(43000000);
+    channel_ptr->dual_channel = TRUE;
+    bk4819_set_freq(channel_ptr->channel_1.frequency * 100);
 
     // Point to channel 1 for initial setup
     channel_ptr->cur_channel = &channel_ptr->channel_1;
+    printf("main channel initialization finished! Current channel's freqency equal %x", channel_ptr->cur_channel->frequency);
 
     channel_ptr->channel = (channel_ptr->cur_channel == &channel_ptr->channel_1 ? TRUE : FALSE);
     channel_ptr->step = 10; // 10.0KHZ
@@ -543,12 +562,116 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->ch_val = channel_ptr->ch_pra;
 }
 
+/**
+ * @brief main channel change
+ *
+ * @param channel_ptr channel pointer
+ * @param step stepped frequency
+ */
 void jgfx_channel_change(ui_main_channel_ptr channel_ptr, jgfx_channel_step_t step)
 {
     if (step == MAIN_CHANNEL_NONE)
         return;
     channel_ptr->cur_index = step;
     channel_ptr->step = channel_ptr->ch_pra[step - 1];
+}
+
+/**
+ * @brief draw frames when PTT press in main interface
+ *
+ */
+void main_channel_speaking(ui_main_channel_ptr channel_ptr)
+{
+    if (channel_ptr->channel == 1)
+    {
+        // jgfx_draw_line(32, DISPLAY_H / 2 + 10, DISPLAY_W + 32, DISPLAY_W / 2 + 10);
+        jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+        jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
+        jgfx_fill_react(32, DISPLAY_H / 2 + 11, DISPLAY_W, DISPLAY_H / 2);
+        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+        jgfx_draw_text_en(76, DISPLAY_H / 2 + 33, "A  TX");
+    }
+    else
+    {
+        jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+        jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
+        jgfx_fill_react(32, 10, DISPLAY_W, DISPLAY_H / 2);
+        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+        jgfx_draw_text_en(76, DISPLAY_H / 2 - 23, "B  RX");
+    }
+}
+
+/**
+ * @brief Dual Band in main interface
+ *
+ * @param channel_ptr channel pointer
+ * @return uint8_t 1: Detect successd,refresh main interface; 0 :Detect failed,doing nothing
+ */
+main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
+{
+    uint16_t RSSI;
+    if (channel_ptr->dual_channel)
+    {
+        channel_ptr->dual_channel = FALSE;
+        bk4819_set_freq(channel_ptr->channel_1.frequency * 100);
+        bk4819_rx_on();
+        RSSI = bk4819_read_reg(BK4819_REG_67);
+        if (RSSI > 0x42)
+            return CHANNAL_A_SPEAKING;
+    }
+    else if (!channel_ptr->dual_channel)
+    {
+        channel_ptr->dual_channel = TRUE;
+        bk4819_set_freq(channel_ptr->channel_2.frequency * 100);
+        bk4819_rx_on();
+        RSSI = bk4819_read_reg(BK4819_REG_67);
+        if (RSSI > 0x42)
+            return CHANNEL_B_SPEAKING;
+    }
+
+    bk4819_set_freq(channel_ptr->cur_channel->frequency * 100);
+    return 0;
+}
+
+/**
+ * @brief draw frame in main interface after detect a preset channel speaking
+ *
+ * @param channel_ptr channel pointer
+ * @param status the speaking channel
+ */
+void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t status)
+{
+    if (status == ONOE_CHANNEL_SPEAKING)
+    {
+        bk4819_set_freq(channel_ptr->cur_channel->frequency * 100);
+        return;
+    }
+    // turn on sound
+    uint16_t reg = bk4819_read_reg(BK4819_REG_30);
+    bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
+
+    jgfx_set_color_hex(JGFXF_COLOR_BLACK);
+    jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
+    if (status == CHANNAL_A_SPEAKING)
+    {
+        jgfx_fill_react(32, DISPLAY_H / 2 + 11, DISPLAY_W, DISPLAY_H / 2);
+        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+        jgfx_draw_text_en(76, DISPLAY_H / 2 + 33, "A  RX");
+    }
+    else if (status == CHANNEL_B_SPEAKING)
+    {
+        jgfx_fill_react(32, 10, DISPLAY_W, DISPLAY_H / 2);
+        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+        jgfx_draw_text_en(76, DISPLAY_H / 2 - 23, "B  RX");
+    }
+    while (1)
+    {
+        if (bk4819_read_reg(BK4819_REG_67) < 0x42)
+            break;
+    }
+    bk4819_write_reg(BK4819_REG_30, reg | ~(BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE));
+    // bk4819_rx_off();
+    bk4819_set_freq(channel_ptr->cur_channel->frequency * 100);
 }
 
 void menu_draw_rightside(uint8_t *string)
@@ -662,28 +785,114 @@ void wakeup_screen(Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Time
  *
  * @param menu_ptr
  */
-void input_window_init(jgfx_menu_ptr menu_ptr)
+void input_window_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
 {
+    uint8_t str[20];
     _r_clear_item_area(menu_ptr);
-
     jgfx_set_font(JGFX_FONT_EN_16X32);
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
     jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
 
-    jgfx_draw_text_en(32 + 3, DISPLAY_H / 10 + 25, "----");
+    sprintf(str, "%04d", channel_ptr->cur_channel->offset / 1000);
+    jgfx_draw_text_en(32 + 3, DISPLAY_H / 10 + 25, str);
     jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 10 + 25 + 13, ".");
-    jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 25, "---");
+    sprintf(str, "%03d", channel_ptr->cur_channel->offset % 1000);
+    jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 25, str);
 }
 
-void create_channel_draw(uint32_t input_channel)
+/**
+ * @brief set subchannel offset
+ *
+ * @param channel_ptr channel pointer
+ */
+void offset_setting(ui_main_channel_ptr channel_ptr)
+{
+    uint32_t input_channel = 0;
+    while (1)
+    {
+        key_map_t key = key_get();
+        if (key != KEY_MAP_NONE)
+        {
+            if (key == 1)
+            {
+                // input_state = 0;
+                if (input_channel == 0)
+                {
+
+                    break;
+                }
+                else
+                {
+                    while (!(input_channel / (1000)))
+                        input_channel *= 10;
+                    channel_offset_draw(input_channel);
+                    delay_1ms(1); // as a timer for confirm setting
+                    channel_ptr->cur_channel->offset = input_channel;
+                    break;
+
+                    // draw input success
+                }
+                while (key_get() != KEY_MAP_NONE)
+                    ;
+            }
+            else if (key == 4)
+            {
+                if (input_channel != 0)
+                {
+                    input_channel /= 10;
+                    channel_offset_draw(input_channel);
+                }
+                else
+                {
+                    // draw input cancel
+                    draw_info(ADD_OFFSET_CANCEL);
+                    break;
+                }
+                while (key_get() != KEY_MAP_NONE)
+                    ;
+            }
+            // detect number key press
+            else if (key != 2 && key != 3 && key != 8 && key != 16)
+            {
+                input_channel = input_channel * 10 + KEY_GET_NUM(key);
+                if (input_channel > (1300 * 1000))
+                {
+                    input_channel = 0;
+                    draw_info(ADD_OFFSET_ERROR);
+                    // draw input error
+                    // input_state = 0;
+                }
+                channel_offset_draw(input_channel);
+                if (input_channel >= 200 * 1000)
+                {
+                    // input_state = FALSE;
+                    // draw input success
+                    break;
+                }
+                while (key_get() != KEY_MAP_NONE)
+                    ;
+            }
+        }
+        delay_1us(100);
+    }
+}
+
+/**
+ * @brief initialize the offset input window
+ *
+ * @param input_channel
+ */
+void channel_offset_draw(uint32_t input_channel)
 {
     uint8_t input_window[8];
+
     // jgfx_draw_text_en(32 + 3, DISPLAY_H / 10 + 25, "----");
     // jgfx_draw_text_en(32 + 3 + 3 * 16 + 14, DISPLAY_H / 10 + 25 + 13, ".");
     // jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 25, "---");
     jgfx_set_font(JGFX_FONT_EN_16X32);
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
     jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+    jgfx_fill_react(35, DISPLAY_H / 10 + 23, DISPLAY_W - 5, 34);
 
     sprintf(input_window, "%03d", input_channel / 1000);
     jgfx_draw_text_en(32 + 3 + 16, DISPLAY_H / 10 + 25, input_window);
@@ -698,17 +907,31 @@ void create_channel_draw(uint32_t input_channel)
     jgfx_draw_text_en(32 + 3 + 4 * 16 + 5, DISPLAY_H / 10 + 25, input_window);
 }
 
+/**
+ * @brief Pop-up information box just for offset input temporarily
+ *
+ * @param status offset input status
+ */
 void draw_info(jgfx_add_channel_status_t status)
 {
     jgfx_set_font(JGFX_FONT_EN_8X16);
-    if (status == ADD_CHANNEL_CANCEL)
+    if (status == ADD_OFFSET_CANCEL)
     {
         jgfx_set_color_hex(JGFXF_COLOR_CYAN);
         jgfx_set_color_back_hex(JGFXF_COLOR_YELLOW);
-        jgfx_draw_text_en(32 + 8, DISPLAY_H - 35, "  Add cancel  ");
+        jgfx_draw_text_en(32 + 8, DISPLAY_H - 35, "  Set cancel  ");
+        delay_1ms(2);
     }
-
-    delay_1ms(10);
+    if (status == ADD_OFFSET_ERROR)
+    {
+        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+        jgfx_set_color_back_hex(JGFXF_COLOR_RED);
+        jgfx_draw_text_en(32 + 8, DISPLAY_H - 35, " Offset error ");
+        delay_1ms(1);
+        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+        jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+        jgfx_fill_react(32 + 7, DISPLAY_H - 34, 14 * 8, 18);
+    }
 }
 
 /**
@@ -720,10 +943,18 @@ void draw_info(jgfx_add_channel_status_t status)
 void channel_CTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param)
 {
     if (param - 1 != 0)
+    {
         bk4819_CTDCSS_enable(1);
-    else
-        bk4819_CTDCSS_disable();
+    }
+    // else
+    // {
+    //     bk4819_CTDCSS_disable();
+    // }
     bk4819_CTDCSS_set(0, CTCSS_param[param - 1]);
+}
+
+void channel_CDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param)
+{
 }
 
 /**
@@ -989,7 +1220,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
             {
                 while (key_get() != KEY_MAP_NONE)
                     ;
-                delay_1us(10);
+                delay_1us(100);
                 return submenu_ptr->cur_item;
             }
             else if (key == 2 && submenu_ptr->cur_item != 1)
@@ -1013,7 +1244,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
                 }
                 while (key_get() != KEY_MAP_NONE)
                     ;
-                delay_1us(10);
+                delay_1us(100);
             }
             else if (key == 3 && submenu_ptr->cur_item != submenu_ptr->itemlist_num)
             {
@@ -1037,7 +1268,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
                 }
                 while (key_get() != KEY_MAP_NONE)
                     ;
-                delay_1us(10);
+                delay_1us(100);
             }
             else if (key == 4)
             {
@@ -1045,7 +1276,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
                 menu_ptr->status = JGFX_MENU_STATUS_SELECTED;
                 while (key_get() != KEY_MAP_NONE)
                     ;
-                delay_1us(10);
+                delay_1us(100);
                 return 0;
                 // break;
             }
