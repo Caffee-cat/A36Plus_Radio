@@ -3,7 +3,7 @@
 #include "main.h"
 #include "stdlib.h"
 #include "st7735s.h"
-#include "Font_8x16.h"
+#include "Font.h"
 
 #define RGB565_TO_RGB666(rgb565) \
     ((((rgb565 >> 11) & 0x1F) << 18) | (((rgb565 >> 5) & 0x3F) << 12) | ((rgb565 & 0x1F) << 6))

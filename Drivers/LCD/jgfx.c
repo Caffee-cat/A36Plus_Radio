@@ -29,17 +29,34 @@ SOFTWARE.
  *
  */
 
-
 #include "jgfx.h"
 
-static jgfx_ptr jgfx;
+#ifdef USE_FONT_LOADED_IN_MCU
 extern uint8_t font8x16[][16];
+extern uint8_t font8x16_song[];
+extern uint8_t font_16x32_song[];
 
-static void use_font_8x16_for_temp(uint16_t offset, uint8_t *readData, uint32_t num)
+static void font_8x16_for_temp(uint16_t offset, uint8_t *readData, uint32_t num)
 {
     for (uint16_t i = 0; i < num; i++)
         readData[i] = font8x16[offset][i];
 }
+
+static void font_8x16_song(uint16_t offset, uint8_t *readData, uint32_t num)
+{
+    for (uint16_t i = 0; i < num; i++)
+        readData[i] = font8x16_song[offset * 16 + i];
+}
+
+static void font_16x32_blodface(uint16_t offset, uint8_t *readData, uint32_t num)
+{
+    for (uint16_t i = 0; i < num; i++)
+        readData[i] = font_16x32_song[offset * 64 + i];
+}
+
+#endif
+
+static jgfx_ptr jgfx;
 
 void jgfx_init(uint16_t buf1_size, uint16_t buf2_size)
 {
@@ -322,18 +339,32 @@ void jgfx_draw_text_en(uint16_t x, uint16_t y, uint8_t *str)
         st7735s_set_window(x, x + font_width - 1, y, y + font_height - 1);
 
         offset = *str - jgfx->font.index;
-        w25q16jv_read_num(jgfx->font.addr + offset * jgfx->font.size, jgfx->font_data, jgfx->font.size);
 
+#ifdef USE_FONT_LOADED_IN_MCU
+
+        // replace font_data with font loaded in MCU temporarily
         if (jgfx->font.addr == FLASH_FONT_EN_8X16_ADDR)
         {
-            use_font_8x16_for_temp(offset + jgfx->font.index, jgfx->font_data, jgfx->font.size);
+            font_8x16_song(offset, jgfx->font_data, jgfx->font.size);
         }
+        else if (jgfx->font.addr == FLASH_FONT_EN_8X16_BLOD_ADDR)
+        {
+            font_8x16_for_temp(offset + jgfx->font.index, jgfx->font_data, jgfx->font.size);
+        }
+        else if (jgfx->font.addr == FLASH_FONT_EN_16x32_ADDR)
+        {
+            font_16x32_blodface(offset, jgfx->font_data, jgfx->font.size);
+        }
+#else
+        w25q16jv_read_num(jgfx->font.addr + offset * jgfx->font.size, jgfx->font_data, jgfx->font.size);
+#endif
 
         for (uint16_t i = 0; i < font_height * font_width; i++)
         {
             if (i % 8 == 0)
             {
                 temp = jgfx->font_data[j++];
+
                 k = 0;
             }
 
