@@ -31,6 +31,51 @@ SOFTWARE.
 
 #include "bk4819.h"
 
+typedef enum
+{
+	CODE_TYPE_OFF = 0x00,
+	CODE_TYPE_CONTINUOUS_TONE,
+	CODE_TYPE_DIGITAL,
+	CODE_TYPE_REVERSE_DIGITAL
+}DCS_CodeType_t;
+
+const uint16_t DCS_Options[104] = {
+	0x0013, 0x0015, 0x0016, 0x0019, 0x001A, 0x001E, 0x0023, 0x0027,
+	0x0029, 0x002B, 0x002C, 0x0035, 0x0039, 0x003A, 0x003B, 0x003C,
+	0x004C, 0x004D, 0x004E, 0x0052, 0x0055, 0x0059, 0x005A, 0x005C,
+	0x0063, 0x0065, 0x006A, 0x006D, 0x006E, 0x0072, 0x0075, 0x007A,
+	0x007C, 0x0085, 0x008A, 0x0093, 0x0095, 0x0096, 0x00A3, 0x00A4,
+	0x00A5, 0x00A6, 0x00A9, 0x00AA, 0x00AD, 0x00B1, 0x00B3, 0x00B5,
+	0x00B6, 0x00B9, 0x00BC, 0x00C6, 0x00C9, 0x00CD, 0x00D5, 0x00D9,
+	0x00DA, 0x00E3, 0x00E6, 0x00E9, 0x00EE, 0x00F4, 0x00F5, 0x00F9,
+	0x0109, 0x010A, 0x010B, 0x0113, 0x0119, 0x011A, 0x0125, 0x0126,
+	0x012A, 0x012C, 0x012D, 0x0132, 0x0134, 0x0135, 0x0136, 0x0143,
+	0x0146, 0x014E, 0x0153, 0x0156, 0x015A, 0x0166, 0x0175, 0x0186,
+	0x018A, 0x0194, 0x0197, 0x0199, 0x019A, 0x01AC, 0x01B2, 0x01B4,
+	0x01C3, 0x01CA, 0x01D3, 0x01D9, 0x01DA, 0x01DC, 0x01E3, 0x01EC,
+};
+
+static uint32_t DCS_CalculateGolay(uint32_t CodeWord)
+{
+	unsigned int i;
+	uint32_t Word = CodeWord;
+	for (i = 0; i < 12; i++)
+	{
+		Word <<= 1;
+		if (Word & 0x1000)
+			Word ^= 0x08EA;
+	}
+	return CodeWord | ((Word & 0x0FFE) << 11);
+}
+
+uint32_t DCS_GetGolayCodeWord(DCS_CodeType_t CodeType, uint8_t Option)
+{
+	uint32_t Code = DCS_CalculateGolay(DCS_Options[Option] + 0x800U);
+	if (CodeType == CODE_TYPE_REVERSE_DIGITAL)
+		Code ^= 0x7FFFFF;
+	return Code;
+}
+
 static void spi_write_byte(uint8_t data)
 {
     BK4819_SCK_LOW;
@@ -154,23 +199,19 @@ void bk4819_init(void)
     bk4819_write_reg(BK4819_REG_29, 0xb4cb);                                          // Set Compress (AF Tx).
     bk4819_write_reg(BK4819_REG_40, bk4819_read_reg(BK4819_REG_40) & 0xf000 | 0x4d2); // RF Tx Deviation Tuning (Apply for both in-band signal andsub-audio signal).
     bk4819_write_reg(BK4819_REG_31, bk4819_read_reg(BK4819_REG_31) & 0xfffffff7);     // disEnable Compander Function.Remain VOX detection,Scramble Function as defalult(dlsable).
-    bk4819_set_freq(43000000);
 
-    // bk4819_CTDCSS_enable(1);
+    // bk4819_CTDCSS_enable(0);
+    // bk4819_CDCSS_set(1,0x19);
+    // bk4819_set_freq(43025000);
+
     // bk4819_CTDCSS_set(0, 719); // Set CTCSS to 71.9HZ
     bk4819_CTDCSS_set(0, 885); // Set CTCSS to 88.5HZ
-
     bk4819_CTDCSS_disable();
-    printf("BK4819_REG_30:%d\n", bk4819_read_reg(BK4819_REG_30));
-    // bk4819_rx_on();
     // bk4819_tx_on();
-    bk4819_tx_off();
-    // printf("BK4819_REG_30_SECOND_TIME:%d\n", bk4819_read_reg(BK4819_REG_30));
+    // bk4819_tx_off();
 
-    // close BK4819 temporaily
-    // bk4819_write_reg(BK4819_REG_00, 0x8000);
-    // bk4819_delay(1000);
-    // bk4819_write_reg(BK4819_REG_00, 0x00);
+    bk4819_rx_off();
+    // bk4819_rx_on();
 }
 
 static void bk4819_delay(uint32_t count)
@@ -206,18 +247,27 @@ void bk4819_set_freq(uint32_t freq)
  */
 void bk4819_rx_on(void)
 {
-    bk4819_write_reg(BK4819_REG_30, 0x00); // reset
+    gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+    bk4819_write_reg(BK4819_REG_37, 0x1d0f); // DSP voltage setting
+    bk4819_write_reg(BK4819_REG_30, 0x00);   // reset
 
     bk4819_write_reg(BK4819_REG_30,
                      BK4819_REG30_REVERSE2_ENABLE |
                          BK4819_REG30_REVERSE1_ENABLE |
                          BK4819_REG30_VCO_CALIBRATION |
                          BK4819_REG30_RX_LINK_ENABLE |
-                         BK4819_REG30_AF_DAC_ENABLE |
+                         // BK4819_REG30_AF_DAC_ENABLE |
                          BK4819_REG30_PLL_VCO_ENABLE |
-                         BK4819_REG30_MIC_ADC_ENABLE |
+                         // BK4819_REG30_MIC_ADC_ENABLE |
                          BK4819_REG30_PA_GAIN_ENABLE |
                          BK4819_REG30_RX_DSP_ENABLE);
+}
+
+void bk4819_rx_off(void)
+{
+    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+    bk4819_write_reg(BK4819_REG_30, 0);
+    // bk4819_write_reg(BK4819_REG_37, 0x1D00);
 }
 
 /**
@@ -227,7 +277,7 @@ void bk4819_rx_on(void)
 void bk4819_tx_on(void)
 {
     gpio_bit_reset(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN); // open microphone
-    bk4819_write_reg(BK4819_REG_37, 0x1d0f); // DSP voltage setting
+    bk4819_write_reg(BK4819_REG_37, 0x1d0f);           // DSP voltage setting
 
     bk4819_write_reg(BK4819_REG_30, 0x00); // reset
 
@@ -250,13 +300,13 @@ void bk4819_tx_off(void)
     gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
 
     bk4819_write_reg(BK4819_REG_30, 0);
-    bk4819_write_reg(BK4819_REG_37, 0x1D00);
+    // bk4819_write_reg(BK4819_REG_37, 0x1D00);
 }
 
 /**
  * @brief Set CTCSS/CDCSS
  *
- * @param sel 0:CTC1 1:CTC2 2:CSCSS
+ * @param sel 0:CTC1 1:CTC2 2:CDCSS
  * @param frequency frquency control word, frequency * 10 = TxCTCSS
  */
 void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
@@ -295,7 +345,11 @@ void bk4819_CTDCSS_enable(uint8_t sel)
     if (sel)
         reg |= BK4819_REG51_CTCSCSS_MODE_SEL;
     else
+    {
         reg &= ~BK4819_REG51_CTCSCSS_MODE_SEL;
+        reg &= ~BK4819_REG51_TRANSMIT_NEG_CDCSS_CODE;
+        reg &= ~BK4819_REG51_CDCSS_BIT_SEL;
+    }
     bk4819_write_reg(BK4819_REG_51, reg);
 }
 
@@ -315,6 +369,12 @@ void bk4819_CTDCSS_disable(void)
 void bk4819_CDCSS_set(uint8_t sel, uint16_t code)
 {
     bk4819_write_reg(BK4819_REG_08, (BK4819_REG_08, sel << 15) | code);
+}
+
+void bk4819_CDCSS_set_v2(uint32_t code)
+{
+    bk4819_write_reg(BK4819_REG_08, (0u << 15) | ((code >> 0) & 0x0FFF));  // LS 12-bits
+    bk4819_write_reg(BK4819_REG_08, (1u << 15) | ((code >> 12) & 0x0FFF)); // MS 12-bits
 }
 
 /**

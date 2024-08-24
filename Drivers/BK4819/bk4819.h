@@ -212,13 +212,19 @@ void bk4819_tx_on(void);
 
 void bk4819_tx_off(void);
 
+void bk4819_rx_off(void);
+
 void bk4819_CTDCSS_enable(uint8_t sel);
 
 void bk4819_CTDCSS_disable(void);
 
+void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency);
+
 void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC);
 
-void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency);
+void bk4819_CDCSS_set(uint8_t sel, uint16_t code);
+
+void bk4819_CDCSS_set_v2(uint32_t code);
 
 void bk4819_set_CTDCSS(uint8_t sel, uint16_t frequency);
 
