@@ -3,7 +3,11 @@
 #include "main.h"
 #include "stdlib.h"
 #include "st7735s.h"
+
+
+#ifdef USE_FONT_LOADED_IN_MCU
 #include "Font.h"
+#endif
 
 #define RGB565_TO_RGB666(rgb565) \
     ((((rgb565 >> 11) & 0x1F) << 18) | (((rgb565 >> 5) & 0x3F) << 12) | ((rgb565 & 0x1F) << 6))
@@ -128,6 +132,9 @@ typedef struct gfx
     // void (*send_command)(uint8_t);
     // void (*send_data)(uint8_t);
 } jgfx_t, *jgfx_ptr;
+
+static jgfx_ptr jgfx;
+
 
 void jgfx_test(void);
 void jgfx_init(uint16_t buf1_size, uint16_t buf2_size);             //  jgfx init

@@ -31,6 +31,8 @@ SOFTWARE.
 
 #include "jgfx.h"
 
+
+
 #ifdef USE_FONT_LOADED_IN_MCU
 extern uint8_t font8x16[][16];
 extern uint8_t font8x16_song[];
@@ -56,8 +58,6 @@ static void font_16x32_blodface(uint16_t offset, uint8_t *readData, uint32_t num
 
 #endif
 
-static jgfx_ptr jgfx;
-
 void jgfx_init(uint16_t buf1_size, uint16_t buf2_size)
 {
     jgfx = (jgfx_t *)malloc(sizeof(jgfx_t));
@@ -77,8 +77,9 @@ void jgfx_init(uint16_t buf1_size, uint16_t buf2_size)
 
     jgfx->draw_buf.buf1_size = BUFFER_SIZE;
     jgfx->draw_buf.buf2_size = BUFFER_SIZE;
-    jgfx->draw_buf.buf_point = 0;
     jgfx->draw_buf.buf_act = jgfx->draw_buf.buf1;
+
+    jgfx->draw_buf.buf_point = 0;
     jgfx->flushing = 0;
 
     jgfx->color_front.full = 0x00;
@@ -140,6 +141,7 @@ void jgfx_draw_pixel(uint8_t x, uint8_t y)
 
 void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
 {
+    uint16_t color = jgfx->color_back.full;
     st7735s_set_window(x, x + width - 1, y, y + height - 1);
     for (uint16_t j = 0; j < height; j++)
     {
@@ -147,9 +149,9 @@ void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
         {
             if (jgfx->draw_buf.buf_act == NULL)
             {
-                st7735s_send_data(((jgfx->color_back.full >> 8) & 0xFF));
-                st7735s_send_data(jgfx->color_back.full & 0xFF);
-                continue;
+            st7735s_send_data(((color >> 8) & 0xFF));
+            st7735s_send_data(color & 0xFF);
+            continue;
             }
             else
             {
@@ -326,6 +328,7 @@ void jgfx_draw_text(uint16_t x, uint16_t y, uint8_t *str)
 
 void jgfx_draw_text_en(uint16_t x, uint16_t y, uint8_t *str)
 {
+
     // NEG CODE, MSb(bit), ROW
     uint8_t font_width = jgfx->font.width;
     uint8_t font_height = jgfx->font.height;
@@ -341,7 +344,6 @@ void jgfx_draw_text_en(uint16_t x, uint16_t y, uint8_t *str)
         offset = *str - jgfx->font.index;
 
 #ifdef USE_FONT_LOADED_IN_MCU
-
         // replace font_data with font loaded in MCU temporarily
         if (jgfx->font.addr == FLASH_FONT_EN_8X16_ADDR)
         {
@@ -591,7 +593,7 @@ void jgfx_set_color_hex(uint32_t color)
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        jgfx->color_front.full = color;
+    jgfx->color_front.full = color;
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
@@ -629,7 +631,7 @@ void jgfx_set_color_back_hex(uint32_t color)
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-        jgfx->color_back.full = color;
+    jgfx->color_back.full = color;
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
