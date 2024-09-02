@@ -7,7 +7,6 @@
 
 
 
-
 void ui_init(void);
 
 void ui_refresh(void);

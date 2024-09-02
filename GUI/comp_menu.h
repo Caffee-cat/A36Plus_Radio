@@ -1,6 +1,7 @@
 #ifndef __COMP_MENU_JAMIEXU_H__
 #define __COMP_MENU_JAMIEXU_H__
 #include "main.h"
+#include "fmc.h"
 #define JGFX_MENU_STR_MAX_LEN 10
 
 typedef struct jgfx_menu_item_t *jgfx_menu_item_ptr;
@@ -13,6 +14,7 @@ typedef struct ui_main_channel_t *ui_main_channel_ptr;
 typedef struct Display_Timer_t *Display_Timer_ptr;
 typedef struct Brightness_setting_t *Brightness_setting_ptr;
 extern uint32_t *cur_ch, ch1, ch2;
+
 
 typedef enum
 {
@@ -40,13 +42,13 @@ typedef enum
 //     JGFX_MENU_STATUS_
 // }
 
-typedef enum
-{
-    MAIN_CHANNEL_NONE = 0x00,
-    MAIN_CHANNEL_10KHZ,
-    MAIN_CHANNEL_15KHZ,
-    MAIN_CHANNEL_20KHZ
-} jgfx_channel_step_t;
+// typedef enum
+// {
+//     MAIN_CHANNEL_NONE = 0x00,
+//     MAIN_CHANNEL_10KHZ,
+//     MAIN_CHANNEL_15KHZ,
+//     MAIN_CHANNEL_20KHZ
+// } radio_channel_step_t;
 
 typedef enum
 {
@@ -57,10 +59,19 @@ typedef enum
 
 typedef enum
 {
-    ONOE_CHANNEL_SPEAKING = 0x00,
+    NONE_CHANNEL_SPEAKING = 0x00,
+    CHANNEL_SPEAKING,
     CHANNAL_A_SPEAKING,
-    CHANNEL_B_SPEAKING
+    CHANNEL_B_SPEAKING,
+    CTDCSS_INCORRENT
 } main_channel_speak_t;
+
+typedef enum
+{
+    OFF = 0x00,
+    ADDITION,
+    SUBTRACTION
+} offset_direction_t;
 
 typedef struct jgfx_menu_item_t
 {
@@ -106,7 +117,6 @@ typedef struct jgfx_menu_t
     uint8_t page;
     uint8_t Initial_flag;
     bool menu_draw_complete;
-    bool sys_start;
     jgfx_menu_status_t status;
 
     jgfx_menu_item_ptr head_item;
@@ -138,9 +148,10 @@ typedef struct sub_channel_t
     uint32_t frequency;
     uint16_t Tx_CTCSS;
     uint16_t Rx_CTCSS;
-    uint16_t Tx_CDCSS;
-    uint16_t Rx_CDCSS;
+    uint32_t Tx_CDCSS;
+    uint32_t Rx_CDCSS;
     uint16_t offset;
+    offset_direction_t direction;
 } sub_channel_t;
 
 typedef struct ui_main_channel_t
@@ -153,9 +164,12 @@ typedef struct ui_main_channel_t
     uint32_t ch_bak;
     sub_channel_t *cur_channel;
 
+    // for submenu cursor
     uint8_t cur_index;
-    const uint32_t *ch_pra;
-    const uint32_t *ch_val;
+    uint8_t SFT_D_index;
+
+    const float *ch_pra;
+    const float *ch_val;
 
     uint8_t block_height1;
     uint8_t block_height2;
@@ -163,15 +177,16 @@ typedef struct ui_main_channel_t
     // count for flicker
     uint16_t flash_count_num1;
     uint16_t flash_count_num2;
-    uint16_t step;
-    bool channel; // 1:A,0:B
+    float step;
+    bool channel;      // 1:A,0:B
     bool dual_channel; // 1:A,0:B
     bool Initial_flag;
+    bool channel_changed; // FALSE:not , TRUE:yes
 } ui_main_channel_t;
 
 typedef struct Brightness_setting_t
 {
-    uint8_t cur_bri;   // as a parameter for submenu index
+    uint8_t cur_bri;         // as a parameter for submenu index
     const uint32_t *bri_pra; // point to the configurable parameters
     const uint32_t *bri_val; // point to the current brightness setting
 } Brightness_setting_t;
@@ -188,6 +203,8 @@ typedef struct Display_Timer_t
     const uint16_t *Tim_pra;
     const uint16_t *Tim_val;
 } Display_Timer_t;
+
+void Startup_display(void);
 
 void jgfx_menu_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr main_channel);
 
@@ -235,17 +252,33 @@ void sub_channel_init(sub_channel_ptr sub_ch);
 
 void main_channel_init(ui_main_channel_ptr channel_ptr);
 
-void jgfx_channel_change(ui_main_channel_ptr channel_ptr, jgfx_channel_step_t step);
+void radio_channel_change(ui_main_channel_ptr channel_ptr, uint8_t step);
 
 void main_channel_speaking(ui_main_channel_ptr channel_ptr);
+
+void channel_input_flicker(ui_main_channel_ptr channel_ptr, uint8_t state);
+
+void channel_store(ui_main_channel_ptr channel_ptr);
 
 main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr);
 
 void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t status);
 
-void channel_CTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t prarm);
+void offset_direction(ui_main_channel_ptr channel_ptr, uint8_t param);
 
-void channel_CDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+void channel_offset_preload(ui_main_channel_ptr channel_ptr);
+
+void channel_offset_unload(ui_main_channel_ptr channel_ptr);
+
+void channel_TxCTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t prarm);
+
+void channel_RxCTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t prarm);
+
+void channel_TxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+
+void channel_RxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+
+void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr,uint8_t *state);
 
 void return_to_menu(jgfx_menu_ptr menu_ptr);
 
@@ -269,6 +302,8 @@ void channel_offset_draw(uint32_t input_channel);
 
 void draw_info(jgfx_add_channel_status_t status);
 
+void bk4819_TxCTDCSS_set_auto(ui_main_channel_ptr channel_ptr);
+
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
 static void _r_menu_draw_items(jgfx_menu_ptr menu_ptr, uint8_t order);
@@ -286,5 +321,7 @@ static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, u
 static void submenu_items_refresh(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 
 static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
+
+static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channel);
 
 #endif

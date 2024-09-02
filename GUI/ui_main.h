@@ -2,9 +2,24 @@
 #define __UI_MAIN_JAMIEXU_H___
 #include "ui.h"
 
+
+#ifdef USE_FONT_LOADED_IN_MCU
 extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 extern uint8_t main_icon[];
+#endif
+
+extern ui_stack_t ui_stack;
+extern ui_page_t ui_menu;
+extern Display_Timer_t Display_Timer;
+extern Brightness_setting_t Display_brightness;
+extern ui_page_t ui_main;
+
+
+
+
+
+void draw_channel(void);
 
 void ui_main_initial(void);
 
