@@ -29,7 +29,6 @@ set(CMAKE_BUILD_TYPE Debug)
 include_directories(Core/Inc)
 include_directories(Users/Inc)
 
-
 include_directories(Libraries/GD32/)
 include_directories(Libraries/printf/)
 include_directories(Libraries/GD32/CMSIS)
@@ -43,6 +42,7 @@ include_directories(Drivers/BK1080)
 include_directories(Drivers/BK4819)
 include_directories(Drivers/Flash)
 include_directories(Drivers/Key)
+include_directories(Drivers/FMC)
 include_directories(GUI)
 
 

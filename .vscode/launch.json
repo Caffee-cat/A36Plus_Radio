@@ -8,7 +8,7 @@
             "type": "cortex-debug",
             "servertype": "openocd",
             "configFiles": [
-                "D:/2-Software/3-Env/xpack-openocd-0.12.0-3/openocd/scripts/interface/stlink.cfg",
+                "D:/2-Software/3-Env/xpack-openocd-0.12.0-3/openocd/scripts/interface/cmsis-dap.cfg",
                 "${workspaceFolder}/gd32f33x.cfg"
             ],
             "svdPath": "${workspaceFolder}/GD32F3x0.svd",

@@ -25,7 +25,7 @@ SECTIONS
 		. = ALIGN(4);
 		_edata = .;
 	} >RAM AT >FLASH
-	_rdata = LOADADDR(.data);
+	_sidata = LOADADDR(.data);
 	/*
 	.dflash : 
 	{
