@@ -1,7 +1,12 @@
 #ifndef __MAIN_JAMIEXU_H__
 #define __MAIN_JAMIEXU_H__
+
+// #define USE_FONT_LOADED_IN_MCU
+#define USE_USART_AND_FLASH
+
+
 #include "gd32f3x0.h"
-#include "../printf/printf.h"
+// #include "../printf/printf.h"
 #include "stdarg.h"
 #include "gpio.h"
 #include "systick.h"
@@ -19,15 +24,20 @@
 #include "task.h"
 #include "jgfx.h"
 #include "ui.h"
+#include "ui_menu.h"
 #include "comp_menu.h"
+#ifdef USE_USART_AND_FLASH
 #include "usart_flash.h"
+#endif
 // Written by Jamiexu
 
+
+
 // Font address
-#define FLASH_SPLASH_ADDR 0x7D000 // file: font/splash.bin, offset: 0x7d000
+#define FLASH_SPLASH_ADDR 0x7D000        // file: font/splash.bin, offset: 0x7d000
 #define FLASH_ICON_CHANNELA_ADDR 0x85140 // file: font/splash.bin, offset: 0x7d000
 #define FLASH_ICON_CHANNELB_ADDR 0x85350 // file: font/splash.bin, offset: 0x7d000
-#define FLASH_ICON_MAIN_ADDR 0x85560 // file: font/splash.bin, offset: 0x7d000
+#define FLASH_ICON_MAIN_ADDR 0x85560     // file: font/splash.bin, offset: 0x7d000
 
 #define FLASH_FONT_EN_8X16_ADDR 0x85910      // file: font/font_en_8x16.fon, offset: 0x85050
 #define FLASH_FONT_EN_8X16_BLOD_ADDR 0x86060 // file: font/font_en_8x16_blod.fon, offset: 0x85690

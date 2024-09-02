@@ -60,29 +60,17 @@ int main(void)
     dma_config();
     spi_config();
     tim_config();
+    PWR_keep_blocked();
+
+#ifdef USE_USART_AND_FLASH
     usart_config();
+    // key press KEY_MAP_L1 and KEY_MAP_L2 to enter flash mode
+    usart_flash_run();
+#endif
 
 
-    // while(1)
-    // {
-    //     printf("%d\n",timer_interrupt_flag_get(TIMER16,TIMER_INT_UP));
-    //     if(timer_interrupt_flag_get(TIMER16,TIMER_INT_UP))break;
-    // }
-    // backlight_terminate();
-
-    // usart_flash_run();
-
-    // bk4819_init();
-    // bk4819_test();
-
-    // while(1)
-    // {
-    //     printf("%d\n",(uint32_t)KEY_GET_NUM(key_get()));
-    // }
-
-
-    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
-
+    bk4819_init();
+    FMC_channel_init();
 
     /* Init ST7735S driver*/
     st7735s_init();
@@ -90,16 +78,8 @@ int main(void)
     vtasks_init();
     vTaskStartScheduler();
 
-    // jgfx_test();
 
-    // delay_1ms(30000);
-    // printf("Running...\r\n");
-    // w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-    // w25q16jv_chip_erase();
-    // w25q16jv_sector_erase(0x00);
-    // flash_test();
-    // w25q16jv_chip_erase();
-    // w25q16jv_sector_erase(0x00);
+    // backlight_terminate();
 
     while (1)
     {
