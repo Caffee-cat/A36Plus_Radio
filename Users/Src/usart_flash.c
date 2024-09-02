@@ -1,4 +1,3 @@
-#include "usart_flash.h"
 
 /**
  * @file usart_flash.c
@@ -30,6 +29,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  *
  */
+#include "usart_flash.h"
+
+#ifdef USE_USART_AND_FLASH
 
 usart_flash_context_t context = {
     .data = {0},
@@ -249,6 +251,9 @@ void usart_flash_cb(uint8_t n)
 
 void usart_flash_run(void)
 {
+    gpio_bit_set(KEY_GPIO_PORT, KEY_GPIO_ROW0_PIN | KEY_GPIO_ROW1_PIN | KEY_GPIO_ROW2_PIN | KEY_GPIO_ROW3_PIN);
+    if (!(gpio_input_bit_get(KEY_GPIO_PORT, KEY_GPIO_COL1_PIN) == RESET && gpio_input_bit_get(KEY_GPIO_PORT, KEY_GPIO_COL2_PIN) == RESET))
+        return;
     while (1)
     {
         if (context_ptr->rcv_idle_bit == 1)
@@ -269,3 +274,5 @@ void usart_flash_run(void)
         }
     }
 }
+
+#endif

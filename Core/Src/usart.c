@@ -1,7 +1,9 @@
 #include "usart.h"
 
 // Written by Jamiexu
+#ifdef USE_USART_AND_FLASH
 extern void usart_flash_cb(uint8_t n);
+#endif
 
 void usart_config(void)
 {
@@ -32,6 +34,7 @@ int fputc(int ch, unsigned char *f)
         ;
     return ch;
 }
+#ifdef USE_USART_AND_FLASH
 
 void USART0_IRQHandler(void)
 {
@@ -47,6 +50,7 @@ void USART0_IRQHandler(void)
         usart_interrupt_flag_clear(USART0, USART_INT_FLAG_IDLE);
     }
 }
+#endif
 
 void USART_SendByte(uint8_t data)
 {
