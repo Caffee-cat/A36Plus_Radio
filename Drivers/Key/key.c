@@ -19,7 +19,7 @@ key_map_t key_get(void)
     {
         gpio_bit_set(KEY_GPIO_PORT, KEY_GPIO_ROW0_PIN | KEY_GPIO_ROW1_PIN | KEY_GPIO_ROW2_PIN | KEY_GPIO_ROW3_PIN);
         gpio_bit_reset(KEY_GPIO_PORT, 1 << 3 << i);
-        delay_1us(5);
+        delay_1us(3);
         if (gpio_input_bit_get(KEY_GPIO_PORT, KEY_GPIO_COL0_PIN) == RESET)
             return i * 4 + 1;
         if (gpio_input_bit_get(KEY_GPIO_PORT, KEY_GPIO_COL1_PIN) == RESET)

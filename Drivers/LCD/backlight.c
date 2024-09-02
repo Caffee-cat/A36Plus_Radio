@@ -1,18 +1,14 @@
 #include "backlight.h"
-extern uint16_t Timer;
+
+const uint16_t Display_Timer_param[] = {999, 10, 30, 60, 120};
+const uint32_t brightness_param[] = {5, 20, 100, 200, 500};
 extern Display_Timer_t Display_Timer;
+
 void TIMER16_IRQHandler(void)
 {
     if (timer_interrupt_flag_get(TIMER16, TIMER_INT_UP) != RESET)
     {
-        // gpio_bit_toggle(LCD_GPIO_PORT, LCD_GPIO_LIGHT_PIN);
         Display_Timer.Timer_count += 1;
-        // printf("Timer equal %d\n", Timer);
-        // if (Timer >= 33)
-        // {
-        //     Time_over = 1;
-        //     Timer = 0;
-        // }
         timer_flag_clear(TIMER16, TIMER_INT_UP);
     }
 }

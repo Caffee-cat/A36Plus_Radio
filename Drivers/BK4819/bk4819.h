@@ -1,6 +1,11 @@
 #ifndef __BK4818_JAMIEXU_H__
 #define __BK4818_JAMIEXU_H__
 #include "main.h"
+
+extern const uint16_t CTCSS_param[];
+extern const float main_channel_step[];
+extern const uint16_t DCS_Options[];
+
 // Written by Jamiexu
 
 #define BK4819_SCK_LOW gpio_bit_reset(BK4819_GPIO_PORT, BK4819_GPIO_SCK_PIN)
@@ -179,6 +184,14 @@ typedef enum
     BK4819_RDATA_
 } bk4819_rdata_t;
 
+typedef enum
+{
+    CODE_TYPE_OFF = 0,
+    CODE_TYPE_CONTINUOUS_TONE,
+    CODE_TYPE_DIGITAL,
+    CODE_TYPE_REVERSE_DIGITAL
+} DCS_CodeType_t;
+
 // typedef enum
 // {
 //     bk4819_CTCSS_PHASE_120 = 0X01,
@@ -200,7 +213,6 @@ uint16_t bk4819_read_reg(bk4819_reg_t reg);
 void bk4819_write_reg(bk4819_reg_t reg, uint16_t data);
 
 uint8_t bk4819_int_get(bk4819_int_t interrupt);
-uint8_t bk4819_flag_get(void);
 
 void bk4819_init(void);
 
@@ -226,6 +238,5 @@ void bk4819_CDCSS_set(uint8_t sel, uint16_t code);
 
 void bk4819_CDCSS_set_v2(uint32_t code);
 
-void bk4819_set_CTDCSS(uint8_t sel, uint16_t frequency);
 
 #endif

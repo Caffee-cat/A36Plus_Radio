@@ -5,4 +5,10 @@
 void backlight_init();
 void backlight_terminate();
 
+
+extern const uint16_t Display_Timer_param[];
+extern const uint32_t brightness_param[];
+
+
+
 #endif

@@ -31,13 +31,8 @@ SOFTWARE.
 
 #include "bk4819.h"
 
-typedef enum
-{
-	CODE_TYPE_OFF = 0x00,
-	CODE_TYPE_CONTINUOUS_TONE,
-	CODE_TYPE_DIGITAL,
-	CODE_TYPE_REVERSE_DIGITAL
-}DCS_CodeType_t;
+const uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
+const float main_channel_step[] = {5, 6.25, 10, 12.5, 20.0, 25.0, 50.0};
 
 const uint16_t DCS_Options[104] = {
 	0x0013, 0x0015, 0x0016, 0x0019, 0x001A, 0x001E, 0x0023, 0x0027,
@@ -57,23 +52,23 @@ const uint16_t DCS_Options[104] = {
 
 static uint32_t DCS_CalculateGolay(uint32_t CodeWord)
 {
-	unsigned int i;
-	uint32_t Word = CodeWord;
-	for (i = 0; i < 12; i++)
-	{
-		Word <<= 1;
-		if (Word & 0x1000)
-			Word ^= 0x08EA;
-	}
-	return CodeWord | ((Word & 0x0FFE) << 11);
+    unsigned int i;
+    uint32_t Word = CodeWord;
+    for (i = 0; i < 12; i++)
+    {
+        Word <<= 1;
+        if (Word & 0x1000)
+            Word ^= 0x08EA;
+    }
+    return CodeWord | ((Word & 0x0FFE) << 11);
 }
 
 uint32_t DCS_GetGolayCodeWord(DCS_CodeType_t CodeType, uint8_t Option)
 {
-	uint32_t Code = DCS_CalculateGolay(DCS_Options[Option] + 0x800U);
-	if (CodeType == CODE_TYPE_REVERSE_DIGITAL)
-		Code ^= 0x7FFFFF;
-	return Code;
+    uint32_t Code = DCS_CalculateGolay(DCS_Options[Option] + 0x800U);
+    if (CodeType == CODE_TYPE_REVERSE_DIGITAL)
+        Code ^= 0x7FFFFF;
+    return Code;
 }
 
 static void spi_write_byte(uint8_t data)
@@ -200,17 +195,17 @@ void bk4819_init(void)
     bk4819_write_reg(BK4819_REG_40, bk4819_read_reg(BK4819_REG_40) & 0xf000 | 0x4d2); // RF Tx Deviation Tuning (Apply for both in-band signal andsub-audio signal).
     bk4819_write_reg(BK4819_REG_31, bk4819_read_reg(BK4819_REG_31) & 0xfffffff7);     // disEnable Compander Function.Remain VOX detection,Scramble Function as defalult(dlsable).
 
-    // bk4819_CTDCSS_enable(0);
-    // bk4819_CDCSS_set(1,0x19);
-    // bk4819_set_freq(43025000);
+    // bk4819_set_freq(48762500);
+    // bk4819_CTDCSS_enable(1);
 
+    // bk4819_CDCSS_set(1,0x19);
     // bk4819_CTDCSS_set(0, 719); // Set CTCSS to 71.9HZ
-    bk4819_CTDCSS_set(0, 885); // Set CTCSS to 88.5HZ
+    bk4819_CTDCSS_set(0, 2775); // Set CTCSS to 88.5HZ
     bk4819_CTDCSS_disable();
     // bk4819_tx_on();
-    // bk4819_tx_off();
+    bk4819_tx_off();
 
-    bk4819_rx_off();
+    // bk4819_rx_off();
     // bk4819_rx_on();
 }
 
@@ -312,8 +307,14 @@ void bk4819_tx_off(void)
 void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
 {
     // bk4819_write_reg(BK4819_REG_07, (sel << 13) | frequency);
-    bk4819_write_reg(BK4819_REG_07, sel | (((frequency * 206488u) + 50000u) / 100000u));
+    if (sel == 0 | sel == 1)
+        bk4819_write_reg(BK4819_REG_07, sel | (((frequency * 206488u) + 50000u) / 100000u));
+    if (sel == 2)
+    {
+    }
 }
+
+
 
 /**
  * @brief Set squelch threshold
