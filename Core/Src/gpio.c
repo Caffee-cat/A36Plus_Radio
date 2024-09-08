@@ -66,6 +66,21 @@ static void misc_gpio_init(void)
     gpio_output_options_set(MIC_EN_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, MIC_EN_GPIO_PIN);
 }
 
+static void TxAmplifier_init(void)
+{
+    gpio_mode_set(TxAmplifier_VHF_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, TxAmplifier_VHF_PIN);
+    gpio_output_options_set(TxAmplifier_VHF_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, TxAmplifier_VHF_PIN);
+}
+
+static void RxAmplifier_init(void)
+{
+    gpio_mode_set(RxAmplifier_VHF_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, RxAmplifier_VHF_PIN);
+    gpio_output_options_set(RxAmplifier_VHF_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RxAmplifier_VHF_PIN);
+
+    gpio_mode_set(RxAmplifier_UHF_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, RxAmplifier_UHF_PIN);
+    gpio_output_options_set(RxAmplifier_UHF_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RxAmplifier_UHF_PIN);
+}
+
 void gpio_config(void)
 {
     rcu_periph_clock_enable(LCD_GPIO_RCU);
@@ -86,4 +101,6 @@ void gpio_config(void)
     bk4819_gpio_init();
     bk1080_gpio_init();
     misc_gpio_init();
+    TxAmplifier_init();
+    RxAmplifier_init();
 }

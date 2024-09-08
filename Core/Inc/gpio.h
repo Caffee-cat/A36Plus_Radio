@@ -45,6 +45,20 @@
 #define BK4819_GPIO_SCN_RCU RCU_GPIOC
 
 
+//TxAmplifier
+#define TxAmplifier_VHF_PORT GPIOC
+#define TxAmplifier_VHF_PIN GPIO_PIN_15
+#define TxAmplifier_UHF_GPIO_RCU RCU_GPIOB
+#define TxAmplifier_VHF_GPIO_RCU RCU_GPIOC
+
+
+//RxAmplifier
+#define RxAmplifier_VHF_PORT GPIOB
+#define RxAmplifier_VHF_PIN  GPIO_PIN_0
+#define RxAmplifier_UHF_PORT GPIOC
+#define RxAmplifier_UHF_PIN  GPIO_PIN_14
+
+
 // BK1080
 #define BK1080_GPIO_PORT GPIOF
 #define BK1080_GPIO_SCK_PIN GPIO_PIN_6
