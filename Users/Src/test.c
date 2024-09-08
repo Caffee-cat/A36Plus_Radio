@@ -4,8 +4,152 @@ uint8_t flash_data[W25Q16JV_SECTOR_SIZE] = {0};
 uint8_t flash_data_text[16] = {0};
 uint32_t current_addr = 0;
 
+// without the antenna,it perform very low accuracy
+void Scan_test(void)
+{
+    bk4819_rx_on();
+    // int squelch = -127 + (5 * 66) / 15;
+    // bk4819_set_Squelch((squelch / 2 + 160) * 2,
+    //                    ((squelch - 2) / 2 + 160) * 2,
+    //                    0x5f, 0x5e, 0x20, 0x08);
+
+    BK4819_EnableFrequencyScan();
+
+    while (1)
+    {
+        uint16_t reg = bk4819_read_reg(BK4819_REG_0D);
+        delay_1us(10);
+        if (reg & 0x8000)
+        {
+            printf("busy!\n");
+        }
+        else
+        {
+            uint32_t high, low, fre;
+            high = (uint32_t)(bk4819_read_reg(BK4819_REG_0D) & 0x03ff) << 16;
+            low = bk4819_read_reg(BK4819_REG_0E);
+            fre = high + low;
+            printf("high : %x , BK4819_REG_0D : %x\n", high, bk4819_read_reg(BK4819_REG_0D));
+            printf("Frequency Found! It equal : %x\n", fre);
+            printf("reg_0D equal : %x,reg_0E equal : %04x \n", bk4819_read_reg(BK4819_REG_0D), bk4819_read_reg(BK4819_REG_0E));
+            break;
+        }
+        // delay_1ms(10);
+    }
+
+    while (1)
+    {
+        uint16_t Low;
+        uint16_t High = bk4819_read_reg(BK4819_REG_69);
+        // delay_1ms(10);
+
+        if ((High & 0x8000) == 0)
+        {
+            Low = bk4819_read_reg(BK4819_REG_6A);
+            printf("Get CDCSS now! Origin code : %x\n", ((High & 0xFFF) << 12) | (Low & 0xFFF));
+            printf("CDCSS calculate that equal : %d\n", DCS_GetCdcssCode(((High & 0xFFF) << 12) | (Low & 0xFFF)));
+            break;
+        }
+
+        Low = bk4819_read_reg(BK4819_REG_68);
+
+        if ((Low & 0x8000) == 0)
+        {
+            printf("Get CTCSS now! Equal : %x\n", ((Low & 0x1FFF) * 4843) / 10000);
+            break;
+        }
+        printf("CTDCSS founding!\n");
+        // delay_1ms(10);
+    }
+    BK4819_DisableFrequencyScan();
+    bk4819_rx_off();
+}
+
+//  everything is ok,but need to be careful about the bk4819 output pin are all enable
+void TxAmplifier_v2(void)
+{
+    // If frequency is VHF, toggle GPIO C15
+    // If frequency is UHF, toggle BK4819 GPIO 4
+    bk4819_tx_on();
+    // gpio_bit_set(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
+    bk4819_gpio_pin_set(4, TRUE);
+
+    // uint16_t reg = bk4819_read_reg(BK4819_REG_33);
+    // reg &= 0xfbff;
+    // reg |= 0x0004;
+    // bk4819_write_reg(BK4819_REG_33,reg);
+
+    printf("reg 0a euqal:%x\n", bk4819_read_reg(BK4819_REG_0A));
+
+    delay_1ms(1000);
+
+    bk4819_gpio_pin_set(4, FALSE);
+
+    printf("reg 0a euqal:%x\n", bk4819_read_reg(BK4819_REG_0A));
+}
+
+void dual_watch(void)
+{
+    bool dual_channel = FALSE;
+    while (1)
+    {
+        uint16_t count = 10, RSSI;
+        // channel turn
+        if (dual_channel)
+        {
+            dual_channel = FALSE;
+            bk4819_set_freq(48762500);
+            bk4819_rx_on();
+            printf("channel A detecting !\n");
+            RSSI = bk4819_read_reg(BK4819_REG_67);
+            printf("RSSI now equal : %x\n", RSSI);
+            // recive info
+            if (RSSI > 0x42)
+            {
+                // check RxCTC/CDC
+                // if (main_channel_CTDCSS_judge(&channel_ptr->channel_1) == CHANNEL_SPEAKING)
+                //     return CHANNAL_A_SPEAKING;
+                // return CTDCSS_INCORRENT;
+            }
+        }
+
+        else if (!dual_channel)
+        {
+            dual_channel = TRUE;
+            bk4819_set_freq(45322500);
+            bk4819_rx_on();
+            printf("channel B detecting !\n");
+            RSSI = bk4819_read_reg(BK4819_REG_67);
+            printf("RSSI now equal : %x\n", RSSI);
+            if (RSSI > 0x42)
+            {
+                // if (main_channel_CTDCSS_judge(&channel_ptr->channel_2) == CHANNEL_SPEAKING)
+                //     return CHANNEL_B_SPEAKING;
+                // return CTDCSS_INCORRENT;
+            }
+        }
+        bk4819_set_freq(45322500);
+    }
+}
+
+// Whatever how to set,the The measured power perform low,eventhough the radio is getting hot.Guess the antenna part isn't tuned on
+void TxAmplifier(void)
+{
+    // while (1)
+    // {
+    //     printf("REG_67 equal : %x\n", bk4819_read_reg(BK4819_REG_67));
+    // }
+    bk4819_tx_on();
+    gpio_bit_set(RxAmplifier_VHF_PORT, RxAmplifier_VHF_PIN);
+    printf("UHF set successful!level: %d\n", gpio_output_bit_get(RxAmplifier_VHF_PORT, RxAmplifier_VHF_PIN));
+    gpio_bit_set(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
+    printf("VHF set successful!level: %d\n", gpio_output_bit_get(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN));
+}
+
 void flash_test(void)
 {
+    uint8_t temp_data[500] = {0};
+
     w25q16jv_read_num(0x3A0, flash_data, 16);
     for (uint8_t i = 0; i < 16; i++)
     {
@@ -13,44 +157,111 @@ void flash_test(void)
     }
 
     // printf("WEL: %d\n", w25q16jv_read_reg1(W25Q16JV_REG1_WEL));
-    // w25q16jv_write_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-    // delay_1ms(500);
+    w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    delay_1ms(500);
 
-    // printf("WEL: %d\n", w25q16jv_read_reg1(W25Q16JV_REG1_WEL));
-    // w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-    // delay_1ms(500);
+    // w25q16jv_sector_erase(0x00);
+    w25q16jv_chip_erase();
+    while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
+    {
+        printf("Erase Busy...\n");
+    }
 
-    // // w25q16jv_sector_erase(0x00);
-    // w25q16jv_chip_erase();
-    // while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
+    uint8_t d[256] = {0};
+    for (uint16_t i = 0; i < 256; i++)
+    {
+        d[i] = 0x22;
+    }
+
+    w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    w25q16jv_page_program(0x00, d, 256);
+
+    while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
+    {
+        printf("Busy...\n");
+    }
+
+    w25q16jv_read_num(0x00, temp_data, 256);
+    for (int i = 0; i < 256; i++)
+    {
+        printf("%x    ", temp_data[i]);
+    }
+
+    printf("\n\n");
+
+    for (uint16_t i = 256; i > 0; i--)
+    {
+        d[i - 1] = i;
+    }
+    w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    w25q16jv_page_program(0x100, d, 256);
+
+    while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
+    {
+        printf("Busy...\n");
+    }
+
+    w25q16jv_read_num(0x100, temp_data, 256);
+    for (int i = 0; i < 256; i++)
+    {
+        printf("%x    ", temp_data[i]);
+    }
+}
+
+void FMC_test(void)
+{
+    fmc_unlock();
+    ob_unlock();
+
+    printf("unlock ready!\n");
+    printf("FMC_FLAG_END equal : %d\nFMC_FLAG_WPERR equal : %d\nFMC_FLAG_PGERR equal : %d\nFMC_FLAG_PGERR",
+           fmc_flag_get(FMC_FLAG_END), fmc_flag_get(FMC_FLAG_WPERR), fmc_flag_get(FMC_FLAG_PGERR));
+
+    fmc_flag_clear(FMC_FLAG_END);
+    fmc_flag_clear(FMC_FLAG_WPERR);
+    fmc_flag_clear(FMC_FLAG_PGERR);
+
+    printf("unlock finished!\n");
+    printf("FMC_FLAG_END equal : %d\nFMC_FLAG_WPERR equal : %d\nFMC_FLAG_PGERR equal : %d\nFMC_FLAG_PGERR",
+           fmc_flag_get(FMC_FLAG_END), fmc_flag_get(FMC_FLAG_WPERR), fmc_flag_get(FMC_FLAG_PGERR));
+
+    while (1)
+    {
+        fmc_state_enum state = fmc_page_erase(0x0800c800); // page 50
+        printf("state equal : %d\n", state);
+        if (state == FMC_READY)
+            break;
+    }
+
+    fmc_word_program(0x0800c800, 0xAD1331DA);
+    // fmc_halfword_program(0x0800c804, 25);
+    // fmc_word_program(0x0800c806, 487625);
+    uint32_t OutData = (*(__IO uint32_t *)(0x0800c800));
+    printf("Reading data now! OutData equal :%x\n", OutData);
+    // OutData = (*(__IO uint16_t *)(0x0800c804));
+    // printf("Reading data now! OutData equal :%d\n", OutData);
+    // OutData = (*(__IO uint32_t *)(0x0800c806));
+    // printf("Reading data now! OutData equal :%d\n", OutData);
+
+    fmc_lock();
+}
+
+void CDCSS_test(void)
+{
+
+    uint32_t Code = DCS_GetGolayCodeWord(CODE_TYPE_REVERSE_DIGITAL, 2);
+
+    // bk4819_rx_on();
+
+    bk4819_CTDCSS_enable(0);
+
+    bk4819_CDCSS_set_v2(Code);
+
+    bk4819_tx_on();
+
+    // while(1)
     // {
-    //     printf("Erase Busy...\n");
-    // }
-
-    // uint8_t d[256] = {0};
-    // for (uint16_t i = 0; i < 256; i++)
-    // {
-    //     d[i] = 0x10;
-    // }
-
-    // w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-    // w25q16jv_page_program(0x00, d, 256);
-
-    // while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
-    // {
-    //     printf("Busy...\n");
-    // }
-
-    // for (uint16_t i = 256; i > 0; i--)
-    // {
-    //     d[i - 1] = i;
-    // }
-    // w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-    // w25q16jv_page_program(0x100, d, 256);
-
-    // while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
-    // {
-    //     printf("Busy...\n");
+    //     printf("REG_0C : %x" ,bk4819_read_reg(BK4819_REG_0C));
     // }
 }
 
@@ -12892,7 +13103,7 @@ const unsigned char gImage_img[12800] = {
 void jgfx_test(void)
 {
     LCD_LIGHT_HIGH;
-    
+
     jgfx_set_color_hex(0x00);
     jgfx_fill_react(0, 0, DISPLAY_W, DISPLAY_H);
     // delay_1ms(500);
@@ -12910,7 +13121,6 @@ void jgfx_test(void)
     jgfx_draw_text_en(32, 60, "Blod: Jamiexu");
     jgfx_set_font(JGFX_FONT_EN_16X32);
     jgfx_draw_text_en(32, 80, "419.460");
-    
 
     jgfx_set_font(JGFX_FONT_CN_16X16);
     jgfx_draw_text_cn(32, 60, "�������ã�");
@@ -12966,22 +13176,23 @@ void jgfx_test(void)
 
 void bk4819_test(void)
 {
-    // bk4819_write_reg(BK4819_REG_10, 0x8085);
-    // printf("BK4819 REG_10: 0x%x\r\n", bk4819_read_reg(BK4819_REG_10));
-    // printf("BK4819 REG_11: 0x%x\r\n", bk4819_read_reg(BK4819_REG_11));
-    // printf("BK4819 REG_12: 0x%x\r\n", bk4819_read_reg(BK4819_REG_12));
-    // printf("BK4819 REG_13: 0x%x\r\n", bk4819_read_reg(BK4819_REG_13));
-    // printf("BK4819 REG_14: 0x%x\r\n", bk4819_read_reg(BK4819_REG_14));
-    // printf("BK4819 REG_18: 0x%x\r\n", bk4819_read_reg(BK4819_REG_18));
-    // printf("BK4819 REG_19: 0x%x\r\n", bk4819_read_reg(BK4819_REG_19));
+    bk4819_write_reg(BK4819_REG_10, 0x8085);
+    printf("BK4819 REG_10: 0x%x\r\n", bk4819_read_reg(BK4819_REG_10));
+    printf("BK4819 REG_11: 0x%x\r\n", bk4819_read_reg(BK4819_REG_11));
+    printf("BK4819 REG_12: 0x%x\r\n", bk4819_read_reg(BK4819_REG_12));
+    printf("BK4819 REG_13: 0x%x\r\n", bk4819_read_reg(BK4819_REG_13));
+    printf("BK4819 REG_14: 0x%x\r\n", bk4819_read_reg(BK4819_REG_14));
+    printf("BK4819 REG_18: 0x%x\r\n", bk4819_read_reg(BK4819_REG_18));
+    printf("BK4819 REG_19: 0x%x\r\n", bk4819_read_reg(BK4819_REG_19));
 
-    // printf("Running...\r\n");
-    // bk4819_set_freq(46255000);
-    // printf("Current frequency: %d", (bk4819_read_reg(0x38) << 16 + bk4819_read_reg(0x39)) * 10);
-    // printf("RSSI: %d\r\n", bk4819_read_reg(0x67) & 0x0F);
-    // printf("Ex-noise: %d\r\n", bk4819_read_reg(0x65) & 0x0b111111);
-    // printf("Glitch: %d\r\n", bk4819_read_reg(0x63) & 0x0b01111111);
-    // printf("Squelch: %d\r\n", bk4819_read_reg(0x0C) & 0x01);
+    printf("Running...\r\n");
+    bk4819_set_freq(46255000);
+    printf("0x38:%d     0x39:%d", bk4819_read_reg(0x38), bk4819_read_reg(0x39));
+    printf("Current frequency: %d", (bk4819_read_reg(0x38) << 16 + bk4819_read_reg(0x39)) * 10);
+    printf("RSSI: %d\r\n", bk4819_read_reg(0x67) & 0x0F);
+    printf("Ex-noise: %d\r\n", bk4819_read_reg(0x65) & 0x0b111111);
+    printf("Glitch: %d\r\n", bk4819_read_reg(0x63) & 0x0b01111111);
+    printf("Squelch: %d\r\n", bk4819_read_reg(0x0C) & 0x01);
 }
 
 void bk1080_test(void)
