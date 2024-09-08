@@ -11,12 +11,12 @@ void ui_init(void)
     // splash
     // jgfx_draw_img_byaddr(32, 0, 128, 128, FLASH_SPLASH_ADDR);
 
-    LCD_LIGHT_HIGH;
+    // LCD_LIGHT_HIGH;
 
     backlight_init();
     vTaskDelay(30);
 
-    Startup_display();
+    // Startup_display();
     ui_main_initial();
     ui_menu_initial();
     uiStackInit(&ui_stack, UI_STACK_MAX_SIZE);
