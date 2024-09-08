@@ -1,10 +1,10 @@
 #include "ui_main.h"
 
 static uint8_t tmp[100];
-static uint8_t input_state = 0;
 static bool confirm = 0;
 static uint8_t input_num = 0;
 
+uint8_t input_state = 0;
 ui_page_t ui_main;
 ui_main_channel_t radio_channel;
 
@@ -71,6 +71,25 @@ static void draw_status(void)
             jgfx_draw_text_en(32 + 112, DISPLAY_H / 10 + 23, "-");
     }
 
+    switch (radio_channel.channel_1.power)
+    {
+    case TXP_HIGH:
+        jgfx_draw_text_en(32 + 38, DISPLAY_H / 10 + 5, "H");
+        break;
+    case TXP_MID:
+        jgfx_draw_text_en(32 + 38, DISPLAY_H / 10 + 5, "M");
+        break;
+    case TXP_LOW:
+        jgfx_draw_text_en(32 + 38, DISPLAY_H / 10 + 5, "L");
+    default:
+        break;
+    }
+
+    if(radio_channel.channel_1.channnel_bandwidth == 3)
+    {
+        jgfx_draw_text_en(32 + 24, DISPLAY_H / 10 + 5, "N");
+    }
+
     // draw channel_B
 
     if (radio_channel.channel_2.Rx_CTCSS)
@@ -89,6 +108,25 @@ static void draw_status(void)
         else if (radio_channel.channel_2.direction == SUBTRACTION)
             jgfx_draw_text_en(32 + 112, DISPLAY_H / 2 + 70, "-");
     }
+
+    switch (radio_channel.channel_2.power)
+    {
+    case TXP_HIGH:
+        jgfx_draw_text_en(32 + 38, DISPLAY_H / 2 + 12, "H");
+        break;
+    case TXP_MID:
+        jgfx_draw_text_en(32 + 38, DISPLAY_H / 2 + 12, "M");
+        break;
+    case TXP_LOW:
+        jgfx_draw_text_en(32 + 38, DISPLAY_H / 2 + 12, "L");
+    default:
+        break;
+    }
+
+        if(radio_channel.channel_1.channnel_bandwidth == 3)
+    {
+        jgfx_draw_text_en(32 + 24, DISPLAY_H / 2 + 12, "N");
+    }
 }
 
 static void draw_status_tx(void)
@@ -97,7 +135,7 @@ static void draw_status_tx(void)
         return;
     jgfx_fill_react(32 + 49, DISPLAY_H / 10 + 3, 26, 18);
     jgfx_fill_react(32 + 49, DISPLAY_H / 2 + 11, 26, 18);
-     // draw channelA
+    // draw channelA
 
     if (radio_channel.channel_1.Tx_CTCSS)
     {
@@ -108,7 +146,7 @@ static void draw_status_tx(void)
         jgfx_draw_text_en(32 + 50, DISPLAY_H / 10 + 5, "DCS");
     }
 
-     if (radio_channel.channel_2.Tx_CTCSS)
+    if (radio_channel.channel_2.Tx_CTCSS)
     {
         jgfx_draw_text_en(32 + 50, DISPLAY_H / 2 + 12, "CT");
     }
@@ -116,7 +154,6 @@ static void draw_status_tx(void)
     {
         jgfx_draw_text_en(32 + 50, DISPLAY_H / 2 + 12, "DCS");
     }
-
 }
 
 void draw_channel(void)
@@ -245,7 +282,7 @@ void ui_main_event_cb(void)
     if (key == KEY_MAP_NONE)
     {
         channel_store(&radio_channel);
-        dual_band_standby(&radio_channel,&Display_brightness,&Display_Timer,&input_state);
+        dual_band_standby(&radio_channel, &Display_brightness, &Display_Timer, &input_state);
     }
     if (key != KEY_MAP_NONE)
     {
@@ -314,9 +351,14 @@ void ui_main_event_cb(void)
                 draw_channel();
             }
             if (radio_channel.cur_channel == &radio_channel.channel_1)
+            {
                 radio_channel.cur_channel = &radio_channel.channel_2;
+            }
             else if (radio_channel.cur_channel == &radio_channel.channel_2)
+            {
                 radio_channel.cur_channel = &radio_channel.channel_1;
+            }
+            bk4819_set_BandWidth(radio_channel.cur_channel->channnel_bandwidth);
             draw_main();
         }
 
@@ -339,6 +381,10 @@ void ui_main_event_cb(void)
                 input_state = 0;
             channel_offset_preload(&radio_channel);
             draw_channel();
+            uint16_t reg_temp = bk4819_read_reg(BK4819_REG_36);
+            bk4819_write_reg(BK4819_REG_36, 0xefbf);
+            TxAmplifier_enable(radio_channel.cur_channel->power);
+
             bk4819_set_freq(radio_channel.cur_channel->frequency);
             bk4819_tx_on();
             bk4819_TxCTDCSS_set_auto(&radio_channel);
@@ -347,13 +393,15 @@ void ui_main_event_cb(void)
             while (key_get() != 0)
                 ;
             bk4819_tx_off();
+            TxAmplifier_disable();
+            bk4819_write_reg(BK4819_REG_36, reg_temp);
             channel_offset_unload(&radio_channel);
             // shit
             ui_main_refresh();
         }
 
         // channel input
-        else if (key != KEY_MAP_16)
+        else if (key != KEY_MAP_16 && key != KEY_MAP_L1 && key != KEY_MAP_L2 && key != KEY_MAP_TOP)
         {
             radio_channel.flash_count_num1 = 3, radio_channel.flash_count_num2 = 1;
             if (input_state == 0)
