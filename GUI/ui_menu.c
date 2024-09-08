@@ -44,7 +44,7 @@ static void T_CTCSS_callback()
     uint8_t submenu_list_num = 10;
     sub_menu.cur_item = radio_channel.cur_index;
     channel_TxCTCSS_change(&radio_channel, submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
-                                                            " OFF", " 67.0HZ", " 69.3HZ", " 71.9HZ", " 74.4HZ", " 77.0HZ", " 79.7HZ", " 82.5HZ", " 85.4HZ", " 88.5HZ"));
+                                                             " OFF", " 67.0HZ", " 69.3HZ", " 71.9HZ", " 74.4HZ", " 77.0HZ", " 79.7HZ", " 82.5HZ", " 85.4HZ", " 88.5HZ"));
 }
 
 static void R_CTCSS_callback()
@@ -53,7 +53,7 @@ static void R_CTCSS_callback()
     uint8_t submenu_list_num = 10;
     sub_menu.cur_item = radio_channel.cur_index;
     channel_RxCTCSS_change(&radio_channel, submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
-                                                            " OFF", " 67.0HZ", " 69.3HZ", " 71.9HZ", " 74.4HZ", " 77.0HZ", " 79.7HZ", " 82.5HZ", " 85.4HZ", " 88.5HZ"));
+                                                             " OFF", " 67.0HZ", " 69.3HZ", " 71.9HZ", " 74.4HZ", " 77.0HZ", " 79.7HZ", " 82.5HZ", " 85.4HZ", " 88.5HZ"));
 }
 
 static void T_CDCSS_callback()
@@ -62,7 +62,7 @@ static void T_CDCSS_callback()
     uint8_t submenu_list_num = 10;
     sub_menu.cur_item = radio_channel.cur_index;
     channel_TxCDCSS_change(&radio_channel, submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
-                                                            " OFF", " D023N", " D025N", " D026N", " D031N", " D023I", "D025I", " D026I", " D031I", " D032I"));
+                                                             " OFF", " D023N", " D025N", " D026N", " D031N", " D023I", "D025I", " D026I", " D031I", " D032I"));
 }
 
 static void R_CDCSS_callback()
@@ -71,7 +71,7 @@ static void R_CDCSS_callback()
     uint8_t submenu_list_num = 10;
     sub_menu.cur_item = radio_channel.cur_index;
     channel_RxCDCSS_change(&radio_channel, submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
-                                                            " OFF", " D023N", " D025N", " D026N", " D031N", " D023I", "D025I", " D026I", " D031I", " D032I"));
+                                                             " OFF", " D023N", " D025N", " D026N", " D031N", " D023I", "D025I", " D026I", " D031I", " D032I"));
 }
 
 static void Offset_callback(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
@@ -87,7 +87,22 @@ static void SFT_D_callback(ui_main_channel_ptr channel_ptr)
     uint8_t submenu_list_num = 3;
     sub_menu.cur_item = radio_channel.SFT_D_index;
     offset_direction(&radio_channel, submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
-                                                            " OFF", " +", " -"));
+                                                       " OFF", " +", " -"));
+}
+
+static void TxPower_callback(ui_main_channel_ptr channel_ptr)
+{
+    submenu_item_t sub_menu;
+    uint8_t submenu_list_num = 3;
+    sub_menu.cur_item = radio_channel.TxPower_index;
+    TxPower_change(&radio_channel, submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
+                                                     " HIGH", " MID", " LOW"));
+}
+
+static void Scan_callback(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
+{
+    // Scan_test();
+    frequency_scan(menu_ptr, channel_ptr);
 }
 
 // Set screen Brightness
@@ -178,12 +193,12 @@ static void Display_Settings(jgfx_menu_ptr ptr)
 static void Banks(jgfx_menu_ptr menu_ptr)
 {
     submenu_item_t sub_menu;
-    uint8_t submenu_list_num = 2, exit_flag = 0;
+    uint8_t submenu_list_num = 4, exit_flag = 0;
     sub_menu.cur_item = 1;
     while (!exit_flag)
     {
         // Create submenu
-        switch (submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, "Offset","SFT-D"))
+        switch (submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, "Offset", "SFT-D", "TxPower", "Scan"))
         {
         case 1:
             Offset_callback(menu_ptr, &radio_channel);
@@ -191,6 +206,12 @@ static void Banks(jgfx_menu_ptr menu_ptr)
             break;
         case 2:
             SFT_D_callback(&radio_channel);
+            break;
+        case 3:
+            TxPower_callback(&radio_channel);
+            break;
+        case 4:
+            Scan_callback(menu_ptr, &radio_channel);
             break;
         default:
             return_to_menu(menu_ptr);
@@ -200,18 +221,29 @@ static void Banks(jgfx_menu_ptr menu_ptr)
     }
 }
 
-void cb4(jgfx_menu_ptr ptr)
+void BandWidth(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
-    uint8_t index = 1, submenu_list_num = 3;
-    submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " menu_item4", " menu_item4", " menu_item4");
+    uint8_t submenu_list_num = 3;
+    sub_menu.cur_item = 1;
+    uint8_t param = submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " wide", " narrow", " narrower");
+    channel_bandwidth_change(&radio_channel, param);
+    ptr->status = JGFX_MENU_STATUS_SELECTED;
+    return_to_menu(ptr);
 }
 
-void cb5(jgfx_menu_ptr ptr)
+void Squelch(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
-    uint8_t index = 1, submenu_list_num = 3;
-    submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " menu_item5", " menu_item5", " menu_item6");
+    uint8_t submenu_list_num = 10;
+    sub_menu.cur_item = 1;
+    
+    uint8_t param = submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
+                                     " 0", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9");
+
+    channel_bandwidth_change(&radio_channel, param);
+    ptr->status = JGFX_MENU_STATUS_SELECTED;
+    return_to_menu(ptr);
 }
 
 void cb6(jgfx_menu_ptr ptr)
@@ -254,7 +286,7 @@ void ui_menu_init(void)
 
     jgfx_clear_screen();
     vTaskDelay(100);
-    
+
     jgfx_menu_init(&jgfx_menu, &radio_channel);
     jgfx_menu_set_size(&jgfx_menu, DISPLAY_W, DISPLAY_H);
 
@@ -264,8 +296,8 @@ void ui_menu_init(void)
     jgfx_menu_append_text(&jgfx_menu, "Display ", Display_Settings);
     // Don't delete the space below,it works
     jgfx_menu_append_text(&jgfx_menu, "Banks ", Banks);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing4", cb4);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing5", cb5);
+    jgfx_menu_append_text(&jgfx_menu, "B/W", BandWidth);
+    // jgfx_menu_append_text(&jgfx_menu, "SQL", Squelch);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing6", cb6);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing7", cb7);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing8", cb8);
