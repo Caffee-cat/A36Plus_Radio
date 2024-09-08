@@ -1,12 +1,15 @@
-#ifndef __BK4818_JAMIEXU_H__
-#define __BK4818_JAMIEXU_H__
+// Written by Jamiexu
+#ifndef __BK4819_JAMIEXU_H__
+#define __BK4819_JAMIEXU_H__
 #include "main.h"
+#include <comp_menu.h>
 
 extern const uint16_t CTCSS_param[];
 extern const float main_channel_step[];
 extern const uint16_t DCS_Options[];
 
-// Written by Jamiexu
+
+
 
 #define BK4819_SCK_LOW gpio_bit_reset(BK4819_GPIO_PORT, BK4819_GPIO_SCK_PIN)
 #define BK4819_SCK_HIGH gpio_bit_set(BK4819_GPIO_PORT, BK4819_GPIO_SCK_PIN)
@@ -179,10 +182,6 @@ typedef enum
     BK4819_FLAG_CDCSS_PNR = BIT(15),      //  CDCSS negative code received
 } bk4819_flag_t;
 
-typedef enum
-{
-    BK4819_RDATA_
-} bk4819_rdata_t;
 
 typedef enum
 {
@@ -191,6 +190,32 @@ typedef enum
     CODE_TYPE_DIGITAL,
     CODE_TYPE_REVERSE_DIGITAL
 } DCS_CodeType_t;
+
+typedef enum
+{
+    BK4819_BW_WIDE = 0x49a8,            // 0 100 100 110 10 1 0 00       
+                                        // 3.75  KHZ RF filter bandwidth, no auto fix
+                                        // 4.0  kHz AFTxLPF2 filter Band Width
+                                        // 25k/20k BW Mode Selection
+                                        // 0 dB Gain after FM Demodulation
+
+    BK4819_BW_NARROW = 0x4808,          // 0 100 100 000 00 1 0 00
+                                        // 3.75  KHZ RF filter bandwidth, no auto fix
+                                        // 3.0  kHz AFTxLPF2 filter Band Width
+                                        // 12.5k BW Mode Selection
+                                        // 0 dB Gain after FM Demodulation
+
+    BK4819_BW_NARROWER = 0x3658,        // 0 011 011 001 01 1 0 00
+                                        // 3.0  KHZ RF filter bandwidth, no auto fix
+                                        // 2.5  kHz AFTxLPF2 filter Band Width
+                                        // 6.25k BW Mode Selection
+                                        // 0 dB Gain after FM Demodulation
+
+}bkj4819_bandwidth_t;
+// typedef enum
+// {
+
+// }
 
 // typedef enum
 // {
@@ -204,10 +229,12 @@ typedef enum
 //     bk4819_RX_ACG_GAIN_PAG =
 // } bk4819_RX_ACG_GAIN;
 
+static uint32_t DCS_CalculateGolay(uint32_t CodeWord);
 static void spi_write_byte(uint8_t data);
 static void spi_write_half_word(uint16_t data);
 static uint16_t spi_read_half_word(void);
 static void bk4819_delay(uint32_t count);
+
 
 uint16_t bk4819_read_reg(bk4819_reg_t reg);
 void bk4819_write_reg(bk4819_reg_t reg, uint16_t data);
@@ -237,6 +264,26 @@ void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, 
 void bk4819_CDCSS_set(uint8_t sel, uint16_t code);
 
 void bk4819_CDCSS_set_v2(uint32_t code);
+
+// void bk4819_Tx_Power(Tx_Power_t power);
+
+void TxAmplifier_disable(void);
+
+void RxAmplifier_enable(void);
+
+void RxAmplifier_disable(void);
+
+void BK4819_EnableFrequencyScan(void);
+
+uint32_t FrequencyScanResult(uint8_t *mode, uint32_t *CTDCSS_result);
+
+void BK4819_DisableFrequencyScan(void);
+
+void bk4819_gpio_pin_set(uint8_t pin,bool state);
+
+uint8_t DCS_GetCdcssCode(uint32_t Code);
+
+void bk4819_set_BandWidth(uint8_t param);
 
 
 #endif

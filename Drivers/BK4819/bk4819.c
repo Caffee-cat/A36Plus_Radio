@@ -113,6 +113,11 @@ static uint16_t spi_read_half_word(void)
     return data;
 }
 
+static void bk4819_delay(uint32_t count)
+{
+    delay_1us(count);
+}
+
 uint16_t bk4819_read_reg(bk4819_reg_t reg)
 {
     uint16_t data;
@@ -125,6 +130,25 @@ uint16_t bk4819_read_reg(bk4819_reg_t reg)
     bk4819_delay(1);
     BK4819_SCN_HIGH;
     return data;
+}
+
+void bk4819_Tx_Power(Tx_Power_t power)
+{
+    switch (power)
+    {
+    case TXP_HIGH:
+        bk4819_write_reg(BK4819_REG_36, 0xFFBF);
+        break;
+    case TXP_MID:
+        bk4819_write_reg(BK4819_REG_36, 0xA2AD);
+        break;
+    case TXP_LOW:
+        bk4819_write_reg(BK4819_REG_36, 0x70aa);
+        break;
+    case TXP_STANDBY:
+        bk4819_write_reg(BK4819_REG_36, 0x103f);
+        break;
+    }
 }
 
 void bk4819_write_reg(bk4819_reg_t reg, uint16_t data)
@@ -196,22 +220,20 @@ void bk4819_init(void)
     bk4819_write_reg(BK4819_REG_31, bk4819_read_reg(BK4819_REG_31) & 0xfffffff7);     // disEnable Compander Function.Remain VOX detection,Scramble Function as defalult(dlsable).
 
     // bk4819_set_freq(48762500);
+    // bk4819_set_freq(12245300);
     // bk4819_CTDCSS_enable(1);
-
     // bk4819_CDCSS_set(1,0x19);
     // bk4819_CTDCSS_set(0, 719); // Set CTCSS to 71.9HZ
-    bk4819_CTDCSS_set(0, 2775); // Set CTCSS to 88.5HZ
+    // bk4819_CTDCSS_set(0, 2775); // Set CTCSS to 88.5HZ
     bk4819_CTDCSS_disable();
+
+    bk4819_Tx_Power(TXP_STANDBY);
+
     // bk4819_tx_on();
-    bk4819_tx_off();
+    // bk4819_tx_off();
 
-    // bk4819_rx_off();
+    bk4819_rx_off();
     // bk4819_rx_on();
-}
-
-static void bk4819_delay(uint32_t count)
-{
-    delay_1us(count);
 }
 
 /**
@@ -314,8 +336,6 @@ void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
     }
 }
 
-
-
 /**
  * @brief Set squelch threshold
  *
@@ -387,4 +407,193 @@ void bk4819_CDCSS_set_v2(uint32_t code)
 void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
 {
     bk4819_write_reg(BK4819_REG_09, (number << 12) | (coeff));
+}
+
+void TxAmplifier_enable(Tx_Power_t power)
+{
+    bk4819_gpio_pin_set(4, TRUE);
+    gpio_bit_set(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
+    bk4819_Tx_Power(power);
+}
+
+void TxAmplifier_disable(void)
+{
+    bk4819_gpio_pin_set(4, FALSE);
+    gpio_bit_reset(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
+    bk4819_Tx_Power(TXP_STANDBY);
+}
+
+void RxAmplifier_enable(void)
+{
+    gpio_bit_set(RxAmplifier_VHF_PORT, RxAmplifier_VHF_PIN);
+    gpio_bit_set(RxAmplifier_UHF_PORT, RxAmplifier_UHF_PIN);
+}
+
+void RxAmplifier_disable(void)
+{
+    gpio_bit_reset(RxAmplifier_VHF_PORT, RxAmplifier_VHF_PIN);
+    gpio_bit_reset(RxAmplifier_UHF_PORT, RxAmplifier_UHF_PIN);
+}
+
+/**
+ * @brief Scan frequency
+ *
+ */
+void BK4819_EnableFrequencyScan(void)
+{
+    // RxAmplifier_enable();
+    bk4819_write_reg(BK4819_REG_32,    // 0x0245);   // 00 0000100100010 1
+                     (0u << 14) |      // 0 frequency scan time
+                         (290u << 1) | // ???
+                         (1u << 0));   // 1 frequency scan enable
+}
+
+/**
+ * @brief interrupt frequency scan
+ *
+ */
+void BK4819_DisableFrequencyScan(void)
+{
+    bk4819_write_reg(BK4819_REG_32,    // 0x0244);    // 00 0000100100010 0
+                     (0u << 14) |      // 0 frequency scan Time
+                         (290u << 1) | // ???
+                         (0u << 0));   // 0 frequency scan enable
+    // RxAmplifier_disable();
+}
+
+/**
+ * @brief Get frequency result scaned after enable frequency scan
+ *
+ * @param mode 1:not found  2：CDCSS  3:CTCSS
+ * @param CTDCSS_result mode = 1: NULL   mdoe = 2:CDCSS  mdoe = 3:CTCSS
+ * @return uint32_t frequency result
+ */
+uint32_t FrequencyScanResult(uint8_t *mode, uint32_t *CTDCSS_result)
+{
+    bk4819_rx_on();
+    uint16_t reg = bk4819_read_reg(BK4819_REG_0D);
+    delay_1us(10);
+    if (reg & 0x8000)
+    {
+        return NULL;
+    }
+    else
+    {
+        uint16_t count = 1000;
+        while (count--)
+        {
+            uint16_t Low;
+            uint16_t High = bk4819_read_reg(BK4819_REG_69);
+            // delay_1ms(10);
+
+            if ((High & 0x8000) == 0)
+            {
+                Low = bk4819_read_reg(BK4819_REG_6A);
+                *CTDCSS_result = DCS_GetCdcssCode(((High & 0xFFF) << 12) | (Low & 0xFFF));
+                if (*CTDCSS_result == 0xFF)
+                {
+                    *mode = 1;
+                    *CTDCSS_result = 0xFFFF;
+                    break;
+                }
+                *mode = 2;
+                break;
+            }
+
+            Low = bk4819_read_reg(BK4819_REG_68);
+
+            if ((Low & 0x8000) == 0)
+            {
+                *CTDCSS_result = ((Low & 0x1FFF) * 4843) / 10000;
+                *mode = 3;
+                break;
+
+            }
+            // delay_1ms(10);
+        }
+        
+        uint32_t high, low, fre;
+        high = (uint32_t)(bk4819_read_reg(BK4819_REG_0D) & 0x03ff) << 16;
+        low = bk4819_read_reg(BK4819_REG_0E);
+        bk4819_rx_off();
+        return high + low;
+    }
+}
+
+/**
+ * @brief set BK4819 pin output level
+ *
+ * @param pin BK4819 pin
+ * @param state 0:low    1:high
+ */
+void bk4819_gpio_pin_set(uint8_t pin, bool state)
+{
+    pin += 1;
+    uint16_t reg = bk4819_read_reg(BK4819_REG_33);
+    uint16_t mask = ~(0x8000 >> pin);
+    reg &= mask;
+    if (state == 1) 
+    {
+        mask = 0x0080 >> pin;
+        reg |= mask;
+    }
+    else if (state == 0)
+    {
+        mask = ~(0x0080 >> pin);
+        reg &= mask;
+    }
+
+    bk4819_write_reg(BK4819_REG_33, reg);
+}
+
+/**
+ * @brief transform origin CDCSS gotten from bk4819 to DCS_Options
+ *
+ * @param Code ((bk4819_read_reg(BK4819_REG_69) & 0xFFF) << 12) | (bk4819_read_reg(BK4819_REG_6A) & 0xFFF)
+ * @return uint8_t DCS_Options
+ */
+uint8_t DCS_GetCdcssCode(uint32_t Code)
+{
+    unsigned int i;
+    for (i = 0; i < 23; i++)
+    {
+        uint32_t Shift;
+
+        if (((Code >> 9) & 0x7U) == 4)
+        {
+            unsigned int j;
+            for (j = 0; j < sizeof(DCS_Options) / sizeof(DCS_Options[0]); j++)
+                if (DCS_Options[j] == (Code & 0x1FF))
+                    if (DCS_GetGolayCodeWord(2, j) == Code)
+                        return DCS_Options[j];
+        }
+
+        Shift = Code >> 1;
+        if (Code & 1U)
+            Shift |= 0x400000U;
+        Code = Shift;
+    }
+
+    return 0xFF;
+}
+
+/**
+ * @brief set bk4819 bandwidth
+ * 
+ */
+void bk4819_set_BandWidth(uint8_t param)
+{
+    switch (param)
+    {
+    case 1:
+        bk4819_write_reg(BK4819_REG_43,BK4819_BW_WIDE);
+        break;
+    case 2:
+        bk4819_write_reg(BK4819_REG_43,BK4819_BW_NARROW);
+        break;
+    case 3:
+        bk4819_write_reg(BK4819_REG_43,BK4819_BW_NARROWER);
+    default:
+        break;
+    }
 }
