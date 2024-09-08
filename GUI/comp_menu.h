@@ -1,7 +1,6 @@
 #ifndef __COMP_MENU_JAMIEXU_H__
 #define __COMP_MENU_JAMIEXU_H__
 #include "main.h"
-#include "fmc.h"
 #define JGFX_MENU_STR_MAX_LEN 10
 
 typedef struct jgfx_menu_item_t *jgfx_menu_item_ptr;
@@ -143,6 +142,14 @@ typedef struct corner_index_num_t
     void (*refresh)(void);
 } corner_index_num_t;
 
+typedef enum
+{
+    TXP_STANDBY,
+    TXP_HIGH,
+    TXP_MID,
+    TXP_LOW
+}Tx_Power_t;
+
 typedef struct sub_channel_t
 {
     uint32_t frequency;
@@ -150,7 +157,10 @@ typedef struct sub_channel_t
     uint16_t Rx_CTCSS;
     uint32_t Tx_CDCSS;
     uint32_t Rx_CDCSS;
+    uint8_t channnel_bandwidth;
+    uint8_t sql;
     uint16_t offset;
+    Tx_Power_t power;
     offset_direction_t direction;
 } sub_channel_t;
 
@@ -167,6 +177,7 @@ typedef struct ui_main_channel_t
     // for submenu cursor
     uint8_t cur_index;
     uint8_t SFT_D_index;
+    uint8_t TxPower_index;
 
     const float *ch_pra;
     const float *ch_val;
@@ -266,6 +277,14 @@ void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t
 
 void offset_direction(ui_main_channel_ptr channel_ptr, uint8_t param);
 
+// void bk4819_Tx_Power(Tx_Power_t power);
+
+void TxPower_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+
+void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr);
+
+void TxAmplifier_enable(Tx_Power_t power);
+
 void channel_offset_preload(ui_main_channel_ptr channel_ptr);
 
 void channel_offset_unload(ui_main_channel_ptr channel_ptr);
@@ -323,5 +342,7 @@ static void submenu_items_refresh(jgfx_menu_ptr menu_ptr, submenu_item_ptr subme
 static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 
 static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channel);
+
+void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 #endif

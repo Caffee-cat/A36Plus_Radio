@@ -545,6 +545,8 @@ void sub_channel_init(sub_channel_ptr sub_ch)
     sub_ch->Rx_CDCSS = 0;
     sub_ch->Tx_CDCSS = 0;
     sub_ch->direction = OFF;
+    sub_ch->power = TXP_MID;
+    sub_ch->channnel_bandwidth = 1;
 }
 
 void main_channel_init(ui_main_channel_ptr channel_ptr)
@@ -562,7 +564,9 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->channel_2.frequency = channel_B_get();
     channel_ptr->ch_bak = 0;
     channel_ptr->dual_channel = TRUE;
+
     bk4819_set_freq(channel_ptr->channel_1.frequency);
+    bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
 
     // Point to channel 1 for initial setup
     channel_ptr->cur_channel = &channel_ptr->channel_1;
@@ -571,8 +575,11 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
 
     channel_ptr->channel = (channel_ptr->cur_channel == &channel_ptr->channel_1 ? TRUE : FALSE);
     channel_ptr->step = 10.0000; // 10.0KHZ
+
     channel_ptr->cur_index = 1;
     channel_ptr->SFT_D_index = 1;
+    channel_ptr->TxPower_index = 1;
+
     channel_ptr->ch_pra = main_channel_step;
     channel_ptr->ch_val = channel_ptr->ch_pra;
     channel_ptr->channel_changed = FALSE;
@@ -723,6 +730,7 @@ void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t
     // turn on sound
     uint16_t reg = bk4819_read_reg(BK4819_REG_30);
     bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
+    // RxAmplifier_enable();
 
     jgfx_set_color_hex(JGFXF_COLOR_BLACK);
     jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
@@ -744,24 +752,25 @@ void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t
             break;
     }
     bk4819_write_reg(BK4819_REG_30, reg | ~(BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE));
+    // RxAmplifier_disable();
     // bk4819_rx_off();
     bk4819_set_freq(channel_ptr->cur_channel->frequency * 100);
 }
 
-
 /**
  * @brief Dual-Band standby and draw the main interface when a signal is detected
- * 
+ *
  * @param channel_ptr channel pointer
  * @param Brightness_ptr brightness pointer
  * @param Timer_ptr timer pointer
  * @param state input state refer from ui_main
  */
-void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr,uint8_t *state)
+void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr, uint8_t *state)
 {
     main_channel_speak_t cur_chan = channel_detect(channel_ptr);
     if (cur_chan != NONE_CHANNEL_SPEAKING && cur_chan != CTDCSS_INCORRENT)
     {
+        printf("channel detect!\n");
         *state = 0;
         wakeup_screen(Brightness_ptr, Timer_ptr);
         draw_channel();
@@ -951,7 +960,7 @@ void offset_setting(ui_main_channel_ptr channel_ptr)
                     ;
             }
             // detect number key press
-            else if (key != 2 && key != 3 && key != 8 && key != 16)
+            else if (key != 2 && key != 3 && key != 8 && key != 16 && key != 17 && key != 18 && key != 19 && key != 20)
             {
                 input_channel = input_channel * 10 + KEY_GET_NUM(key);
                 if (input_channel > (1300 * 1000))
@@ -1059,6 +1068,150 @@ void offset_direction(ui_main_channel_ptr channel_ptr, uint8_t param)
         break;
     }
 }
+
+// /**
+//  * @brief set bk4819 Tx power.
+//  *
+//  * @param power refer from Tx_Power_t
+//  */
+// void bk4819_Tx_Power(Tx_Power_t power)
+// {
+//     switch (power)
+//     {
+//     case TXP_HIGH:
+//         bk4819_write_reg(BK4819_REG_36, 0xffbf);
+//         break;
+//     case TXP_MID:
+//         bk4819_write_reg(BK4819_REG_36, 0x82AD);
+//         break;
+//     default:
+//     case TXP_LOW:
+//         bk4819_write_reg(BK4819_REG_36, 0x30aa);
+//         break;
+//     case TXP_STANDBY:
+//         bk4819_write_reg(BK4819_REG_36, 0x103f);
+//     }
+// }
+
+/**
+ * @brief set TX power parameter for radio_channel
+ *
+ * @param channel_ptr channel pointer
+ * @param param refer from Tx_Power_t
+ */
+void TxPower_change(ui_main_channel_ptr channel_ptr, uint8_t param)
+{
+    if (param == 0)
+        return;
+    channel_ptr->TxPower_index = param;
+    switch (param)
+    {
+    case 1:
+        channel_ptr->cur_channel->power = TXP_HIGH;
+        break;
+    case 2:
+        channel_ptr->cur_channel->power = TXP_MID;
+        break;
+    case 3:
+        channel_ptr->cur_channel->power = TXP_LOW;
+        break;
+    }
+}
+
+/**
+ * @brief scan frequency and CxCSS 
+ * 
+ * @param menu_ptr menu pointer
+ * @param channel_ptr channel pointer
+ */
+void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
+{
+
+    uint8_t str[20];
+    uint8_t mode = 0;
+    uint32_t CTDCSS_result = 0;
+    uint32_t frequency = NULL;
+
+    bool FrequencyScan = FALSE;
+    bool CTDCSSSCAN = FALSE;
+
+    _r_clear_item_area(menu_ptr);
+    jgfx_set_font(JGFX_FONT_EN_8X16);
+    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+    jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+
+    jgfx_draw_text_en(40, 30, "fre: ");
+    jgfx_draw_text_en(40, 60, "CXCSS: ");
+
+    BK4819_EnableFrequencyScan();
+    // Scan_test();
+    while (1)
+    {
+        if (FrequencyScan == FALSE)
+        {
+            frequency = FrequencyScanResult(&mode, &CTDCSS_result);
+            if (frequency != NULL)
+            {
+                FrequencyScan = TRUE;
+                if (mode != 0)
+                {
+                    snprintf(str, sizeof(str), "%7d", frequency * 10);
+                    jgfx_draw_text_en(80, 30, str);
+
+                    if (mode == 1)
+                        jgfx_draw_text_en(100, 60, "NF");
+                    else if (mode == 2 || mode == 3)
+                    {
+                        snprintf(str, sizeof(str), "%6d", CTDCSS_result);
+                        jgfx_draw_text_en(100, 60, str);
+                        if (mode == 2)
+                            jgfx_draw_text_en(40, 90, "mode : CDCSS");
+                        if (mode == 3)
+                            jgfx_draw_text_en(40, 90, "mode : CTCSS");
+                    }
+                    BK4819_DisableFrequencyScan();
+                    break;
+                }
+            }
+        }
+        uint8_t key = key_get();
+        if (key != NULL)
+        {
+            if (key == 4)
+            {
+                BK4819_DisableFrequencyScan();
+                break;
+            }
+        }
+    }
+    BK4819_DisableFrequencyScan();
+    delay_1ms(2);
+}
+
+
+/**
+ * @brief change bandwidth setting for one of both subchannel 
+ * 
+ * @param channel_ptr channel pointer
+ * @param param 1:width 2:narrow 3:narrower
+ * 
+ */
+void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param)
+{
+    if (param <= 0 || param > 3)
+        return;
+    channel_ptr->cur_channel->channnel_bandwidth = param;
+    bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
+}
+
+
+// void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param)
+// {
+//     if(param <=0 || param > 10)
+//         return;
+//     channel_ptr->cur_channel->sql = param - 1;
+//     bk4819_set_Squelch
+// }
 
 /**
  * @brief preset offset before draw main_channel_speaking
