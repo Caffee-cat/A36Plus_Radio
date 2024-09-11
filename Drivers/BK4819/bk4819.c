@@ -50,6 +50,18 @@ const uint16_t DCS_Options[104] = {
 	0x01C3, 0x01CA, 0x01D3, 0x01D9, 0x01DA, 0x01DC, 0x01E3, 0x01EC,
 };
 
+uint8_t flash_channel[MEM_CAHNNEL_LISTS][15] =
+    {
+        "001","002","003","004","005","006","007","008",
+        "009","010","011","012","013","014","015","016",
+        "017","018","019","020","021","022","023","024",
+        "025","026","027","028","029","030","031","032",
+        "033","034","035","036","037","038","039","040",
+        "041","042","043","044","045","046","047","048",
+        "049","050","051","052","053","054","055","056",
+        "057","058","059","060","061","062","063","064",
+};
+
 static uint32_t DCS_CalculateGolay(uint32_t CodeWord)
 {
     unsigned int i;
@@ -596,4 +608,144 @@ void bk4819_set_BandWidth(uint8_t param)
     default:
         break;
     }
+}
+
+
+void flash_channel_save(uint16_t param, uint32_t channel_frequency)
+{
+    // ch-001:0x000~0x1ff
+    // ch-002:0x200~0x3ff
+    // ch-003:0x400~0x5ff
+    // ch-004:0x600~0x7ff
+    // ch-005:0x800~0x9ff
+    // ch-006:0xa00~0xbff
+    // ch-007:0xc00~0xdff
+    // ch-008:0xe00~0xfff
+    if(param <= 0)
+        return;
+
+    uint8_t data[MEM_CHANNEL_LIST_IN_BLOCK * MEM_CAHNNEL_SIZES];
+
+    w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
+    // if(data[1] == 0xaa)
+    // {
+    //     printf("Channel existed!Exit now!\n");
+    //     return;
+    // }
+
+
+    for (int i = 0; i < MEM_CHANNEL_LIST_IN_BLOCK; i++)
+    {
+        w25q16jv_read_num(i * 0x200 + ((param - 1) / 8) * 0x1000, &data[8 * i], 8);
+    }
+
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 1) % 64] = 0xaa;
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 2) % 64] = (uint8_t)(channel_frequency & 0xFF);
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 3) % 64] = (uint8_t)((channel_frequency >> 8) & 0xFF);
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 4) % 64] = (uint8_t)((channel_frequency >> 16) & 0xFF);
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 5) % 64] = (uint8_t)((channel_frequency >> 24) & 0xFF);
+
+
+    uint8_t test_for_input[9] = {0};
+
+    w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    w25q16jv_sector_erase(((param - 1) / 8) * 0x1000);
+    while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
+        ;
+
+    // printf("\n----------------------------------------------------------------------\n\n");
+    for (int i = 0; i < MEM_CHANNEL_LIST_IN_BLOCK; i++)
+    {   
+            delay_1us(10);
+            w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+            w25q16jv_page_program(i * 0x200 + ((param - 1) / 8) * 0x1000, &data[8 * i], 8);
+    }
+
+
+    w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
+    if(data[1] != 0xaa)
+    {
+        printf("Save failed!\n");
+        return;
+    }
+    channel_ShowParam_add(param - 1);
+}
+
+bool flash_channel_read(uint8_t param, uint32_t *frequency)
+{
+    if(param <= 0)
+        return FALSE;
+    uint8_t data[8];
+    w25q16jv_read_num((param - 1) * 0x200, data, 8);
+    if (data[1] != 0xaa)
+        return FALSE;
+    *frequency = *(uint32_t *)&data[2];
+    return TRUE;
+}
+
+void flash_channel_delete(uint16_t param)
+{
+    if(param <= 0)
+        return;
+    uint8_t data[8];
+    w25q16jv_read_num((param - 1) * 0x200, data, 2);
+    if(data[1] != 0xaa)
+        return;
+    memset(data, 0, sizeof(data));  
+    
+    w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    w25q16jv_page_program((param - 1) * 0x200, data, 8);
+
+    w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
+    if(data[1] == 0xaa)
+    {
+        printf("Detele failed!\n");
+        return;
+    }
+
+    channel_ShowParam_delete(param - 1);
+}
+
+/**
+ * @brief only run for one time when turn on radio to initial channel_select ui showed
+ * 
+ */
+void flash_channel_init(void)
+{
+    uint8_t list, head[8];
+    for (list = 0; list < MEM_CAHNNEL_LISTS; list++)
+    {
+        head[1] = 0;
+        w25q16jv_read_num(list * 0x200, head, 2);
+        if (head[1] == 0xaa)
+        {
+            channel_ShowParam_add(list);
+        }
+    }
+}
+
+void channel_ShowParam_add(uint8_t param)
+{
+    if(flash_channel[param][0] == 'c')
+        return;
+    int8_t i;
+    for (i = 3; i >= 0; i--)
+    {
+        flash_channel[param][i + 3] = flash_channel[param][i];
+    }
+    flash_channel[param][0] = 'c';
+    flash_channel[param][1] = 'h';
+    flash_channel[param][2] = '-';
+    flash_channel[param][6] = '\0';
+}
+
+void channel_ShowParam_delete(uint8_t param)
+{
+    if(flash_channel[param][0] != 'c')
+    return;
+    uint8_t i;
+    flash_channel[param][0] = (char)((param + 1) / 100 + 48);
+    flash_channel[param][1] = (char)((param + 1) % 100 / 10 + 48);
+    flash_channel[param][2] = (char)((param + 1) % 10 + 48);
+    flash_channel[param][3] = '\0';
 }

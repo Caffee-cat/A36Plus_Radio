@@ -125,12 +125,12 @@ typedef struct jgfx_menu_t
 
 typedef struct submenu_item_t
 {
-    uint8_t *item_name[50];
+    uint8_t *item_name[80];
     uint16_t line_height;
-    uint8_t itemlist_num;
-    uint8_t cur_item;
-    uint8_t cur_page;
-    uint8_t num_in_page;
+    uint8_t itemlist_num;       //Count from 1
+    uint8_t cur_item;           //Count from 1
+    uint8_t cur_page;           //Count from 1
+    uint8_t num_in_page;        //Count from 1
 } submenu_item_t;
 
 typedef struct corner_index_num_t
@@ -248,6 +248,8 @@ bool jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index);
 void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
 
 uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...);
+
+uint8_t submenu_item_show_v2(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, uint8_t (*string)[]);
 
 void index_num_display(jgfx_menu_ptr menu_ptr);
 

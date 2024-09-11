@@ -4,9 +4,18 @@
 #include "main.h"
 #include <comp_menu.h>
 
+
+#define MEM_CAHNNEL_LISTS 64
+#define MEM_CAHNNEL_SIZES 8
+#define MEM_CHANNEL_LIST_IN_BLOCK 8
+
 extern const uint16_t CTCSS_param[];
 extern const float main_channel_step[];
 extern const uint16_t DCS_Options[];
+
+
+
+// extern uint8_t flash_channel[MEM_CAHNNEL_LISTS][15];
 
 
 
@@ -285,5 +294,16 @@ uint8_t DCS_GetCdcssCode(uint32_t Code);
 
 void bk4819_set_BandWidth(uint8_t param);
 
+void flash_channel_save(uint16_t param, uint32_t channel_frequency);
+
+bool flash_channel_read(uint8_t param, uint32_t *frequency);
+
+void flash_channel_delete(uint16_t param);
+
+void flash_channel_init(void);
+
+void channel_ShowParam_add(uint8_t param);
+
+void channel_ShowParam_delete(uint8_t param);
 
 #endif

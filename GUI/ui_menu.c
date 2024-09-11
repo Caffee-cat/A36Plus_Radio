@@ -5,10 +5,12 @@ static jgfx_menu_t jgfx_menu;
 extern ui_main_channel_t radio_channel;
 extern ui_stack_t ui_stack;
 extern ui_page_ptr temp_page;
+extern Display_Timer_t Display_Timer;
+extern uint8_t flash_channel[MEM_CAHNNEL_LISTS][15];
+
 ui_page_t ui_menu;
 corner_index_num_t jgfx_menu_corner;
 Brightness_setting_t Display_brightness;
-Display_Timer_t Display_Timer;
 
 void ui_menu_initial(void)
 {
@@ -237,34 +239,59 @@ void Squelch(jgfx_menu_ptr ptr)
     submenu_item_t sub_menu;
     uint8_t submenu_list_num = 10;
     sub_menu.cur_item = 1;
-    
+
     uint8_t param = submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
-                                     " 0", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9");
+                                      " 0", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9");
 
     channel_bandwidth_change(&radio_channel, param);
     ptr->status = JGFX_MENU_STATUS_SELECTED;
     return_to_menu(ptr);
 }
 
-void cb6(jgfx_menu_ptr ptr)
+void Channel_Save(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
-    uint8_t index = 1, submenu_list_num = 3;
-    submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " menu_item6", " menu_item5", " menu_item6");
+    uint8_t index = 1, submenu_list_num = 64;
+    sub_menu.cur_item = 1;
+    flash_channel_init();
+    uint8_t param = submenu_item_show_v2(&jgfx_menu, submenu_list_num, &sub_menu, flash_channel);
+    flash_channel_save(param, radio_channel.cur_channel->frequency);
+    ptr->status = JGFX_MENU_STATUS_SELECTED;
+    return_to_menu(ptr);
 }
 
-void cb7(jgfx_menu_ptr ptr)
+void Channel_Select(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
-    uint8_t index = 1, submenu_list_num = 3;
-    submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " menu_item7", " menu_item5", " menu_item6");
+    uint8_t index = 1, submenu_list_num = 64;
+    sub_menu.cur_item = 1;
+    flash_channel_init();
+    uint8_t param = submenu_item_show_v2(&jgfx_menu, submenu_list_num, &sub_menu, flash_channel);
+    flash_channel_read(param, &radio_channel.cur_channel->frequency);
+
+    radio_channel.channel_changed == TRUE;
+    channel_store(&radio_channel);
+    
+    ptr->status = JGFX_MENU_STATUS_SELECTED;
+    return_to_menu(ptr);
 }
 
-void cb8(jgfx_menu_ptr ptr)
+void Channel_Delete(jgfx_menu_ptr ptr)
 {
+
     submenu_item_t sub_menu;
-    uint8_t index = 1, submenu_list_num = 3;
-    submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " menu_item8", " menu_item5", " menu_item6");
+    uint8_t index = 1, submenu_list_num = 64;
+    sub_menu.cur_item = 1;
+    flash_channel_init();
+    uint8_t param = submenu_item_show_v2(&jgfx_menu, submenu_list_num, &sub_menu, flash_channel);
+    flash_channel_delete(param);
+
+    uint32_t d_frequency = 0;
+    flash_channel_read(1, &d_frequency);
+    printf("frequency equal to : %d \n", d_frequency);
+
+    ptr->status = JGFX_MENU_STATUS_SELECTED;
+    return_to_menu(ptr);
 }
 
 void cb9(jgfx_menu_ptr ptr)
@@ -297,10 +324,10 @@ void ui_menu_init(void)
     // Don't delete the space below,it works
     jgfx_menu_append_text(&jgfx_menu, "Banks ", Banks);
     jgfx_menu_append_text(&jgfx_menu, "B/W", BandWidth);
-    // jgfx_menu_append_text(&jgfx_menu, "SQL", Squelch);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing6", cb6);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing7", cb7);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing8", cb8);
+    jgfx_menu_append_text(&jgfx_menu, "SQL", Squelch);
+    jgfx_menu_append_text(&jgfx_menu, "Ch Save", Channel_Save);
+    jgfx_menu_append_text(&jgfx_menu, "Ch Select", Channel_Select);
+    jgfx_menu_append_text(&jgfx_menu, "Ch Delete", Channel_Delete);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing9", cb9);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing10", cb10);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing11", NULL);

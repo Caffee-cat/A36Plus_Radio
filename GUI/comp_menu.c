@@ -363,7 +363,6 @@ uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item
 {
     uint8_t index = 1, i;
     uint8_t *data;
-    // jgfx_init(0, 0);
     // Clean index num on the top right corner
     jgfx_set_color_back_hex(0x0000);
     jgfx_fill_react(130, 5, 16, 16);
@@ -390,6 +389,38 @@ uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item
         //                   submenu_ptr->item_name[i]);
     }
     va_end(pointer);
+
+    // Draw items
+    submenu_items_refresh(menu_ptr, submenu_ptr);
+
+    // redraw the line in the botton to fix some error
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
+
+    return submenu_cb(menu_ptr, submenu_ptr);
+}
+
+uint8_t submenu_item_show_v2(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, uint8_t string[][15])
+{
+    uint8_t index = 1, i;
+    uint8_t *data;
+    // Clean index num on the top right corner
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_fill_react(130, 5, 16, 16);
+
+    submenu_init(menu_ptr, submenu_ptr, item_num);
+    // draw item menu's title in the first line
+    _r_clear_item_area(menu_ptr);
+    jgfx_set_color_hex(0xFFFF);
+    _r_menu_draw_item(menu_ptr, menu_ptr->cur_item, JGFX_MENU_ITEM_STATUS_UNSELECTED, 0);
+
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
+    for (i = 0; i < submenu_ptr->itemlist_num; i++)
+    {
+        submenu_ptr->item_name[i] = string[i];
+    }
 
     // Draw items
     submenu_items_refresh(menu_ptr, submenu_ptr);
@@ -1119,8 +1150,8 @@ void TxPower_change(ui_main_channel_ptr channel_ptr, uint8_t param)
 }
 
 /**
- * @brief scan frequency and CxCSS 
- * 
+ * @brief scan frequency and CxCSS
+ *
  * @param menu_ptr menu pointer
  * @param channel_ptr channel pointer
  */
@@ -1188,13 +1219,12 @@ void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
     delay_1ms(2);
 }
 
-
 /**
- * @brief change bandwidth setting for one of both subchannel 
- * 
+ * @brief change bandwidth setting for one of both subchannel
+ *
  * @param channel_ptr channel pointer
  * @param param 1:width 2:narrow 3:narrower
- * 
+ *
  */
 void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param)
 {
@@ -1203,7 +1233,6 @@ void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param)
     channel_ptr->cur_channel->channnel_bandwidth = param;
     bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
 }
-
 
 // void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param)
 // {
