@@ -290,7 +290,7 @@ void TxPower_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr);
 
-void TxAmplifier_enable(Tx_Power_t power);
+void TxAmplifier_enable(ui_main_channel_ptr channel_ptr);
 
 void channel_offset_preload(ui_main_channel_ptr channel_ptr);
 

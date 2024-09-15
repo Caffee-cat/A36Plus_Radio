@@ -471,11 +471,13 @@ void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
     bk4819_write_reg(BK4819_REG_09, (number << 12) | (coeff));
 }
 
-void TxAmplifier_enable(Tx_Power_t power)
+void TxAmplifier_enable(ui_main_channel_ptr channel_ptr)
 {
-    bk4819_gpio_pin_set(4, TRUE);
-    gpio_bit_set(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
-    bk4819_Tx_Power(power);
+    if(channel_ptr->cur_channel->frequency > 24500000)
+        bk4819_gpio_pin_set(4, TRUE);
+    else
+        gpio_bit_set(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
+    bk4819_Tx_Power(channel_ptr->cur_channel->power);
 }
 
 void TxAmplifier_disable(void)

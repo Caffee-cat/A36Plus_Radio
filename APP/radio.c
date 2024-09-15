@@ -28,14 +28,19 @@ bool loudspeaker_TurnOff(void)
     }
 }
 
-void main_channel_listening_draw(ui_main_channel_ptr channel_ptr)
+void main_channel_listening_draw(ui_main_channel_ptr channel_ptr, uint8_t *state)
 {
     bool render_finish = FALSE;
     uint16_t count = 1000;
 
     if (xSemaphoreTake(xMainListeningRender, portMAX_DELAY) == pdTRUE)
     {
-
+        if(*state == 1)
+        {
+            *state = 0;
+            draw_channel();
+            vTaskDelay(50);
+        }
 
         while (1)
         {
@@ -73,6 +78,7 @@ void main_channel_listening_draw(ui_main_channel_ptr channel_ptr)
                 }
             }
         }
+        xSemaphoreGive(xMainChannelDraw);
         xSemaphoreGive(xMainListeningRender);
 
         vTaskDelay(200);

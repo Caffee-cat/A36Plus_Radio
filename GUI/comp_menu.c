@@ -31,7 +31,7 @@
 #include "comp_menu.h"
 
 extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput;
-extern SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender;
+extern SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
 extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 
@@ -713,12 +713,11 @@ void channel_store(ui_main_channel_ptr channel_ptr)
  */
 main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 {
-    
+
     uint16_t count = 10, reg_0c_flag;
     // channel turn
     if (channel_ptr->dual_channel)
     {
-       
 
         channel_ptr->dual_channel = FALSE;
 
@@ -726,10 +725,9 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 
         bk4819_rx_on();
 
-       bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
+        bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
 
         // printf("detecting!\n");
-
 
         reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
         // recive info
@@ -745,7 +743,6 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 
     else if (!channel_ptr->dual_channel)
     {
-        
 
         channel_ptr->dual_channel = TRUE;
 
@@ -758,7 +755,6 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
         // printf("detecting!\n");
 
         reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
-
 
         if (bk4819_read_reg(BK4819_REG_0C) & 0x02)
         {
@@ -817,9 +813,12 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
                 if (cur_chan != NONE_CHANNEL_SPEAKING && cur_chan != CTDCSS_INCORRENT)
                 {
                     bk4819_Tx_Power(TXP_MID);
-                    *state = 0;
                     wakeup_screen(Brightness_ptr, Timer_ptr);
-                    draw_channel();
+
+                    // *state = 0;
+                    // draw_channel();
+
+
                     loudspeaker_TurnOn(channel_ptr, cur_chan);
                     xSemaphoreGive(xMainListeningRender);
                 }

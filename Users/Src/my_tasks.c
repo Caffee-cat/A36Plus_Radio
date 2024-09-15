@@ -8,7 +8,7 @@ extern uint8_t input_state;
 
 bool FREERTOS_ON = FALSE;
 SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput;
-SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender;
+SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
 
 void vTaskChannelListening(void)
 {
@@ -33,7 +33,7 @@ void vTaskSpeakingDraw(void)
     vTaskDelay(1800);
     for (;;)
     {
-        main_channel_listening_draw(&radio_channel);
+        main_channel_listening_draw(&radio_channel,&input_state);
     }
 }
 
@@ -59,6 +59,7 @@ void xSemaphore_init(void)
     xMainChannelInput = xSemaphoreCreateMutex();
     xMainListeningRender = xSemaphoreCreateMutex();
     xMainListeningUnrender = xSemaphoreCreateMutex();
+    xMainChannelDraw = xSemaphoreCreateMutex();
 
     xSemaphoreTake(xMainListeningUnrender, portMAX_DELAY);
 }

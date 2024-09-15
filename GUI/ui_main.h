@@ -18,6 +18,7 @@ extern ui_page_t ui_main;
 extern SemaphoreHandle_t xMainChannelTalking;
 extern SemaphoreHandle_t xMainChannelListening;
 extern SemaphoreHandle_t xMainChannelInput;
+extern SemaphoreHandle_t xMainChannelDraw;
 
 void draw_channel(void);
 

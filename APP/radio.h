@@ -15,11 +15,12 @@ extern ui_page_ptr temp_page;
 extern ui_main_channel_t radio_channel;
 extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput;
 extern SemaphoreHandle_t xMainListeningRender,xMainListeningUnrender;
+extern SemaphoreHandle_t xMainChannelDraw;
 
 
 bool loudspeaker_TurnOff(void);
 
-void main_channel_listening_draw(ui_main_channel_ptr channel_ptr);
+void main_channel_listening_draw(ui_main_channel_ptr channel_ptr,uint8_t *state);
 
 void MainChannel_input_interrupt(void);
 

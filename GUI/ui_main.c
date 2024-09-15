@@ -239,10 +239,10 @@ void draw_battery(void)
     while(count--)
     {
         val += getValue(ADC_CHANNEL_1);
-        printf("%d\n",val);
+        // printf("%d\n",val);
     }
     val = val / 10;
-    printf("total: %d\n",val);
+    // printf("total: %d\n",val);
 
     if(val>2553)
     {
@@ -274,6 +274,7 @@ void ui_main_init(void)
 
 void ui_main_refresh(void)
 {
+    printf("refreshing\n");
 
     // clear screen
     jgfx_set_color_hex(JGFXF_COLOR_BLACK);
@@ -321,7 +322,7 @@ void ui_main_event_cb(void)
 {
     Display_Timer_count(&Display_Timer);
     channel_input_flicker(&radio_channel, input_state);
-    draw_battery();
+    // draw_battery();
 
     key_map_t key = key_get();
     if (key == KEY_MAP_NONE)
@@ -452,7 +453,7 @@ void ui_main_event_cb(void)
                     draw_channel();
                     uint16_t reg_temp = bk4819_read_reg(BK4819_REG_36);
                     bk4819_write_reg(BK4819_REG_36, 0xefbf);
-                    TxAmplifier_enable(radio_channel.cur_channel->power);
+                    TxAmplifier_enable(&radio_channel);
 
                     bk4819_set_freq(radio_channel.cur_channel->frequency);
                     bk4819_tx_on();
