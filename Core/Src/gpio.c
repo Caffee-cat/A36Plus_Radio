@@ -66,19 +66,25 @@ static void misc_gpio_init(void)
     gpio_output_options_set(MIC_EN_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, MIC_EN_GPIO_PIN);
 }
 
-static void TxAmplifier_init(void)
+static void TxAmplifier_gpio_init(void)
 {
     gpio_mode_set(TxAmplifier_VHF_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, TxAmplifier_VHF_PIN);
     gpio_output_options_set(TxAmplifier_VHF_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, TxAmplifier_VHF_PIN);
 }
 
-static void RxAmplifier_init(void)
+static void RxAmplifier_gpio_init(void)
 {
     gpio_mode_set(RxAmplifier_VHF_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, RxAmplifier_VHF_PIN);
     gpio_output_options_set(RxAmplifier_VHF_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RxAmplifier_VHF_PIN);
 
     gpio_mode_set(RxAmplifier_UHF_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, RxAmplifier_UHF_PIN);
     gpio_output_options_set(RxAmplifier_UHF_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, RxAmplifier_UHF_PIN);
+}
+
+void battery_gpio_init(void)
+{
+    gpio_mode_set(BATTERY_GPIO_PORT, GPIO_MODE_ANALOG, GPIO_PUPD_NONE, BATTERY_GPIO_PIN);
+    gpio_output_options_set(BATTERY_GPIO_PORT, GPIO_OTYPE_OD, GPIO_OSPEED_50MHZ, BATTERY_GPIO_PIN);
 }
 
 void gpio_config(void)
@@ -94,6 +100,7 @@ void gpio_config(void)
     rcu_periph_clock_enable(KEY_GPIO_PTT_RCU);
     rcu_periph_clock_enable(MIC_EN_GPIO_RCU);
 
+
     LCD_gpio_init();
     key_gpio_init();
     flash_gpio_init();
@@ -101,6 +108,6 @@ void gpio_config(void)
     bk4819_gpio_init();
     bk1080_gpio_init();
     misc_gpio_init();
-    TxAmplifier_init();
-    RxAmplifier_init();
+    TxAmplifier_gpio_init();
+    RxAmplifier_gpio_init();
 }
