@@ -139,7 +139,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -274,7 +274,7 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8000000</StartAddress>
+                <StartAddress>0x8001000</StartAddress>
                 <Size>0x20000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
@@ -312,7 +312,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>0</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -334,10 +334,10 @@
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
-              <MiscControls></MiscControls>
+              <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,GD32F3X0,GD32F330,LV_CONF_INCLUDE_SIMPLE</Define>
               <Undefine></Undefine>
-              <IncludePath>..\Libraries\GD32\CMSIS\GD\GD32F3x0\Include;..\Libraries\GD32\CMSIS\Keil;..\Users\Inc;..\Libraries\GD32\CMSIS\GD\GD32F3x0\Source\ARM;..\Libraries\GD32\GD32F3x0_standard_peripheral\Include;.cmsis\include;RTE\_GD32F330;.eide\deps;..\Libraries\GD32;..\Core\Inc;..\Drivers\LCD;..\Drivers\Flash;..\Drivers\BK4819;..\Drivers\BK1080;..\Drivers\Key;..\Libraries\FreeRTOS-Kernel\include;..\Libraries\FreeRTOS-Kernel\portable\RVDS\ARM_CM4F;..\Libraries\lvgl\src;..\GUI;RTE\_Project</IncludePath>
+              <IncludePath>..\Libraries\GD32\CMSIS\GD\GD32F3x0\Include;..\Libraries\GD32\CMSIS\Keil;..\Users\Inc;..\Libraries\GD32\CMSIS\GD\GD32F3x0\Source\ARM;..\Libraries\GD32\GD32F3x0_standard_peripheral\Include;.cmsis\include;RTE\_GD32F330;.eide\deps;..\Libraries\GD32;..\Core\Inc;..\APP;..\Drivers\LCD;..\Drivers\Flash;..\Drivers\BK4819;..\Drivers\BK1080;..\Drivers\Key;..\Drivers\FMC;..\Drivers\FONT;..\Libraries\FreeRTOS-Kernel\include;..\Libraries\FreeRTOS-Kernel\portable\RVDS\ARM_CM4F;..\Libraries\lvgl\src;..\GUI;RTE\_Project</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -378,101 +378,6 @@
         </TargetArmAds>
       </TargetOption>
       <Groups>
-        <Group>
-          <GroupName>../USERS/SRC</GroupName>
-          <Files>
-            <File>
-              <FileName>boot.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Users/Src/boot.c</FilePath>
-            </File>
-            <File>
-              <FileName>gd32f3x0_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Users/Src/gd32f3x0_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>lv_port_disp.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Users/Src/lv_port_disp.c</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
-                  <AlwaysBuild>0</AlwaysBuild>
-                  <GenerateAssemblyFile>0</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>0</AssembleAssemblyFile>
-                  <PublicsOnly>0</PublicsOnly>
-                  <StopOnExitCode>3</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <useXO>2</useXO>
-                    <v6Lang>0</v6Lang>
-                    <v6LangP>0</v6LangP>
-                    <vShortEn>2</vShortEn>
-                    <vShortWch>2</vShortWch>
-                    <v6Lto>2</v6Lto>
-                    <v6WtE>2</v6WtE>
-                    <v6Rtti>2</v6Rtti>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
-            </File>
-            <File>
-              <FileName>main.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Users/Src/main.c</FilePath>
-            </File>
-            <File>
-              <FileName>my_tasks.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Users/Src/my_tasks.c</FilePath>
-            </File>
-            <File>
-              <FileName>systick.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Users/Src/systick.c</FilePath>
-            </File>
-            <File>
-              <FileName>test.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Users/Src/test.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart_flash.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Users\Src\usart_flash.c</FilePath>
-            </File>
-          </Files>
-        </Group>
         <Group>
           <GroupName>../LIBRARIES/PRINTF</GroupName>
           <Files>
@@ -10239,36 +10144,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>../GUI/SRC</GroupName>
-          <Files>
-            <File>
-              <FileName>ui_menu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../GUI/ui_menu.c</FilePath>
-            </File>
-            <File>
-              <FileName>ui.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../GUI/ui.c</FilePath>
-            </File>
-            <File>
-              <FileName>ui_stack.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\GUI\ui_stack.c</FilePath>
-            </File>
-            <File>
-              <FileName>ui_main.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\GUI\ui_main.c</FilePath>
-            </File>
-            <File>
-              <FileName>comp_menu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\GUI\comp_menu.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>../DRIVERS/LCD</GroupName>
           <Files>
             <File>
@@ -10281,6 +10156,11 @@
               <FileType>1</FileType>
               <FilePath>../Drivers/LCD/st7735s.c</FilePath>
             </File>
+            <File>
+              <FileName>backlight.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\LCD\backlight.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -10290,6 +10170,11 @@
               <FileName>key.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/Key/key.c</FilePath>
+            </File>
+            <File>
+              <FileName>backlight.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\LCD\backlight.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -10320,6 +10205,56 @@
               <FileName>bk1080.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Drivers/BK1080/bk1080.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>../DRIVERS/FONT</GroupName>
+          <Files>
+            <File>
+              <FileName>Font.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\Font\Font.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>../DRIVERS/FMC</GroupName>
+          <Files>
+            <File>
+              <FileName>fmc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Drivers\FMC\fmc.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>../GUI/SRC</GroupName>
+          <Files>
+            <File>
+              <FileName>ui_menu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../GUI/ui_menu.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../GUI/ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_stack.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\ui_stack.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui_main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\ui_main.c</FilePath>
+            </File>
+            <File>
+              <FileName>comp_menu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\GUI\comp_menu.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -10355,6 +10290,116 @@
               <FileName>usart.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Core/Src/usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Core\Src\adc.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>../USERS/SRC</GroupName>
+          <Files>
+            <File>
+              <FileName>gd32f3x0_it.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Users/Src/gd32f3x0_it.c</FilePath>
+            </File>
+            <File>
+              <FileName>lv_port_disp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Users/Src/lv_port_disp.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>0</AlwaysBuild>
+                  <GenerateAssemblyFile>0</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>0</AssembleAssemblyFile>
+                  <PublicsOnly>0</PublicsOnly>
+                  <StopOnExitCode>3</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Users/Src/main.c</FilePath>
+            </File>
+            <File>
+              <FileName>my_tasks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Users/Src/my_tasks.c</FilePath>
+            </File>
+            <File>
+              <FileName>pwr_det.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Users\Src\pwr_det.c</FilePath>
+            </File>
+            <File>
+              <FileName>systick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Users/Src/systick.c</FilePath>
+            </File>
+            <File>
+              <FileName>test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../Users/Src/test.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Users\Src\usart_flash.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>../APP</GroupName>
+          <Files>
+            <File>
+              <FileName>radio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\APP\radio.c</FilePath>
             </File>
           </Files>
         </Group>

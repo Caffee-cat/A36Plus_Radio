@@ -2,7 +2,8 @@
 
 const uint16_t Display_Timer_param[] = {999, 10, 30, 60, 120};
 const uint32_t brightness_param[] = {5, 20, 100, 200, 500};
-extern Display_Timer_t Display_Timer;
+Display_Timer_t Display_Timer;
+
 
 void TIMER16_IRQHandler(void)
 {

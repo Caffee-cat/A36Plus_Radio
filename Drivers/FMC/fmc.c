@@ -15,8 +15,6 @@ static void FMC_unlock(void)
 }
 
 
-
-
 uint32_t channel_A_get(void)
 {
     return *(__IO uint32_t *)(CHANNEL_A_KHZ_ADDR) * 100 + *(__IO uint16_t *)(CHANNEL_A_HZ_ADDR);

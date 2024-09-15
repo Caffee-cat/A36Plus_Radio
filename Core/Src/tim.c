@@ -2,7 +2,7 @@
 // uint32_t time1_current_ms = 0;
 void rtos_tim_config(void)
 {
-    timer_parameter_struct timer_initpara;
+    timer_parameter_struct timer_initpara;  
     timer_deinit(TIMER1);
     /* TIMER1 configuration */
     timer_initpara.prescaler = (84 - 1);

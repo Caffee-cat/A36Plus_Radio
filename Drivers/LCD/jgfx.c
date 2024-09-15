@@ -31,8 +31,6 @@ SOFTWARE.
 
 #include "jgfx.h"
 
-
-
 #ifdef USE_FONT_LOADED_IN_MCU
 extern uint8_t font8x16[][16];
 extern uint8_t font8x16_song[];
@@ -149,9 +147,9 @@ void jgfx_fill_react(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
         {
             if (jgfx->draw_buf.buf_act == NULL)
             {
-            st7735s_send_data(((color >> 8) & 0xFF));
-            st7735s_send_data(color & 0xFF);
-            continue;
+                st7735s_send_data(((color >> 8) & 0xFF));
+                st7735s_send_data(color & 0xFF);
+                continue;
             }
             else
             {
@@ -593,7 +591,7 @@ void jgfx_set_color_hex(uint32_t color)
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-    jgfx->color_front.full = color;
+        jgfx->color_front.full = color;
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {
@@ -631,7 +629,7 @@ void jgfx_set_color_back_hex(uint32_t color)
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB565)
     {
-    jgfx->color_back.full = color;
+        jgfx->color_back.full = color;
     }
     else if (jgfx->color_fmt == COLOR_FORMAT_RGB444)
     {

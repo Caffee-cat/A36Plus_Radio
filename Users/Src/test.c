@@ -4,6 +4,64 @@ uint8_t flash_data[W25Q16JV_SECTOR_SIZE] = {0};
 uint8_t flash_data_text[16] = {0};
 uint32_t current_addr = 0;
 
+typedef enum
+{
+    BK4819_AF_MUTE = 0u,      //
+    BK4819_AF_NORMAL = 1u,    // FM
+    BK4819_AF_ALAM = 2u,      //  Tone Out for Rx (Should enable Tone1 first)
+    BK4819_AF_BEEP = 3u,      //  Beep Out for Tx (Should enable Tone1 first and set REG_03[9] = 1 to enable AF
+    BK4819_AF_BASEBAND1 = 4u, // RAW
+    BK4819_AF_BASEBAND2 = 5u, // USB
+    BK4819_AF_CTCO = 6u,      // strange LF audio .. maybe the CTCSS LF line ?
+    BK4819_AF_AM = 7u,        // AM
+    BK4819_AF_FSKO = 8u,      // nothing
+    BK4819_AF_UNKNOWN3 = 9u,  // BYP
+    BK4819_AF_UNKNOWN4 = 10u, // nothing at all
+    BK4819_AF_UNKNOWN5 = 11u, // distorted
+    BK4819_AF_UNKNOWN6 = 12u, // distorted
+    BK4819_AF_UNKNOWN7 = 13u, // interesting
+    BK4819_AF_UNKNOWN8 = 14u, // interesting
+    BK4819_AF_UNKNOWN9 = 15u  // not a lot
+} BK4819_AF_Type_t;
+
+void BK4819_SetAF(BK4819_AF_Type_t AF)
+{
+    // AF Output Inverse Mode = Inverse
+    // Undocumented bits 0x2040
+    //
+    //	bk4819_write_reg(BK4819_REG_47, 0x6040 | (AF << 8));
+    bk4819_write_reg(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6)); // AF Output Inverse Mode. Use AF Tx Filter
+}
+
+void squelch_test(void)
+{
+    printf("REG 47 eaual to : %04x as default\n", bk4819_read_reg(BK4819_REG_47)); // default 0b 0110 0001 0100 0000
+
+    bk4819_rx_on();
+    uint8_t sqlLevel = 2;
+    int squelch = -127 + (sqlLevel * 66) / 15;
+    bk4819_set_Squelch((squelch / 2 + 160) * 2,
+                       ((squelch - 2) / 2 + 160) * 2,
+                       0x5f, 0x5e, 0x20, 0x08);
+    while(1)
+    {
+        printf("RSSI : 0x%04x \n",bk4819_read_reg(BK4819_REG_67));
+        printf("REG_0C : 0x%04x \n\n",bk4819_read_reg(BK4819_REG_0C));
+        delay_1ms(10);
+    }
+    uint16_t reg = bk4819_read_reg(BK4819_REG_30);
+    bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
+    // while (1)
+    // {
+    //     BK4819_SetAF(BK4819_AF_MUTE);
+    //     delay_1ms(2000);
+    //     printf("RSSI : 0x%04x \n",bk4819_read_reg(BK4819_REG_67));
+    //     BK4819_SetAF(BK4819_AF_NORMAL);
+    //     delay_1ms(2000);
+    //     printf("RSSI : 0x%04x \n",bk4819_read_reg(BK4819_REG_67));
+    // }
+}
+
 // without the antenna,it perform very low accuracy
 void Scan_test(void)
 {
@@ -156,42 +214,61 @@ void flash_test(void)
         printf("%x ", flash_data[i]);
     }
 
-    // printf("WEL: %d\n", w25q16jv_read_reg1(W25Q16JV_REG1_WEL));
     w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    printf("WEL: %d\n", w25q16jv_read_reg1(W25Q16JV_REG1_WEL));
     delay_1ms(500);
 
-    // w25q16jv_sector_erase(0x00);
-    w25q16jv_chip_erase();
+    w25q16jv_sector_erase(0x00);
+    // w25q16jv_chip_erase();
     while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
     {
         printf("Erase Busy...\n");
     }
 
+    //////////////////////////////////////////////////////////////////////////////////
     uint8_t d[256] = {0};
     for (uint16_t i = 0; i < 256; i++)
     {
-        d[i] = 0x22;
+        d[i] = 0x33;
     }
-
     w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-    w25q16jv_page_program(0x00, d, 256);
+    w25q16jv_page_program(0x00, d, 8);
 
     while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
     {
         printf("Busy...\n");
     }
 
-    w25q16jv_read_num(0x00, temp_data, 256);
-    for (int i = 0; i < 256; i++)
+    w25q16jv_read_num(0x00, temp_data, 8);
+    for (int i = 0; i < 8; i++)
     {
         printf("%x    ", temp_data[i]);
     }
 
     printf("\n\n");
-
+    //////////////////////////////////////////////////////////////////////////////////
     for (uint16_t i = 256; i > 0; i--)
     {
         d[i - 1] = i;
+    }
+    w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+    w25q16jv_page_program(0x100, d, 8);
+
+    while (w25q16jv_read_reg1(W25Q16JV_REG1_BUSY) != W25Q16JV_RESET)
+    {
+        printf("Busy...\n");
+    }
+
+    w25q16jv_read_num(0x100, temp_data, 8);
+    for (int i = 0; i < 8; i++)
+    {
+        printf("%x    ", temp_data[i]);
+    }
+    printf("\n\n");
+    //////////////////////////////////////////////////////////////////////////////////
+    for (uint16_t i = 256; i > 0; i--)
+    {
+        d[i - 1] = 0xff;
     }
     w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
     w25q16jv_page_program(0x100, d, 256);
@@ -206,6 +283,57 @@ void flash_test(void)
     {
         printf("%x    ", temp_data[i]);
     }
+}
+
+// With the following code or function flash_test(void),the first Byte ceceive from w25q16jv just keep in 0x00 and dont know why.
+void flash_test_v2(void)
+{
+    uint8_t data[18] = {0};
+
+    uint8_t temp_data[16] = {0};
+    flash_channel_delete(1);
+    // flash_channel_delete(2);
+    // flash_channel_delete(3);
+    // flash_channel_delete(4);
+    // flash_channel_delete(5);
+    // flash_channel_delete(6);
+    // flash_channel_delete(7);
+    // flash_channel_delete(8);
+    // flash_channel_delete(9);
+
+    // printf("\n\n\n\n\n\n\n\n\n");
+    flash_channel_save(1, 43946050);
+    // flash_channel_save(2, 45264575);
+    // flash_channel_save(3, 43214525);
+    // flash_channel_save(4, 45478525);
+    // flash_channel_save(5, 42234525);
+    // flash_channel_save(6, 45564525);
+    // flash_channel_save(7, 42324525);
+    // flash_channel_save(8, 45994525);
+    // flash_channel_save(9, 42333525);
+
+    for (int i = 0; i < 0x120;)
+    {
+        printf("\n0x%02x :  ", i);
+        w25q16jv_read_num(i * 0x10, temp_data, 16);
+        for (int j = 0; j < 16; j++)
+        {
+            printf("%02x  ", temp_data[j]);
+        }
+        i += 0x20;
+    }
+
+    // flash_channel_save(1,48762500);
+
+    uint32_t frequency = 0;
+
+    flash_channel_read(1, &frequency);
+
+    printf("frequency equal to : %d \n", frequency);
+
+    flash_channel_read(2, &frequency);
+
+    printf("frequency equal to : %d \n", frequency);
 }
 
 void FMC_test(void)
