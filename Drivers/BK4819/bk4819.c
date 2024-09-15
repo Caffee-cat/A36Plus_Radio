@@ -244,8 +244,8 @@ void bk4819_init(void)
     // bk4819_tx_on();
     // bk4819_tx_off();
 
-    bk4819_rx_off();
-    // bk4819_rx_on();
+    // bk4819_rx_off();
+    bk4819_rx_on();
 }
 
 /**
@@ -276,7 +276,7 @@ void bk4819_set_freq(uint32_t freq)
  */
 void bk4819_rx_on(void)
 {
-    gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
     bk4819_write_reg(BK4819_REG_37, 0x1d0f); // DSP voltage setting
     bk4819_write_reg(BK4819_REG_30, 0x00);   // reset
 
@@ -285,11 +285,12 @@ void bk4819_rx_on(void)
                          BK4819_REG30_REVERSE1_ENABLE |
                          BK4819_REG30_VCO_CALIBRATION |
                          BK4819_REG30_RX_LINK_ENABLE |
-                         // BK4819_REG30_AF_DAC_ENABLE |
+                         // BK4819_REG30_AF_DAC_ENABLE |	
                          BK4819_REG30_PLL_VCO_ENABLE |
-                         // BK4819_REG30_MIC_ADC_ENABLE |
+                         // BK4819_REG30_MIC_ADC_ENABLE | 
                          BK4819_REG30_PA_GAIN_ENABLE |
-                         BK4819_REG30_RX_DSP_ENABLE);
+                         BK4819_REG30_RX_DSP_ENABLE
+                         );
 }
 
 void bk4819_rx_off(void)
@@ -297,6 +298,20 @@ void bk4819_rx_off(void)
     // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
     bk4819_write_reg(BK4819_REG_30, 0);
     // bk4819_write_reg(BK4819_REG_37, 0x1D00);
+}
+
+void bk4819_enable_loudspeaker(void)
+{
+    gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+    uint16_t reg = bk4819_read_reg(BK4819_REG_30);
+    bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
+}
+
+void bk4819_disable_loidspeaker(void)
+{
+    uint16_t reg = bk4819_read_reg(BK4819_REG_30);
+    bk4819_write_reg(BK4819_REG_30, reg | ~(BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE));
+    gpio_bit_reset(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
 }
 
 /**
@@ -349,6 +364,33 @@ void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
 }
 
 /**
+ * @brief just return RSSI value afeer frequency seted
+ * 
+ */
+uint16_t bk4819_RSSI_return(void)
+{
+    return bk4819_read_reg(BK4819_REG_67);
+}
+
+
+/**
+ * @brief Check Squelch resultoutput
+ * 
+ * @return true Detected 
+ * @return false Dissatisfy condition
+ */
+bool Squelch_resultoutput(void)
+{
+    uint16_t reg = bk4819_read_reg(BK4819_REG_0C);
+        // recive info
+        if (reg & 0x02)
+        {
+            return TRUE;
+        }
+    return FALSE;
+}
+
+/**
  * @brief Set squelch threshold
  *
  * @param RTSO RSSI threshold for Squelch=1, 0.5dB/step
@@ -364,6 +406,14 @@ void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, 
     bk4819_write_reg(BK4819_REG_4F, (ETSC << 8) | ETSO);
     bk4819_write_reg(BK4819_REG_4D, GTSC);
     bk4819_write_reg(BK4819_REG_4E, GTSO);
+}
+
+void bk4819_subchannel_set_Squelch(uint8_t sqlLevel)
+{
+    int squelch = -127 + (sqlLevel * 66) / 15;
+    bk4819_set_Squelch((squelch / 2 + 160) * 2,
+                       ((squelch - 2) / 2 + 160) * 2,
+                       0x5f, 0x5e, 0x20, 0x08);
 }
 
 /**
@@ -621,17 +671,19 @@ void flash_channel_save(uint16_t param, uint32_t channel_frequency)
     // ch-006:0xa00~0xbff
     // ch-007:0xc00~0xdff
     // ch-008:0xe00~0xfff
+    // 8 channels for one block.Suppose store 200 channels
     if(param <= 0)
         return;
 
     uint8_t data[MEM_CHANNEL_LIST_IN_BLOCK * MEM_CAHNNEL_SIZES];
 
     w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
-    // if(data[1] == 0xaa)
-    // {
-    //     printf("Channel existed!Exit now!\n");
-    //     return;
-    // }
+
+    if(data[1] == 0xaa)
+    {
+        // printf("Channel existed!Exit now!\n");
+        return;
+    }
 
 
     for (int i = 0; i < MEM_CHANNEL_LIST_IN_BLOCK; i++)
@@ -639,11 +691,11 @@ void flash_channel_save(uint16_t param, uint32_t channel_frequency)
         w25q16jv_read_num(i * 0x200 + ((param - 1) / 8) * 0x1000, &data[8 * i], 8);
     }
 
-    data[((param - 1) * MEM_CAHNNEL_SIZES + 1) % 64] = 0xaa;
-    data[((param - 1) * MEM_CAHNNEL_SIZES + 2) % 64] = (uint8_t)(channel_frequency & 0xFF);
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 1) % 64] = 0xaa;                                                    // Data head,0xaa means that channel effective
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 2) % 64] = (uint8_t)(channel_frequency & 0xFF);                     //Low   frequency
     data[((param - 1) * MEM_CAHNNEL_SIZES + 3) % 64] = (uint8_t)((channel_frequency >> 8) & 0xFF);
     data[((param - 1) * MEM_CAHNNEL_SIZES + 4) % 64] = (uint8_t)((channel_frequency >> 16) & 0xFF);
-    data[((param - 1) * MEM_CAHNNEL_SIZES + 5) % 64] = (uint8_t)((channel_frequency >> 24) & 0xFF);
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 5) % 64] = (uint8_t)((channel_frequency >> 24) & 0xFF);             //High  frequency
 
 
     uint8_t test_for_input[9] = {0};
@@ -665,12 +717,20 @@ void flash_channel_save(uint16_t param, uint32_t channel_frequency)
     w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
     if(data[1] != 0xaa)
     {
-        printf("Save failed!\n");
+        // printf("Save failed!\n");
         return;
     }
     channel_ShowParam_add(param - 1);
 }
 
+/**
+ * @brief Get frequency value from flash selected if it is stored
+ * 
+ * @param param channel number
+ * @param frequency return frequency by pointer,waiting to be change to struct
+ * @return true success
+ * @return false NULL
+ */
 bool flash_channel_read(uint8_t param, uint32_t *frequency)
 {
     if(param <= 0)
@@ -683,6 +743,11 @@ bool flash_channel_read(uint8_t param, uint32_t *frequency)
     return TRUE;
 }
 
+/**
+ * @brief Only earse data head for single channel 
+ * 
+ * @param param channel selected
+ */
 void flash_channel_delete(uint16_t param)
 {
     if(param <= 0)
@@ -724,7 +789,7 @@ void flash_channel_init(void)
     }
 }
 
-void channel_ShowParam_add(uint8_t param)
+static void channel_ShowParam_add(uint8_t param)
 {
     if(flash_channel[param][0] == 'c')
         return;
@@ -739,7 +804,7 @@ void channel_ShowParam_add(uint8_t param)
     flash_channel[param][6] = '\0';
 }
 
-void channel_ShowParam_delete(uint8_t param)
+static void channel_ShowParam_delete(uint8_t param)
 {
     if(flash_channel[param][0] != 'c')
     return;

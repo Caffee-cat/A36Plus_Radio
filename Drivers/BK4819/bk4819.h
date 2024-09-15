@@ -9,9 +9,12 @@
 #define MEM_CAHNNEL_SIZES 8
 #define MEM_CHANNEL_LIST_IN_BLOCK 8
 
+typedef struct bk4819_squelch_t *bk4819_squelch_ptr;
+
 extern const uint16_t CTCSS_param[];
 extern const float main_channel_step[];
 extern const uint16_t DCS_Options[];
+
 
 
 
@@ -220,7 +223,21 @@ typedef enum
                                         // 6.25k BW Mode Selection
                                         // 0 dB Gain after FM Demodulation
 
-}bkj4819_bandwidth_t;
+}bk4819_bandwidth_t;
+
+
+
+typedef struct bk4819_squelch_t
+{
+    uint8_t RTSO; 
+    uint8_t RTSC;
+    uint8_t ETSO;
+    uint8_t ETSC; 
+    uint8_t GTSO; 
+    uint8_t GTSC;
+}bk4819_squelch_t;
+
+
 // typedef enum
 // {
 
@@ -274,6 +291,8 @@ void bk4819_CDCSS_set(uint8_t sel, uint16_t code);
 
 void bk4819_CDCSS_set_v2(uint32_t code);
 
+uint16_t bk4819_RSSI_return(void);
+
 // void bk4819_Tx_Power(Tx_Power_t power);
 
 void TxAmplifier_disable(void);
@@ -302,8 +321,8 @@ void flash_channel_delete(uint16_t param);
 
 void flash_channel_init(void);
 
-void channel_ShowParam_add(uint8_t param);
+static void channel_ShowParam_add(uint8_t param);
 
-void channel_ShowParam_delete(uint8_t param);
+static void channel_ShowParam_delete(uint8_t param);
 
 #endif
