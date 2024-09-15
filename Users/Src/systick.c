@@ -36,6 +36,7 @@ OF SUCH DAMAGE.
 #include "systick.h"
 
 volatile static uint32_t delay;
+extern bool FREERTOS_ON;
 
 /*!
     \brief      configure systick
@@ -65,10 +66,15 @@ void systick_config(void)
 */
 void delay_1us(uint32_t count)
 {
-    delay = count;
-
-    while (0U != delay)
+    if (FREERTOS_ON)
+        vTaskDelay(count);
+    else
     {
+        delay = count;
+
+        while (0U != delay)
+        {
+        }
     }
 }
 

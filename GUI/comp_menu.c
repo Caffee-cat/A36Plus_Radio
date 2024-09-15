@@ -30,6 +30,8 @@
 
 #include "comp_menu.h"
 
+extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput;
+extern SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender;
 extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 
@@ -578,6 +580,7 @@ void sub_channel_init(sub_channel_ptr sub_ch)
     sub_ch->direction = OFF;
     sub_ch->power = TXP_MID;
     sub_ch->channnel_bandwidth = 1;
+    sub_ch->sql = 3;
 }
 
 void main_channel_init(ui_main_channel_ptr channel_ptr)
@@ -595,6 +598,7 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->channel_2.frequency = channel_B_get();
     channel_ptr->ch_bak = 0;
     channel_ptr->dual_channel = TRUE;
+    channel_ptr->channel_listening = FALSE;
 
     bk4819_set_freq(channel_ptr->channel_1.frequency);
     bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
@@ -607,6 +611,7 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->channel = (channel_ptr->cur_channel == &channel_ptr->channel_1 ? TRUE : FALSE);
     channel_ptr->step = 10.0000; // 10.0KHZ
 
+    // index set
     channel_ptr->cur_index = 1;
     channel_ptr->SFT_D_index = 1;
     channel_ptr->TxPower_index = 1;
@@ -668,7 +673,7 @@ void channel_input_flicker(ui_main_channel_ptr channel_ptr, uint8_t state)
         channel_ptr->flash_count_num1 -= 1;
         if (channel_ptr->flash_count_num1 == 0)
         {
-            channel_ptr->flash_count_num1 = 3;
+            channel_ptr->flash_count_num1 = 30;
             channel_ptr->flash_count_num2 = !channel_ptr->flash_count_num2;
             if (channel_ptr->flash_count_num2 == 1)
             {
@@ -708,19 +713,30 @@ void channel_store(ui_main_channel_ptr channel_ptr)
  */
 main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 {
-    uint16_t count = 10, RSSI;
+    
+    uint16_t count = 10, reg_0c_flag;
     // channel turn
     if (channel_ptr->dual_channel)
     {
+       
+
         channel_ptr->dual_channel = FALSE;
+
         bk4819_set_freq(channel_ptr->channel_1.frequency);
+
         bk4819_rx_on();
 
-        RSSI = bk4819_read_reg(BK4819_REG_67);
+       bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
+
+        // printf("detecting!\n");
+
+
+        reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
         // recive info
-        if (RSSI > 0x42)
+        if (reg_0c_flag & 0x02)
         {
             // check RxCTC/CDC
+            // vTaskDelay(10);
             if (main_channel_CTDCSS_judge(&channel_ptr->channel_1) == CHANNEL_SPEAKING)
                 return CHANNAL_A_SPEAKING;
             return CTDCSS_INCORRENT;
@@ -729,11 +745,22 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 
     else if (!channel_ptr->dual_channel)
     {
+        
+
         channel_ptr->dual_channel = TRUE;
+
         bk4819_set_freq(channel_ptr->channel_2.frequency);
+
         bk4819_rx_on();
-        RSSI = bk4819_read_reg(BK4819_REG_67);
-        if (RSSI > 0x42)
+
+        bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
+
+        // printf("detecting!\n");
+
+        reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
+
+
+        if (bk4819_read_reg(BK4819_REG_0C) & 0x02)
         {
             if (main_channel_CTDCSS_judge(&channel_ptr->channel_2) == CHANNEL_SPEAKING)
                 return CHANNEL_B_SPEAKING;
@@ -746,12 +773,12 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 }
 
 /**
- * @brief draw frame in main interface after detect a preset channel speaking
+ * @brief Turn on loudspeaker after RSSI meet requirment
  *
  * @param channel_ptr channel pointer
  * @param status the speaking channel
  */
-void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t status)
+void loudspeaker_TurnOn(ui_main_channel_ptr channel_ptr, main_channel_speak_t status)
 {
     if (status == NONE_CHANNEL_SPEAKING)
     {
@@ -763,29 +790,9 @@ void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t
     bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
     // RxAmplifier_enable();
 
-    jgfx_set_color_hex(JGFXF_COLOR_BLACK);
-    jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
-    if (status == CHANNAL_A_SPEAKING)
-    {
-        jgfx_fill_react(32, DISPLAY_H / 2 + 11, DISPLAY_W, DISPLAY_H / 2);
-        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
-        jgfx_draw_text_en(76, DISPLAY_H / 2 + 33, "A  RX");
-    }
-    else if (status == CHANNEL_B_SPEAKING)
-    {
-        jgfx_fill_react(32, 10, DISPLAY_W, DISPLAY_H / 2);
-        jgfx_set_color_hex(JGFXF_COLOR_WHITE);
-        jgfx_draw_text_en(76, DISPLAY_H / 2 - 23, "B  RX");
-    }
-    while (1)
-    {
-        if (bk4819_read_reg(BK4819_REG_67) < 0x42)
-            break;
-    }
-    bk4819_write_reg(BK4819_REG_30, reg | ~(BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE));
-    // RxAmplifier_disable();
-    // bk4819_rx_off();
-    bk4819_set_freq(channel_ptr->cur_channel->frequency * 100);
+    // main_channel_listening_draw(status);
+
+    channel_ptr->channel_listening = TRUE;
 }
 
 /**
@@ -798,15 +805,27 @@ void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t
  */
 void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr, uint8_t *state)
 {
-    main_channel_speak_t cur_chan = channel_detect(channel_ptr);
-    if (cur_chan != NONE_CHANNEL_SPEAKING && cur_chan != CTDCSS_INCORRENT)
+    if (xSemaphoreTake(xMainChannelTalking, portMAX_DELAY) == pdTRUE)
     {
-        printf("channel detect!\n");
-        *state = 0;
-        wakeup_screen(Brightness_ptr, Timer_ptr);
-        draw_channel();
-        channel_speaking_draw(channel_ptr, cur_chan);
-        ui_main_refresh();
+
+        xSemaphoreGive(xMainChannelTalking);
+        if (xSemaphoreTake(xMainChannelListening, portMAX_DELAY) == pdTRUE)
+        {
+            if (loudspeaker_TurnOff() == TRUE)
+            {
+                main_channel_speak_t cur_chan = channel_detect(channel_ptr);
+                if (cur_chan != NONE_CHANNEL_SPEAKING && cur_chan != CTDCSS_INCORRENT)
+                {
+                    bk4819_Tx_Power(TXP_MID);
+                    *state = 0;
+                    wakeup_screen(Brightness_ptr, Timer_ptr);
+                    draw_channel();
+                    loudspeaker_TurnOn(channel_ptr, cur_chan);
+                    xSemaphoreGive(xMainListeningRender);
+                }
+            }
+            xSemaphoreGive(xMainChannelListening);
+        }
     }
 }
 
@@ -1234,13 +1253,12 @@ void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param)
     bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
 }
 
-// void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param)
-// {
-//     if(param <=0 || param > 10)
-//         return;
-//     channel_ptr->cur_channel->sql = param - 1;
-//     bk4819_set_Squelch
-// }
+void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param)
+{
+    if (param <= 0 || param > 10)
+        return;
+    channel_ptr->cur_channel->sql = param - 1;
+}
 
 /**
  * @brief preset offset before draw main_channel_speaking

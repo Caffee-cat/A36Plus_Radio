@@ -35,6 +35,11 @@ SOFTWARE.
 
 static void SPI_send_data(uint8_t data)
 {
+#ifdef RTOS_ON
+    // vTaskDelay(2);
+#else
+    delay_1us(50);
+#endif
     while (spi_i2s_flag_get(SPI0, SPI_FLAG_TBE) == RESET)
         ;
     spi_i2s_data_transmit(SPI0, data);
@@ -242,7 +247,7 @@ void w25q16jv_sector_erase(uint32_t addr)
         return;
     FLASH_CS_LOW;
 
-    delay_1ms(10);
+    // delay_1ms(10);
     SPI_send_data(W25Q16JV_CMD_SECTOR_ERASE);
     SPI_send_data((addr >> 16) & 0xFF);
     SPI_send_data((addr >> 8) & 0xFF);
@@ -285,7 +290,7 @@ void w25q16jv_page_program(uint32_t addr, uint8_t *raw_data, uint16_t size)
 {
     FLASH_CS_LOW;
 
-    delay_1ms(10);
+    // delay_1ms(10);
     SPI_send_data(W25Q16JV_CMD_PAGE_PROGRAM);
     SPI_send_data((addr >> 16) & 0xFF);
     SPI_send_data((addr >> 8) & 0xFF);
@@ -293,6 +298,7 @@ void w25q16jv_page_program(uint32_t addr, uint8_t *raw_data, uint16_t size)
 
     for (uint16_t i = 0; i < size; i++)
     {
+
         SPI_send_data(*raw_data);
         raw_data++;
     }

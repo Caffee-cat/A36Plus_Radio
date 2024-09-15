@@ -1,6 +1,7 @@
 #ifndef __COMP_MENU_JAMIEXU_H__
 #define __COMP_MENU_JAMIEXU_H__
 #include "main.h"
+// #include "radio.h"
 #define JGFX_MENU_STR_MAX_LEN 10
 
 typedef struct jgfx_menu_item_t *jgfx_menu_item_ptr;
@@ -12,7 +13,10 @@ typedef struct sub_channel_t *sub_channel_ptr;
 typedef struct ui_main_channel_t *ui_main_channel_ptr;
 typedef struct Display_Timer_t *Display_Timer_ptr;
 typedef struct Brightness_setting_t *Brightness_setting_ptr;
+
 extern uint32_t *cur_ch, ch1, ch2;
+
+
 
 
 typedef enum
@@ -193,6 +197,7 @@ typedef struct ui_main_channel_t
     bool dual_channel; // 1:A,0:B
     bool Initial_flag;
     bool channel_changed; // FALSE:not , TRUE:yes
+    bool channel_listening;
 } ui_main_channel_t;
 
 typedef struct Brightness_setting_t
@@ -275,7 +280,7 @@ void channel_store(ui_main_channel_ptr channel_ptr);
 
 main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr);
 
-void channel_speaking_draw(ui_main_channel_ptr channel_ptr, main_channel_speak_t status);
+void loudspeaker_TurnOn(ui_main_channel_ptr channel_ptr, main_channel_speak_t status);
 
 void offset_direction(ui_main_channel_ptr channel_ptr, uint8_t param);
 
@@ -300,6 +305,8 @@ void channel_TxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 void channel_RxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr,uint8_t *state);
+
+
 
 void return_to_menu(jgfx_menu_ptr menu_ptr);
 
@@ -346,5 +353,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channel);
 
 void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+
+void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 #endif

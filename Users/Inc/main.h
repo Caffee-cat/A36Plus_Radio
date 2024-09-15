@@ -1,8 +1,10 @@
 #ifndef __MAIN_JAMIEXU_H__
 #define __MAIN_JAMIEXU_H__
 
-// #define USE_FONT_LOADED_IN_MCU
+#define USE_FONT_LOADED_IN_MCU
 #define USE_USART_AND_FLASH
+#define RTOS_ON
+
 
 
 #include "gd32f3x0.h"
@@ -19,13 +21,16 @@
 #include "w25q16jv.h"
 #include "bk1080.h"
 #include "bk4819.h"
+#include "fmc.h"
 #include "key.h"
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "task.h"
 #include "jgfx.h"
 #include "ui.h"
 #include "ui_menu.h"
 #include "comp_menu.h"
+// #include "radio.h"
 #ifdef USE_USART_AND_FLASH
 #include "usart_flash.h"
 #endif

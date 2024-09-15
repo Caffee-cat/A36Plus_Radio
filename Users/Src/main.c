@@ -51,7 +51,7 @@ int main(void)
     __enable_irq();
 
     /** Set NVIC vector table start address and offset*/
-    // nvic_vector_table_set(0x08001000, 0x00);
+    nvic_vector_table_set(0x08001000, 0x00);
 
     /** Init core peripherals*/
     systick_config();
@@ -60,60 +60,41 @@ int main(void)
     dma_config();
     spi_config();
     tim_config();
+    adc1_init();
+    bk4819_init();
+    RxAmplifier_enable();
     PWR_keep_blocked();
 
 #ifdef USE_USART_AND_FLASH
     usart_config();
     // key press KEY_MAP_L1 and KEY_MAP_L2 to enter flash mode
-    usart_flash_run();
+    // usart_flash_run();
 #endif
 
+#ifndef RTOS_ON
+    // squelch_test();
+    while(1)
+    {
+        delay_1ms(100);
+        uint16_t val=getValue(ADC_CHANNEL_1);
+        printf("%d\n",val);
+    }
 
-    bk4819_init();
-    FMC_channel_init();
+#endif
 
+#ifdef RTOS_ON
     /* Init ST7735S driver*/
     st7735s_init();
     jgfx_init(0, 0);
     vtasks_init();
     vTaskStartScheduler();
+#endif
 
+    // flash_test_v2();
 
     // backlight_terminate();
 
     while (1)
     {
-        // flash_dump();
-        // delay_1ms(1000);
-        // if (++time1_current_ms >= 1000){
-        //     printf("1s...\r\n");
-        //     time1_current_ms = 0;
-        // }
-
-        // if (key_get() != KEY_NONE)
-        //     printf("KEY: %d\r\n", key_get());
-        // printf("Testing...\r\n");
-        // bk1080_test();
-        // bk4819_test();
-        // // flash_dump();
-        // for (uint32_t i = 0; i < 16; i++)
-        // {
-        //     /* code */
-        //     w25q16jv_read_sector(i * 0xFF, flash_data);
-        //     for (uint32_t i = 0; i < W25Q16JV_SECTOR_SIZE; i++)
-        //     {
-
-        //         printf("%x ", flash_data[i]);
-        //         delay_1ms(100);
-        //     }
-        //     delay_1ms(500);
-        // }
-
-        //  st7735s_test();
-        //  delay_1ms(1000);
-        //  LCD_LIGHT_LOW;
-        //  delay_1ms(1000);
-        //  LCD_LIGHT_HIGH;
-        //  delay_1ms(1000);
     }
 }

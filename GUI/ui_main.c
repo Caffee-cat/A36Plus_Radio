@@ -85,7 +85,7 @@ static void draw_status(void)
         break;
     }
 
-    if(radio_channel.channel_1.channnel_bandwidth == 3)
+    if (radio_channel.channel_1.channnel_bandwidth == 3)
     {
         jgfx_draw_text_en(32 + 24, DISPLAY_H / 10 + 5, "N");
     }
@@ -123,7 +123,7 @@ static void draw_status(void)
         break;
     }
 
-        if(radio_channel.channel_1.channnel_bandwidth == 3)
+    if (radio_channel.channel_1.channnel_bandwidth == 3)
     {
         jgfx_draw_text_en(32 + 24, DISPLAY_H / 2 + 12, "N");
     }
@@ -158,6 +158,9 @@ static void draw_status_tx(void)
 
 void draw_channel(void)
 {
+    temp_page = uiStackGetTop(&ui_stack);
+    if (temp_page != &ui_main)
+        return;
 
     // store value to draw channel
     uint32_t temp_channel = radio_channel.cur_channel->frequency;
@@ -229,8 +232,44 @@ void draw_channel(void)
     draw_status();
 }
 
+void draw_battery(void)
+{
+    uint8_t count = 10;
+    uint16_t val = 0;
+    while(count--)
+    {
+        val += getValue(ADC_CHANNEL_1);
+        printf("%d\n",val);
+    }
+    val = val / 10;
+    printf("total: %d\n",val);
+
+    if(val>2553)
+    {
+        jgfx_draw_img(32, 0, 21, 14, battery_full);
+    }
+    else if(val > 2409)
+    {
+        jgfx_draw_img(32, 0, 21, 14, battery_level3);
+    }
+    else if(val > 2280)
+    {
+        jgfx_draw_img(32, 0, 21, 14, battery_level2);
+    }
+    else if (val > 2104)
+    {
+        jgfx_draw_img(32, 0, 21, 14, battery_level1);
+    }
+    else
+    {
+        jgfx_draw_img(32, 0, 21, 14, battery_empty);
+    }
+
+}
+
 void ui_main_init(void)
 {
+    ui_main.initial_finished = FALSE;
 }
 
 void ui_main_refresh(void)
@@ -242,8 +281,11 @@ void ui_main_refresh(void)
     jgfx_fill_react(32, 0, DISPLAY_W, DISPLAY_H + 1);
 
     // draw title
-    jgfx_set_color_hex(JGFXF_COLOR_GRAY);
-    jgfx_fill_react(32, 0, 128, 16);
+    jgfx_set_color_back_hex(JGFXF_COLOR_GRAY);
+    jgfx_fill_react(32, 0, 128, 15);
+
+    // draw header
+    draw_battery();
 
     vTaskDelay(200);
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
@@ -267,6 +309,8 @@ void ui_main_refresh(void)
     radio_channel.flash_count_num1 = radio_channel.flash_count_num2 = 0;
     radio_channel.block_height1 = DISPLAY_H / 10 + 20;
     radio_channel.block_height2 = DISPLAY_H / 2 + 22;
+
+    ui_main.initial_finished = TRUE;
 }
 
 void ui_main_destory(void)
@@ -277,12 +321,14 @@ void ui_main_event_cb(void)
 {
     Display_Timer_count(&Display_Timer);
     channel_input_flicker(&radio_channel, input_state);
+    draw_battery();
 
     key_map_t key = key_get();
     if (key == KEY_MAP_NONE)
     {
         channel_store(&radio_channel);
-        dual_band_standby(&radio_channel, &Display_brightness, &Display_Timer, &input_state);
+        // dual_band_standby(&radio_channel, &Display_brightness, &Display_Timer, &input_state);
+        // printf("1\n");
     }
     if (key != KEY_MAP_NONE)
     {
@@ -295,6 +341,7 @@ void ui_main_event_cb(void)
                 radio_channel.channel_changed = TRUE;
                 confirm = 0;
                 input_state = 0;
+                xSemaphoreGive(xMainChannelInput);
                 radio_channel.cur_channel->frequency = radio_channel.ch_bak;
                 bk4819_set_freq(radio_channel.cur_channel->frequency);
                 draw_channel();
@@ -304,6 +351,7 @@ void ui_main_event_cb(void)
             {
                 radio_channel.channel_changed = TRUE;
                 input_state = 0;
+                xSemaphoreGive(xMainChannelInput);
                 if (radio_channel.ch_bak == 0)
                     ;
                 // radio_channel.cur_channel->frequency = radio_channel.ch_bak;
@@ -329,14 +377,22 @@ void ui_main_event_cb(void)
 
         else if (key == KEY_MAP_2 && (radio_channel.cur_channel->frequency < 1300 * 1000 * 100))
         {
+            // MainChannel_input_interrupt();
+            if (radio_channel.channel_listening == TRUE)
+                MainChannel_input_interrupt();
             radio_channel.cur_channel->frequency += (int)(radio_channel.step * 100);
             radio_channel.channel_changed = TRUE;
+            bk4819_set_freq(radio_channel.cur_channel->frequency);
             draw_channel();
         }
         else if (key == KEY_MAP_3 && (radio_channel.cur_channel->frequency > 100 * 1000 * 100))
         {
+            // MainChannel_input_interrupt();
+            if (radio_channel.channel_listening == TRUE)
+                MainChannel_input_interrupt();
             radio_channel.cur_channel->frequency -= (int)(radio_channel.step * 100);
             radio_channel.channel_changed = TRUE;
+            bk4819_set_freq(radio_channel.cur_channel->frequency);
             draw_channel();
         }
 
@@ -349,6 +405,7 @@ void ui_main_event_cb(void)
                 confirm = 0;
                 main_channel_init(&radio_channel);
                 draw_channel();
+                xSemaphoreGive(xMainChannelInput);
             }
             if (radio_channel.cur_channel == &radio_channel.channel_1)
             {
@@ -369,7 +426,10 @@ void ui_main_event_cb(void)
             {
                 radio_channel.ch_bak /= 10;
                 if (radio_channel.ch_bak / 100 == 0)
+                {
+                    xSemaphoreGive(xMainChannelInput);
                     input_state = 0;
+                }
                 radio_channel.ch_bak = radio_channel.ch_bak / 100 * 100;
             }
             draw_channel();
@@ -377,35 +437,49 @@ void ui_main_event_cb(void)
         //  PTT press
         else if (key == 18)
         {
-            if (input_state == 1)
-                input_state = 0;
-            channel_offset_preload(&radio_channel);
-            draw_channel();
-            uint16_t reg_temp = bk4819_read_reg(BK4819_REG_36);
-            bk4819_write_reg(BK4819_REG_36, 0xefbf);
-            TxAmplifier_enable(radio_channel.cur_channel->power);
+            //  while talking,it can't listen,while listening ,it can't talk .Just avoid BK4819's frequency has been changed between two threads
+            if (xSemaphoreTake(xMainChannelTalking, portMAX_DELAY) == pdTRUE)
+            {
+                if (xSemaphoreTake(xMainChannelListening, portMAX_DELAY) == pdTRUE)
+                {
+                    if (radio_channel.channel_listening == TRUE)
+                        ui_main_refresh();
 
-            bk4819_set_freq(radio_channel.cur_channel->frequency);
-            bk4819_tx_on();
-            bk4819_TxCTDCSS_set_auto(&radio_channel);
-            draw_status_tx();
-            main_channel_speaking(&radio_channel);
-            while (key_get() != 0)
-                ;
-            bk4819_tx_off();
-            TxAmplifier_disable();
-            bk4819_write_reg(BK4819_REG_36, reg_temp);
-            channel_offset_unload(&radio_channel);
-            // shit
-            ui_main_refresh();
+                    xSemaphoreGive(xMainChannelListening);
+                    if (input_state == 1)
+                        input_state = 0;
+                    channel_offset_preload(&radio_channel);
+                    draw_channel();
+                    uint16_t reg_temp = bk4819_read_reg(BK4819_REG_36);
+                    bk4819_write_reg(BK4819_REG_36, 0xefbf);
+                    TxAmplifier_enable(radio_channel.cur_channel->power);
+
+                    bk4819_set_freq(radio_channel.cur_channel->frequency);
+                    bk4819_tx_on();
+                    bk4819_TxCTDCSS_set_auto(&radio_channel);
+                    draw_status_tx();
+                    main_channel_speaking(&radio_channel);
+                    while (key_get() != 0)
+                        ;
+                    bk4819_tx_off();
+                    TxAmplifier_disable();
+                    bk4819_write_reg(BK4819_REG_36, reg_temp);
+                    channel_offset_unload(&radio_channel);
+                    // shit
+                    ui_main_refresh();
+
+                    xSemaphoreGive(xMainChannelTalking);
+                }
+            }
         }
 
         // channel input
         else if (key != KEY_MAP_16 && key != KEY_MAP_L1 && key != KEY_MAP_L2 && key != KEY_MAP_TOP)
         {
-            radio_channel.flash_count_num1 = 3, radio_channel.flash_count_num2 = 1;
+            radio_channel.flash_count_num1 = 30, radio_channel.flash_count_num2 = 1;
             if (input_state == 0)
             {
+                MainChannel_input_interrupt();
                 jgfx_set_color_back_hex(0x0000);
                 jgfx_fill_react(32 + 3, radio_channel.cur_channel == &radio_channel.channel_1 ? (radio_channel.block_height1 + 1) : (radio_channel.block_height2 + 5), 128, 26);
                 input_state = 1;
@@ -417,6 +491,7 @@ void ui_main_event_cb(void)
                 if (radio_channel.ch_bak >= (200 * 1000 * 100))
                 {
                     radio_channel.cur_channel->frequency = radio_channel.ch_bak;
+                    xSemaphoreGive(xMainChannelInput);
                     input_state = 0;
                     radio_channel.channel_changed = TRUE;
                     confirm = 0;
@@ -431,6 +506,7 @@ void ui_main_event_cb(void)
                 {
                     radio_channel.ch_bak = 0;
                     input_state = 0;
+                    xSemaphoreGive(xMainChannelInput);
                     // bk4819_set_freq(radio_channel.cur_channel->frequency);
                 }
             }

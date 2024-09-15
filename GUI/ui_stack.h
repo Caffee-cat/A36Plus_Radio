@@ -12,6 +12,8 @@ typedef struct
     void (*ui_destory)(void);
     void (*ui_refresh)(void);
     void (*ui_event_cb)(void);
+
+    bool initial_finished;
 } ui_page_t, *ui_page_ptr;
 
 typedef struct
