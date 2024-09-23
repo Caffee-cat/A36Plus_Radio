@@ -156,12 +156,44 @@
           <Name>(105=-1,-1,-1,-1,0)</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint/>
+      <Breakpoint>
+        <Bp>
+          <Number>0</Number>
+          <Type>0</Type>
+          <LineNumber>765</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134242242</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>..\GUI\comp_menu.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Project\../GUI/comp_menu.c\765</Expression>
+        </Bp>
+      </Breakpoint>
       <WatchWindow1>
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>string</ItemText>
+          <ItemText>code</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>string[StringLength]</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>string[11]</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>StringLength</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>
@@ -169,11 +201,6 @@
           <count>0</count>
           <WinNumber>2</WinNumber>
           <ItemText>flash_channel[8]</ItemText>
-        </Ww>
-        <Ww>
-          <count>1</count>
-          <WinNumber>2</WinNumber>
-          <ItemText>submenu_ptr</ItemText>
         </Ww>
       </WatchWindow2>
       <MemoryWindow1>

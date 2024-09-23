@@ -1,6 +1,6 @@
 #include "adc.h"
 
-void adc1_init(void)
+void adc_config(void)
 {
 
     rcu_periph_clock_enable(RCU_ADC);
