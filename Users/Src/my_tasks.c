@@ -7,8 +7,9 @@ extern Display_Timer_t Display_Timer;
 extern uint8_t input_state;
 
 bool FREERTOS_ON = FALSE;
-SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput;
+SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput, xMainChannelDTMFSending;
 SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
+SemaphoreHandle_t xChannelScan, jgfx_mutex;
 
 void vTaskChannelListening(void)
 {
@@ -33,7 +34,8 @@ void vTaskSpeakingDraw(void)
     vTaskDelay(1800);
     for (;;)
     {
-        main_channel_listening_draw(&radio_channel,&input_state);
+        // draw_battery();
+        main_channel_listening_draw(&radio_channel, &input_state);
     }
 }
 
@@ -60,6 +62,9 @@ void xSemaphore_init(void)
     xMainListeningRender = xSemaphoreCreateMutex();
     xMainListeningUnrender = xSemaphoreCreateMutex();
     xMainChannelDraw = xSemaphoreCreateMutex();
+    xChannelScan = xSemaphoreCreateMutex();
+    jgfx_mutex = xSemaphoreCreateMutex();
+    xMainChannelDTMFSending = xSemaphoreCreateMutex();
 
     xSemaphoreTake(xMainListeningUnrender, portMAX_DELAY);
 }

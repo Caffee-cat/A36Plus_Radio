@@ -18,6 +18,7 @@ extern SemaphoreHandle_t xMainListeningRender,xMainListeningUnrender;
 extern SemaphoreHandle_t xMainChannelDraw;
 
 
+
 bool loudspeaker_TurnOff(void);
 
 void main_channel_listening_draw(ui_main_channel_ptr channel_ptr,uint8_t *state);
