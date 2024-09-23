@@ -3,7 +3,10 @@
 #include "main.h"
 #include "tim.h"
 
-#define KEY_GET_NUM(x) ((x > 12) ? (x - 6) : ((x > 8) ? ((x == 12) ? 0 : (x - 5)) : ((x > 4) ? (x - 4) : 0)))
+
+#define KEY_GET_NUM(x) key_return_num(x)
+
+// #define KEY_GET_NUM(x) (x > 16 ? 0 : ((x > 12) ? (x - 6) : ((x > 8) ? ((x == 12) ? 0 : (x - 5)) : ((x > 4) ? (x - 4) : 0))))
 // Written by Jamiexu
 
 typedef enum
@@ -32,5 +35,7 @@ typedef enum
 } key_map_t;
 
 key_map_t key_get(void);
+
+uint8_t key_return_num(uint8_t key);
 
 #endif

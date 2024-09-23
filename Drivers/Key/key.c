@@ -2,7 +2,7 @@
 
 // Written by Jamiexu
 
-key_map_t key_get(void)
+key_map_t key_get_pre(void)
 {
     // Scan independent key
     gpio_bit_set(KEY_GPIO_PORT, KEY_GPIO_ROW0_PIN | KEY_GPIO_ROW1_PIN | KEY_GPIO_ROW2_PIN | KEY_GPIO_ROW3_PIN);
@@ -30,4 +30,27 @@ key_map_t key_get(void)
             return i * 4 + 4;
     }
     return KEY_MAP_NONE;
+}
+
+
+// The miscontact is serious. Keystroke filtering with two detections
+key_map_t key_get(void)
+{
+    key_map_t key1,key2;
+    key1 = key_get_pre();
+    key2 = key_get_pre();
+    if(key1 != key2)
+        return KEY_MAP_NONE;
+    return key1;
+}
+
+uint8_t key_return_num(uint8_t key)
+{
+    if (key >= 16 || key <= 4 || key == 8)
+    {
+       return 10;
+    }
+    if(key == 12)
+        return 0;
+    return  key - 3 - key / 4;
 }
