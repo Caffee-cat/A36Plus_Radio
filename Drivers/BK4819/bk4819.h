@@ -18,6 +18,7 @@ extern const uint16_t DCS_Options[];
 
 
 
+
 // extern uint8_t flash_channel[MEM_CAHNNEL_LISTS][15];
 
 
@@ -88,6 +89,7 @@ typedef enum
     BK4819_REG_1A = 0x1A,
     BK4819_REG_1F = 0x1F,
     BK4819_REG_1E = 0x1E,
+    BK4819_REG_21 = 0x21,
     BK4819_REG_24 = 0x24,
     BK4819_REG_26 = 0x26,
     BK4819_REG_28 = 0x28,
@@ -226,6 +228,34 @@ typedef enum
 }bk4819_bandwidth_t;
 
 
+typedef enum
+{
+    BK4819_AF_MUTE = 0u,      //
+    BK4819_AF_NORMAL = 1u,    // FM
+    BK4819_AF_ALAM = 2u,      //  Tone Out for Rx (Should enable Tone1 first)
+    BK4819_AF_BEEP = 3u,      //  Beep Out for Tx (Should enable Tone1 first and set REG_03[9] = 1 to enable AF
+    BK4819_AF_BASEBAND1 = 4u, // RAW
+    BK4819_AF_BASEBAND2 = 5u, // USB
+    BK4819_AF_CTCO = 6u,      // strange LF audio .. maybe the CTCSS LF line ?
+    BK4819_AF_AM = 7u,        // AM
+    BK4819_AF_FSKO = 8u,      // nothing
+    BK4819_AF_UNKNOWN3 = 9u,  // BYP
+    BK4819_AF_UNKNOWN4 = 10u, // nothing at all
+    BK4819_AF_UNKNOWN5 = 11u, // distorted
+    BK4819_AF_UNKNOWN6 = 12u, // distorted
+    BK4819_AF_UNKNOWN7 = 13u, // interesting
+    BK4819_AF_UNKNOWN8 = 14u, // interesting
+    BK4819_AF_UNKNOWN9 = 15u  // not a lot
+} BK4819_AF_Type_t;
+
+enum PF_function_t
+{
+    NO_EXECUTE = 0x00,
+    PF_DTMF,
+    PF_NOAA,
+};
+
+
 
 typedef struct bk4819_squelch_t
 {
@@ -236,6 +266,9 @@ typedef struct bk4819_squelch_t
     uint8_t GTSO; 
     uint8_t GTSC;
 }bk4819_squelch_t;
+
+
+
 
 
 // typedef enum
@@ -260,6 +293,8 @@ static void spi_write_byte(uint8_t data);
 static void spi_write_half_word(uint16_t data);
 static uint16_t spi_read_half_word(void);
 static void bk4819_delay(uint32_t count);
+static void channel_ShowParam_add(uint8_t param);
+static void channel_ShowParam_delete(uint8_t param);
 
 
 uint16_t bk4819_read_reg(bk4819_reg_t reg);
@@ -321,8 +356,16 @@ void flash_channel_delete(uint16_t param);
 
 void flash_channel_init(void);
 
-static void channel_ShowParam_add(uint8_t param);
+void BK4819_AFTxMute(void);
 
-static void channel_ShowParam_delete(uint8_t param);
+void BK4819AFTxNomal(void);
+
+void BK4819_EnableDTMF(void);
+
+void BK4819_DisableDTMF(void);
+
+void BK4819_PlayDTMF(char Code);
+
+void Send_DTMF_String(uint8_t  *pString);
 
 #endif

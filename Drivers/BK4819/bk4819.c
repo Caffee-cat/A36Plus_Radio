@@ -31,6 +31,7 @@ SOFTWARE.
 
 #include "bk4819.h"
 
+extern SemaphoreHandle_t xMainChannelDTMFSending;
 const uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
 const float main_channel_step[] = {5, 6.25, 10, 12.5, 20.0, 25.0, 50.0};
 
@@ -231,7 +232,7 @@ void bk4819_init(void)
     bk4819_write_reg(BK4819_REG_40, bk4819_read_reg(BK4819_REG_40) & 0xf000 | 0x4d2); // RF Tx Deviation Tuning (Apply for both in-band signal andsub-audio signal).
     bk4819_write_reg(BK4819_REG_31, bk4819_read_reg(BK4819_REG_31) & 0xfffffff7);     // disEnable Compander Function.Remain VOX detection,Scramble Function as defalult(dlsable).
 
-    // bk4819_set_freq(48762500);
+    bk4819_set_freq(48762500);
     // bk4819_set_freq(12245300);
     // bk4819_CTDCSS_enable(1);
     // bk4819_CDCSS_set(1,0x19);
@@ -285,12 +286,11 @@ void bk4819_rx_on(void)
                          BK4819_REG30_REVERSE1_ENABLE |
                          BK4819_REG30_VCO_CALIBRATION |
                          BK4819_REG30_RX_LINK_ENABLE |
-                         // BK4819_REG30_AF_DAC_ENABLE |	
+                         // BK4819_REG30_AF_DAC_ENABLE |
                          BK4819_REG30_PLL_VCO_ENABLE |
-                         // BK4819_REG30_MIC_ADC_ENABLE | 
+                         // BK4819_REG30_MIC_ADC_ENABLE |
                          BK4819_REG30_PA_GAIN_ENABLE |
-                         BK4819_REG30_RX_DSP_ENABLE
-                         );
+                         BK4819_REG30_RX_DSP_ENABLE);
 }
 
 void bk4819_rx_off(void)
@@ -344,7 +344,6 @@ void bk4819_tx_off(void)
     gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
 
     bk4819_write_reg(BK4819_REG_30, 0);
-    // bk4819_write_reg(BK4819_REG_37, 0x1D00);
 }
 
 /**
@@ -355,7 +354,6 @@ void bk4819_tx_off(void)
  */
 void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
 {
-    // bk4819_write_reg(BK4819_REG_07, (sel << 13) | frequency);
     if (sel == 0 | sel == 1)
         bk4819_write_reg(BK4819_REG_07, sel | (((frequency * 206488u) + 50000u) / 100000u));
     if (sel == 2)
@@ -365,28 +363,27 @@ void bk4819_CTDCSS_set(uint8_t sel, uint16_t frequency)
 
 /**
  * @brief just return RSSI value afeer frequency seted
- * 
+ *
  */
 uint16_t bk4819_RSSI_return(void)
 {
     return bk4819_read_reg(BK4819_REG_67);
 }
 
-
 /**
  * @brief Check Squelch resultoutput
- * 
- * @return true Detected 
+ *
+ * @return true Detected
  * @return false Dissatisfy condition
  */
 bool Squelch_resultoutput(void)
 {
     uint16_t reg = bk4819_read_reg(BK4819_REG_0C);
-        // recive info
-        if (reg & 0x02)
-        {
-            return TRUE;
-        }
+    // recive info
+    if (reg & 0x02)
+    {
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -473,7 +470,7 @@ void bk4819_DTMF_SELCall_set(uint8_t number, uint8_t coeff)
 
 void TxAmplifier_enable(ui_main_channel_ptr channel_ptr)
 {
-    if(channel_ptr->cur_channel->frequency > 24500000)
+    if (channel_ptr->cur_channel->frequency > 24500000)
         bk4819_gpio_pin_set(4, TRUE);
     else
         gpio_bit_set(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
@@ -571,11 +568,10 @@ uint32_t FrequencyScanResult(uint8_t *mode, uint32_t *CTDCSS_result)
                 *CTDCSS_result = ((Low & 0x1FFF) * 4843) / 10000;
                 *mode = 3;
                 break;
-
             }
             // delay_1ms(10);
         }
-        
+
         uint32_t high, low, fre;
         high = (uint32_t)(bk4819_read_reg(BK4819_REG_0D) & 0x03ff) << 16;
         low = bk4819_read_reg(BK4819_REG_0E);
@@ -596,7 +592,7 @@ void bk4819_gpio_pin_set(uint8_t pin, bool state)
     uint16_t reg = bk4819_read_reg(BK4819_REG_33);
     uint16_t mask = ~(0x8000 >> pin);
     reg &= mask;
-    if (state == 1) 
+    if (state == 1)
     {
         mask = 0x0080 >> pin;
         reg |= mask;
@@ -643,25 +639,24 @@ uint8_t DCS_GetCdcssCode(uint32_t Code)
 
 /**
  * @brief set bk4819 bandwidth
- * 
+ *
  */
 void bk4819_set_BandWidth(uint8_t param)
 {
     switch (param)
     {
     case 1:
-        bk4819_write_reg(BK4819_REG_43,BK4819_BW_WIDE);
+        bk4819_write_reg(BK4819_REG_43, BK4819_BW_WIDE);
         break;
     case 2:
-        bk4819_write_reg(BK4819_REG_43,BK4819_BW_NARROW);
+        bk4819_write_reg(BK4819_REG_43, BK4819_BW_NARROW);
         break;
     case 3:
-        bk4819_write_reg(BK4819_REG_43,BK4819_BW_NARROWER);
+        bk4819_write_reg(BK4819_REG_43, BK4819_BW_NARROWER);
     default:
         break;
     }
 }
-
 
 void flash_channel_save(uint16_t param, uint32_t channel_frequency)
 {
@@ -674,31 +669,29 @@ void flash_channel_save(uint16_t param, uint32_t channel_frequency)
     // ch-007:0xc00~0xdff
     // ch-008:0xe00~0xfff
     // 8 channels for one block.Suppose store 200 channels
-    if(param <= 0)
+    if (param <= 0)
         return;
 
     uint8_t data[MEM_CHANNEL_LIST_IN_BLOCK * MEM_CAHNNEL_SIZES];
 
     w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
 
-    if(data[1] == 0xaa)
+    if (data[1] == 0xaa)
     {
         // printf("Channel existed!Exit now!\n");
         return;
     }
-
 
     for (int i = 0; i < MEM_CHANNEL_LIST_IN_BLOCK; i++)
     {
         w25q16jv_read_num(i * 0x200 + ((param - 1) / 8) * 0x1000, &data[8 * i], 8);
     }
 
-    data[((param - 1) * MEM_CAHNNEL_SIZES + 1) % 64] = 0xaa;                                                    // Data head,0xaa means that channel effective
-    data[((param - 1) * MEM_CAHNNEL_SIZES + 2) % 64] = (uint8_t)(channel_frequency & 0xFF);                     //Low   frequency
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 1) % 64] = 0xaa;                                // Data head,0xaa means that channel effective
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 2) % 64] = (uint8_t)(channel_frequency & 0xFF); // Low   frequency
     data[((param - 1) * MEM_CAHNNEL_SIZES + 3) % 64] = (uint8_t)((channel_frequency >> 8) & 0xFF);
     data[((param - 1) * MEM_CAHNNEL_SIZES + 4) % 64] = (uint8_t)((channel_frequency >> 16) & 0xFF);
-    data[((param - 1) * MEM_CAHNNEL_SIZES + 5) % 64] = (uint8_t)((channel_frequency >> 24) & 0xFF);             //High  frequency
-
+    data[((param - 1) * MEM_CAHNNEL_SIZES + 5) % 64] = (uint8_t)((channel_frequency >> 24) & 0xFF); // High  frequency
 
     uint8_t test_for_input[9] = {0};
 
@@ -709,15 +702,14 @@ void flash_channel_save(uint16_t param, uint32_t channel_frequency)
 
     // printf("\n----------------------------------------------------------------------\n\n");
     for (int i = 0; i < MEM_CHANNEL_LIST_IN_BLOCK; i++)
-    {   
-            delay_1us(10);
-            w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
-            w25q16jv_page_program(i * 0x200 + ((param - 1) / 8) * 0x1000, &data[8 * i], 8);
+    {
+        delay_1us(10);
+        w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
+        w25q16jv_page_program(i * 0x200 + ((param - 1) / 8) * 0x1000, &data[8 * i], 8);
     }
 
-
     w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
-    if(data[1] != 0xaa)
+    if (data[1] != 0xaa)
     {
         // printf("Save failed!\n");
         return;
@@ -727,7 +719,7 @@ void flash_channel_save(uint16_t param, uint32_t channel_frequency)
 
 /**
  * @brief Get frequency value from flash selected if it is stored
- * 
+ *
  * @param param channel number
  * @param frequency return frequency by pointer,waiting to be change to struct
  * @return true success
@@ -735,7 +727,7 @@ void flash_channel_save(uint16_t param, uint32_t channel_frequency)
  */
 bool flash_channel_read(uint8_t param, uint32_t *frequency)
 {
-    if(param <= 0)
+    if (param <= 0)
         return FALSE;
     uint8_t data[8];
     w25q16jv_read_num((param - 1) * 0x200, data, 8);
@@ -746,25 +738,25 @@ bool flash_channel_read(uint8_t param, uint32_t *frequency)
 }
 
 /**
- * @brief Only earse data head for single channel 
- * 
+ * @brief Only earse data head for single channel
+ *
  * @param param channel selected
  */
 void flash_channel_delete(uint16_t param)
 {
-    if(param <= 0)
+    if (param <= 0)
         return;
     uint8_t data[8];
     w25q16jv_read_num((param - 1) * 0x200, data, 2);
-    if(data[1] != 0xaa)
+    if (data[1] != 0xaa)
         return;
-    memset(data, 0, sizeof(data));  
-    
+    memset(data, 0, sizeof(data));
+
     w25q16jv_send_cmd(W25Q16JV_CMD_WRITE_ENABLE);
     w25q16jv_page_program((param - 1) * 0x200, data, 8);
 
     w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
-    if(data[1] == 0xaa)
+    if (data[1] == 0xaa)
     {
         printf("Detele failed!\n");
         return;
@@ -775,7 +767,7 @@ void flash_channel_delete(uint16_t param)
 
 /**
  * @brief only run for one time when turn on radio to initial channel_select ui showed
- * 
+ *
  */
 void flash_channel_init(void)
 {
@@ -793,7 +785,7 @@ void flash_channel_init(void)
 
 static void channel_ShowParam_add(uint8_t param)
 {
-    if(flash_channel[param][0] == 'c')
+    if (flash_channel[param][0] == 'c')
         return;
     int8_t i;
     for (i = 3; i >= 0; i--)
@@ -808,11 +800,165 @@ static void channel_ShowParam_add(uint8_t param)
 
 static void channel_ShowParam_delete(uint8_t param)
 {
-    if(flash_channel[param][0] != 'c')
-    return;
+    if (flash_channel[param][0] != 'c')
+        return;
     uint8_t i;
     flash_channel[param][0] = (char)((param + 1) / 100 + 48);
     flash_channel[param][1] = (char)((param + 1) % 100 / 10 + 48);
     flash_channel[param][2] = (char)((param + 1) % 10 + 48);
     flash_channel[param][3] = '\0';
+}
+
+void BK4819_SetAF(BK4819_AF_Type_t AF)
+{
+    // AF Output Inverse Mode = Inverse
+    // Undocumented bits 0x2040
+    //
+    //	bk4819_write_reg(BK4819_REG_47, 0x6040 | (AF << 8));
+    bk4819_write_reg(BK4819_REG_47, (6u << 12) | (AF << 8) | (1u << 6)); // AF Output Inverse Mode. Use AF Tx Filter
+}
+
+void BK4819_AFTxMute(void)
+{
+    uint16_t reg = bk4819_read_reg(BK4819_REG_50);
+    reg |= 0x8000;
+	bk4819_write_reg(BK4819_REG_50, reg);
+}
+
+void BK4819AFTxNomal(void)
+{
+    uint16_t reg = bk4819_read_reg(BK4819_REG_50);
+    reg &= 0x7FFF;
+	bk4819_write_reg(BK4819_REG_50, reg);
+}
+
+void BK4819_EnableDTMF(void)
+{
+    // no idea what this does
+    bk4819_write_reg(BK4819_REG_21, 0x06D8); // 0000 0110 1101 1000      as default and don't know what it is used for
+    const uint16_t threshold = 130;          // but 128 ~ 247 does
+    bk4819_write_reg(BK4819_REG_24,          // 1 00011000 1 1 1 1110
+                        (1u << 15) |         // ?
+                        (threshold << 7) | // 0 ~ 255   ?
+                        (1u << 6) |         // ?
+                        (1u << 5) |         // enable DTMF/SelCall Enable
+                        (1u << 4) |         // DTMF or SelCall Detection Mode.    1=for DTMF; 0=for SelCall
+                        (15u << 0)); // 0 ~ 15  //Max Symbol Number for SelCall Detection
+}
+
+void BK4819_DisableDTMF(void)
+{
+	bk4819_write_reg(BK4819_REG_24, 0);
+}
+
+
+void BK4819_PlayDTMF(char Code)
+{
+
+	struct DTMF_TonePair {
+		uint16_t tone1;
+		uint16_t tone2;
+	};
+
+	const struct DTMF_TonePair tones[] = {
+		{941, 1336},
+		{697, 1209},
+		{697, 1336},
+		{697, 1477},
+		{770, 1209},
+		{770, 1336},
+		{770, 1477},
+		{852, 1209},
+		{852, 1336},
+		{852, 1477},
+		{697, 1633},
+		{770, 1633},
+		{852, 1633},
+		{941, 1633},
+		{941, 1209},
+		{941, 1477},
+	};
+
+
+	const struct DTMF_TonePair *pSelectedTone = NULL;
+	switch (Code)
+	{
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9': pSelectedTone = &tones[0  + Code - '0']; break;
+
+        case 'A':
+        case 'B':
+        case 'C':
+        case 'D': pSelectedTone = &tones[10 + Code - 'A']; break;
+
+		case '*': pSelectedTone = &tones[14]; break;
+		case '#': pSelectedTone = &tones[15]; break;
+        
+		default: pSelectedTone = NULL;
+	}
+
+	if (pSelectedTone) {
+		bk4819_write_reg(BK4819_REG_71, (((uint32_t)pSelectedTone->tone1 * 103244) + 5000) / 10000);   // with rounding
+		bk4819_write_reg(BK4819_REG_72, (((uint32_t)pSelectedTone->tone2 * 103244) + 5000) / 10000);   // with rounding
+	}
+}
+
+void Send_DTMF_String(uint8_t  *pString)
+{
+    printf("%s\n",pString);
+    xSemaphoreTake(xMainChannelDTMFSending,portMAX_DELAY);
+    uint8_t i;
+    bool firstfont = TRUE;
+
+    BK4819_EnableDTMF();
+
+    BK4819_AFTxMute();
+
+    BK4819_SetAF(BK4819_AF_MUTE);
+
+    bk4819_tx_on();
+
+    bk4819_write_reg(BK4819_REG_70,
+                     (1u << 15) |
+                         (65U << 8) |
+                         (1u << 7) |
+                         (93 << 0));
+
+
+    for (i = 0; pString[i]; i++)
+    {
+        BK4819_PlayDTMF(pString[i]);
+        BK4819AFTxNomal();
+        uint16_t Delay;
+        if (firstfont == TRUE)
+        {
+            Delay = 100;
+            firstfont = FALSE;
+        }
+        else if (pString[i] == '*' || pString[i] == '#')
+            Delay = 100;
+        else
+            Delay = 80;
+        // delay_1ms(Delay);
+        vTaskDelay(Delay * 8);
+        BK4819_AFTxMute();
+        vTaskDelay(80 * 5);
+    }
+    BK4819AFTxNomal();
+    BK4819_SetAF(BK4819_AF_NORMAL);        
+    bk4819_write_reg(BK4819_REG_70, 0x0000);
+    BK4819_DisableDTMF();
+    bk4819_tx_off();
+
+    xSemaphoreGive(xMainChannelDTMFSending);
+
+    // BK4819_PlayDTMF
 }
