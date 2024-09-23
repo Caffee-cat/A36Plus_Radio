@@ -182,6 +182,9 @@ typedef struct ui_main_channel_t
     uint8_t cur_index;
     uint8_t SFT_D_index;
     uint8_t TxPower_index;
+    uint8_t PF1;    //1: DTMF 2: NOAA
+    uint8_t PF2;
+    uint8_t TopKey;
 
     const float *ch_pra;
     const float *ch_val;
@@ -248,6 +251,8 @@ void jgfx_menu_update(jgfx_menu_ptr menu_ptr);
 
 void jgfx_menu_click(jgfx_menu_ptr menu_ptr);
 
+void key_press_delay(void);
+
 bool jgfx_menu_index(jgfx_menu_ptr menu_ptr, uint8_t index);
 
 void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
@@ -273,6 +278,12 @@ void main_channel_init(ui_main_channel_ptr channel_ptr);
 void radio_channel_change(ui_main_channel_ptr channel_ptr, uint8_t step);
 
 void main_channel_speaking(ui_main_channel_ptr channel_ptr);
+
+void main_PTT_transmit(ui_main_channel_ptr channel_ptr);
+
+void main_DTMF_init(ui_main_channel_ptr channel_ptr);
+
+void main_DTMF_input(ui_main_channel_ptr channel_ptr);
 
 void channel_input_flicker(ui_main_channel_ptr channel_ptr, uint8_t state);
 
@@ -306,8 +317,6 @@ void channel_RxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr,uint8_t *state);
 
-
-
 void return_to_menu(jgfx_menu_ptr menu_ptr);
 
 void Brightness_init(Brightness_setting_ptr bri_ptr);
@@ -331,6 +340,8 @@ void channel_offset_draw(uint32_t input_channel);
 void draw_info(jgfx_add_channel_status_t status);
 
 void bk4819_TxCTDCSS_set_auto(ui_main_channel_ptr channel_ptr);
+
+void PF1_funtion_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 

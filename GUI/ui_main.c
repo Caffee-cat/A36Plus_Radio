@@ -129,7 +129,7 @@ static void draw_status(void)
     }
 }
 
-static void draw_status_tx(void)
+void draw_status_tx(void)
 {
     if (radio_channel.cur_channel->Tx_CDCSS == 0 && radio_channel.cur_channel->Tx_CTCSS == 0)
         return;
@@ -226,7 +226,7 @@ void draw_channel(void)
         sprintf(tmp, "%02d", radio_channel.channel_2.frequency % 100);
         jgfx_draw_text_en(32 + 38 + 7 * 8, DISPLAY_H / 2 + 35, tmp);
     }
-
+    
     radio_channel.cur_channel->frequency = temp_channel;
 
     draw_status();
@@ -234,25 +234,40 @@ void draw_channel(void)
 
 void draw_battery(void)
 {
+    static uint16_t battery = 0;
     uint8_t count = 10;
     uint16_t val = 0;
-    while(count--)
+    if (ui_main.initial_finished == FALSE)
+    {
+        battery = 0;
+        return;
+    }
+
+    while (count--)
     {
         val += getValue(ADC_CHANNEL_1);
-        // printf("%d\n",val);
     }
     val = val / 10;
-    // printf("total: %d\n",val);
 
-    if(val>2553)
+    if ((battery > val && battery - val < 50) || (val > battery && val - battery < 50))
+        return;
+    battery = val;
+
+    if (radio_channel.channel_listening == TRUE)
+    {
+        while (render_finish == FALSE)
+            ;
+    }
+
+    if (val > 2553)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_full);
     }
-    else if(val > 2409)
+    else if (val > 2409)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_level3);
     }
-    else if(val > 2280)
+    else if (val > 2280)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_level2);
     }
@@ -264,7 +279,6 @@ void draw_battery(void)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_empty);
     }
-
 }
 
 void ui_main_init(void)
@@ -274,7 +288,8 @@ void ui_main_init(void)
 
 void ui_main_refresh(void)
 {
-    printf("refreshing\n");
+    static uint8_t time = 0;
+    ui_main.initial_finished = FALSE;
 
     // clear screen
     jgfx_set_color_hex(JGFXF_COLOR_BLACK);
@@ -284,9 +299,6 @@ void ui_main_refresh(void)
     // draw title
     jgfx_set_color_back_hex(JGFXF_COLOR_GRAY);
     jgfx_fill_react(32, 0, 128, 15);
-
-    // draw header
-    draw_battery();
 
     vTaskDelay(200);
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
@@ -320,9 +332,10 @@ void ui_main_destory(void)
 
 void ui_main_event_cb(void)
 {
+    vTaskDelay(20);
     Display_Timer_count(&Display_Timer);
     channel_input_flicker(&radio_channel, input_state);
-    // draw_battery();
+    draw_battery();
 
     key_map_t key = key_get();
     if (key == KEY_MAP_NONE)
@@ -374,10 +387,12 @@ void ui_main_event_cb(void)
                     page->ui_init();
                 }
             }
+            key_press_delay();
         }
 
         else if (key == KEY_MAP_2 && (radio_channel.cur_channel->frequency < 1300 * 1000 * 100))
         {
+            input_state = 0;
             // MainChannel_input_interrupt();
             if (radio_channel.channel_listening == TRUE)
                 MainChannel_input_interrupt();
@@ -385,9 +400,11 @@ void ui_main_event_cb(void)
             radio_channel.channel_changed = TRUE;
             bk4819_set_freq(radio_channel.cur_channel->frequency);
             draw_channel();
+            key_press_delay();
         }
         else if (key == KEY_MAP_3 && (radio_channel.cur_channel->frequency > 100 * 1000 * 100))
         {
+            input_state = 0;
             // MainChannel_input_interrupt();
             if (radio_channel.channel_listening == TRUE)
                 MainChannel_input_interrupt();
@@ -395,6 +412,7 @@ void ui_main_event_cb(void)
             radio_channel.channel_changed = TRUE;
             bk4819_set_freq(radio_channel.cur_channel->frequency);
             draw_channel();
+            key_press_delay();
         }
 
         // seems some bugs here
@@ -418,6 +436,7 @@ void ui_main_event_cb(void)
             }
             bk4819_set_BandWidth(radio_channel.cur_channel->channnel_bandwidth);
             draw_main();
+            key_press_delay();
         }
 
         //  exit/rollback
@@ -434,6 +453,7 @@ void ui_main_event_cb(void)
                 radio_channel.ch_bak = radio_channel.ch_bak / 100 * 100;
             }
             draw_channel();
+            key_press_delay();
         }
         //  PTT press
         else if (key == 18)
@@ -449,35 +469,34 @@ void ui_main_event_cb(void)
                     xSemaphoreGive(xMainChannelListening);
                     if (input_state == 1)
                         input_state = 0;
-                    channel_offset_preload(&radio_channel);
-                    draw_channel();
-                    uint16_t reg_temp = bk4819_read_reg(BK4819_REG_36);
-                    bk4819_write_reg(BK4819_REG_36, 0xefbf);
-                    TxAmplifier_enable(&radio_channel);
 
-                    bk4819_set_freq(radio_channel.cur_channel->frequency);
-                    bk4819_tx_on();
-                    bk4819_TxCTDCSS_set_auto(&radio_channel);
-                    draw_status_tx();
-                    main_channel_speaking(&radio_channel);
-                    while (key_get() != 0)
-                        ;
-                    bk4819_tx_off();
-                    TxAmplifier_disable();
-                    bk4819_write_reg(BK4819_REG_36, reg_temp);
-                    channel_offset_unload(&radio_channel);
-                    // shit
+                    main_PTT_transmit(&radio_channel);
+
                     ui_main_refresh();
 
                     xSemaphoreGive(xMainChannelTalking);
                 }
             }
+            key_press_delay();
         }
-
+        else if (key == 19)
+        {
+            input_state == 1;
+            main_DTMF_init(&radio_channel);
+            xSemaphoreTake(jgfx_mutex, portMAX_DELAY);
+            main_DTMF_input(&radio_channel);
+            xSemaphoreGive(jgfx_mutex);
+            ui_main_refresh();
+        }
+        else if (key == 20)
+        {
+        }
         // channel input
         else if (key != KEY_MAP_16 && key != KEY_MAP_L1 && key != KEY_MAP_L2 && key != KEY_MAP_TOP)
         {
-            radio_channel.flash_count_num1 = 30, radio_channel.flash_count_num2 = 1;
+
+            radio_channel.flash_count_num1 = 3000, radio_channel.flash_count_num2 = 1;
+
             if (input_state == 0)
             {
                 MainChannel_input_interrupt();
@@ -512,6 +531,7 @@ void ui_main_event_cb(void)
                 }
             }
             draw_channel();
+            key_press_delay();
         }
 
         // ui_refresh();

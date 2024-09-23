@@ -30,8 +30,9 @@
 
 #include "comp_menu.h"
 
-extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput;
+extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput, xMainChannelDTMFSending;
 extern SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
+extern SemaphoreHandle_t xChannelScan;
 extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 
@@ -47,7 +48,7 @@ void Startup_display(void)
     jgfx_set_color_back_hex(0x0000);
     jgfx_draw_text_en(32 + DISPLAY_W / 2 - (7 * 8 / 2), DISPLAY_H / 2 - 20, "A36Plus");
     jgfx_draw_text_en(32 + DISPLAY_W / 2 - (4 * 8 / 2), DISPLAY_H / 2 + 10, "RTOS");
-    vTaskDelay(1500);
+    vTaskDelay(8000);
 }
 
 /**
@@ -158,9 +159,9 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
     menu_ptr->index = 0;
 
     /** Draw menu box*/
-    jgfx_set_color_hex(0xFFFF);
-    jgfx_set_color_back_hex(0x0000);
-    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
+    // jgfx_set_color_hex(0xFFFF);
+    // jgfx_set_color_back_hex(0x0000);
+    // jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
 
     /** Show title if use title*/
     if (menu_ptr->menu_use_tiltle)
@@ -293,6 +294,20 @@ void jgfx_menu_click(jgfx_menu_ptr menu_ptr)
 }
 
 /**
+ * @brief Prevent miscontact caused by excessive speed
+ *
+ */
+void key_press_delay(void)
+{
+    uint16_t timecount = 10000;
+    while (timecount--)
+    {
+        if (key_get() == KEY_MAP_NONE)
+            break;
+    }
+}
+
+/**
  * @brief Index menu item
  *
  * @param menu_ptr menu pointer
@@ -359,7 +374,7 @@ void jgfx_menu_destory(jgfx_menu_ptr menu_ptr)
  *
  * @param menu_ptr menu pointer
  * @param index current selector
- * @return uint8_t
+ * @return uint8_t 0: no execute  x: param of list of submenu
  */
 uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...)
 {
@@ -615,6 +630,9 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->cur_index = 1;
     channel_ptr->SFT_D_index = 1;
     channel_ptr->TxPower_index = 1;
+    channel_ptr->PF1 = 1;
+    channel_ptr->PF2 = 1;
+    channel_ptr->TopKey = 1;
 
     channel_ptr->ch_pra = main_channel_step;
     channel_ptr->ch_val = channel_ptr->ch_pra;
@@ -656,7 +674,156 @@ void main_channel_speaking(ui_main_channel_ptr channel_ptr)
         jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
         jgfx_fill_react(32, 10, DISPLAY_W, DISPLAY_H / 2);
         jgfx_set_color_hex(JGFXF_COLOR_WHITE);
-        jgfx_draw_text_en(76, DISPLAY_H / 2 - 23, "B  RX");
+        jgfx_draw_text_en(76, DISPLAY_H / 2 - 23, "B  TX");
+    }
+}
+
+/**
+ * @brief execute a serials operations while PTT pressed
+ *
+ * @param channel_ptr channel pointer
+ */
+void main_PTT_transmit(ui_main_channel_ptr channel_ptr)
+{
+    channel_offset_preload(channel_ptr);
+    draw_channel();
+    uint16_t reg_temp = bk4819_read_reg(BK4819_REG_36);
+    bk4819_write_reg(BK4819_REG_36, 0xefbf);
+    TxAmplifier_enable(channel_ptr);
+
+    bk4819_set_freq(channel_ptr->cur_channel->frequency);
+    bk4819_tx_on();
+    bk4819_TxCTDCSS_set_auto(channel_ptr);
+    draw_status_tx();
+    main_channel_speaking(channel_ptr);
+    while (key_get() != 0)
+        ;
+    bk4819_tx_off();
+    TxAmplifier_disable();
+    bk4819_write_reg(BK4819_REG_36, reg_temp);
+    channel_offset_unload(channel_ptr);
+}
+
+/**
+ * @brief draw window ready to send DTMF
+ *
+ * @param channel_ptr
+ */
+void main_DTMF_init(ui_main_channel_ptr channel_ptr)
+{
+    uint8_t str[15];
+    jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+    jgfx_fill_react(32 + 3, channel_ptr->cur_channel == &channel_ptr->channel_1 ? (channel_ptr->block_height1 + 1) : (channel_ptr->block_height2 + 5), 128, 36);
+
+    jgfx_set_font(JGFX_FONT_EN_8X16);
+    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+    if (channel_ptr->cur_channel == &channel_ptr->channel_1)
+    {
+        jgfx_draw_text_en(35, DISPLAY_H / 10 + 30, "DTMF");
+        jgfx_draw_text_en(72, DISPLAY_H / 10 + 30, "----------");
+    }
+    else if (channel_ptr->cur_channel == &channel_ptr->channel_2)
+    {
+        jgfx_draw_text_en(35, DISPLAY_H / 2 + 35, "DTMF");
+        jgfx_draw_text_en(72, DISPLAY_H / 2 + 35, "----------");
+    }
+}
+
+/**
+ *@brief
+ *
+ * @param channel_ptr
+ */
+void main_DTMF_input(ui_main_channel_ptr channel_ptr)
+{
+    
+    // channel_ptr->PF1 = param;
+    uint8_t key, key1, offset, StringLength = 0;
+    uint8_t x, y;
+    x = 72;
+    y = channel_ptr->cur_channel == &channel_ptr->channel_1 ? (DISPLAY_H / 10 + 30) : (DISPLAY_H / 2 + 35);
+    char code;
+    char string[11];
+    strncpy(string, "----------", sizeof(string) - 1);
+
+    while (key_get())
+        ;
+    while (1)
+    {
+        vTaskDelay(10);
+        key = key_get();
+        if (key == KEY_MAP_NONE)
+            continue;
+        if (key == 20)
+        {
+            if(StringLength == 0)
+                break;
+
+            char DTMF_String[15];
+            for(int i = 0;i < StringLength; i++)
+            {
+                DTMF_String[i] = string[i];
+            }
+            DTMF_String[StringLength] = '\0';
+
+            bk4819_set_freq(channel_ptr->cur_channel->frequency);
+            Send_DTMF_String(DTMF_String);
+            // Show param
+            vTaskDelay(2000);
+            break;
+        }
+        if (key == 19 && channel_ptr->PF1 == 1)
+        {
+            if (StringLength > 0)
+            {
+                string[StringLength - 1] = '-';
+                StringLength -= 1;
+                jgfx_fill_react(x, y, 80, 16);
+                jgfx_draw_text_en(x, y, string);
+                while (key_get())
+                    ;
+            }
+            else if (StringLength == 0)
+                break;
+            // exit or sub
+        }
+        // if (key == 20 && channel_ptr->PF2 == 1)
+        // {
+        //     // exit or sub
+        // }
+
+        if (StringLength == 10)
+            continue;
+
+        if (key == 0 || key > 16)
+            continue;
+        key1 = KEY_GET_NUM(key);
+
+        if (key1 < 10)
+            code = 48 + key1;
+
+        else if (key1 >= 10)
+        {
+            if (key >= 1 && key <= 4)
+            {
+                code = 64 + key;
+            }
+            else if (key == 8)
+                code = '*';
+            else if (key == 16)
+                code = '#';
+        }
+
+        if (StringLength < 10)
+            string[StringLength + 1] = string[StringLength];
+        string[StringLength] = code;
+
+        jgfx_fill_react(x, y, 80, 16);
+        jgfx_draw_text_en(x, y, string);
+        StringLength += 1;
+        while (key_get())
+            ;
+            
     }
 }
 
@@ -673,7 +840,7 @@ void channel_input_flicker(ui_main_channel_ptr channel_ptr, uint8_t state)
         channel_ptr->flash_count_num1 -= 1;
         if (channel_ptr->flash_count_num1 == 0)
         {
-            channel_ptr->flash_count_num1 = 30;
+            channel_ptr->flash_count_num1 = 3000;
             channel_ptr->flash_count_num2 = !channel_ptr->flash_count_num2;
             if (channel_ptr->flash_count_num2 == 1)
             {
@@ -725,14 +892,18 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 
         bk4819_rx_on();
 
+        vTaskDelay(800);
+
+        // printf("RSSI equal to :0x%04x\n",bk4819_read_reg(BK4819_REG_67));
+
         bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
 
         // printf("detecting!\n");
-
         reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
         // recive info
         if (reg_0c_flag & 0x02)
         {
+
             // check RxCTC/CDC
             // vTaskDelay(10);
             if (main_channel_CTDCSS_judge(&channel_ptr->channel_1) == CHANNEL_SPEAKING)
@@ -750,14 +921,16 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
 
         bk4819_rx_on();
 
+        vTaskDelay(800);
+
         bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
 
         // printf("detecting!\n");
-
         reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
 
         if (bk4819_read_reg(BK4819_REG_0C) & 0x02)
         {
+
             if (main_channel_CTDCSS_judge(&channel_ptr->channel_2) == CHANNEL_SPEAKING)
                 return CHANNEL_B_SPEAKING;
             return CTDCSS_INCORRENT;
@@ -786,8 +959,6 @@ void loudspeaker_TurnOn(ui_main_channel_ptr channel_ptr, main_channel_speak_t st
     bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
     // RxAmplifier_enable();
 
-    // main_channel_listening_draw(status);
-
     channel_ptr->channel_listening = TRUE;
 }
 
@@ -802,11 +973,15 @@ void loudspeaker_TurnOn(ui_main_channel_ptr channel_ptr, main_channel_speak_t st
 void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr, uint8_t *state)
 {
     if (xSemaphoreTake(xMainChannelTalking, portMAX_DELAY) == pdTRUE)
-    {
-
+    {   
+        xSemaphoreTake(xMainChannelDTMFSending,portMAX_DELAY);
+        xSemaphoreGive(xMainChannelDTMFSending);
+        xSemaphoreTake(xChannelScan, portMAX_DELAY);
+        xSemaphoreGive(xChannelScan);
         xSemaphoreGive(xMainChannelTalking);
         if (xSemaphoreTake(xMainChannelListening, portMAX_DELAY) == pdTRUE)
         {
+            printf("Dual watching!\n");
             if (loudspeaker_TurnOff() == TRUE)
             {
                 main_channel_speak_t cur_chan = channel_detect(channel_ptr);
@@ -817,7 +992,6 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
 
                     // *state = 0;
                     // draw_channel();
-
 
                     loudspeaker_TurnOn(channel_ptr, cur_chan);
                     xSemaphoreGive(xMainListeningRender);
@@ -1016,14 +1190,10 @@ void offset_setting(ui_main_channel_ptr channel_ptr)
                 {
                     input_channel = 0;
                     draw_info(ADD_OFFSET_ERROR);
-                    // draw input error
-                    // input_state = 0;
                 }
                 channel_offset_draw(input_channel);
                 if (input_channel >= 200 * 1000)
                 {
-                    // input_state = FALSE;
-                    // draw input success
                     break;
                 }
                 while (key_get() != KEY_MAP_NONE)
@@ -1175,9 +1345,10 @@ void TxPower_change(ui_main_channel_ptr channel_ptr, uint8_t param)
  */
 void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
 {
-
+    xSemaphoreTake(xChannelScan, portMAX_DELAY);
     uint8_t str[20];
     uint8_t mode = 0;
+    uint32_t count = 10000;
     uint32_t CTDCSS_result = 0;
     uint32_t frequency = NULL;
 
@@ -1194,7 +1365,7 @@ void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
 
     BK4819_EnableFrequencyScan();
     // Scan_test();
-    while (1)
+    while (count--)
     {
         if (FrequencyScan == FALSE)
         {
@@ -1233,8 +1404,16 @@ void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
             }
         }
     }
+
+    if (count == 0)
+    {
+        jgfx_draw_text_en(80, 30, "T");
+        jgfx_draw_text_en(100, 60, "T");
+    }
+
+    xSemaphoreGive(xChannelScan);
     BK4819_DisableFrequencyScan();
-    delay_1ms(2);
+    vTaskDelay(800);
 }
 
 /**
@@ -1260,7 +1439,7 @@ void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param)
 }
 
 /**
- * @brief preset offset before draw main_channel_speaking
+ * @brief preset offset before draw
  *
  * @param channel_ptr channel pointer
  */
@@ -1344,7 +1523,7 @@ void channel_TxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param)
         if (param == 1)
         {
             channel_ptr->cur_channel->Tx_CDCSS = 0;
-            bk4819_CTDCSS_disable();
+            // bk4819_CTDCSS_disable();
             return;
         }
         bk4819_CTDCSS_enable(0);
@@ -1372,17 +1551,19 @@ void channel_RxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param)
     DCS_CodeType_t CodeType;
     if (param == 0)
         return;
-    if (param - 1 != 0)
+
+    if (param == 1)
     {
-        if (param == 1)
-        {
-            channel_ptr->cur_channel->Rx_CDCSS = 0;
-            bk4819_CTDCSS_disable();
-            return;
-        }
+        channel_ptr->cur_channel->Rx_CDCSS = 0;
+        // bk4819_CTDCSS_disable();
+        return;
+    }
+    else
+    {
         bk4819_CTDCSS_enable(0);
         channel_ptr->cur_channel->Rx_CTCSS = 0;
     }
+
     channel_ptr->cur_index = param;
     if (param <= 5)
         CodeType = CODE_TYPE_DIGITAL;
@@ -1390,6 +1571,19 @@ void channel_RxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param)
         CodeType = CODE_TYPE_REVERSE_DIGITAL;
 
     channel_ptr->cur_channel->Rx_CDCSS = DCS_GetGolayCodeWord(CodeType, param - 2);
+}
+
+/**
+ * @brief Change the function when pressing PF1 in mian interface
+ *
+ * @param channel_ptr channel pointer
+ * @param param the parameter submenu pass back
+ */
+void PF1_funtion_change(ui_main_channel_ptr channel_ptr, uint8_t param)
+{
+    if (param == 0)
+        return;
+    channel_ptr->PF1 = param;
 }
 
 /**

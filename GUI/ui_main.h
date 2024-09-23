@@ -7,6 +7,8 @@ extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 extern uint8_t main_icon[];
 #endif
+
+
 extern uint8_t battery_full[], battery_level3[], battery_level2[], battery_level1[], battery_empty[];
 
 extern ui_stack_t ui_stack;
@@ -19,6 +21,8 @@ extern SemaphoreHandle_t xMainChannelTalking;
 extern SemaphoreHandle_t xMainChannelListening;
 extern SemaphoreHandle_t xMainChannelInput;
 extern SemaphoreHandle_t xMainChannelDraw;
+extern SemaphoreHandle_t jgfx_mutex;
+extern bool render_finish;
 
 void draw_channel(void);
 

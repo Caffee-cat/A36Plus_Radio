@@ -2,12 +2,6 @@
 #include "comp_menu.h"
 
 static jgfx_menu_t jgfx_menu;
-extern ui_main_channel_t radio_channel;
-extern ui_stack_t ui_stack;
-extern ui_page_ptr temp_page;
-extern Display_Timer_t Display_Timer;
-extern uint8_t flash_channel[MEM_CAHNNEL_LISTS][15];
-
 ui_page_t ui_menu;
 corner_index_num_t jgfx_menu_corner;
 Brightness_setting_t Display_brightness;
@@ -134,6 +128,24 @@ static void all_channel_callback(void)
 {
 }
 
+static void PF1_Button_callback(void)
+{
+    submenu_item_t sub_menu;
+    uint8_t submenu_list_num = 1;
+    sub_menu.cur_item = radio_channel.PF1;
+    PF1_funtion_change(&radio_channel, submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, "  DTMF", "  NOAA"));
+}
+
+static void PF2_Button_callback(void)
+{
+
+}
+
+static void TopKey_Button_callback(void)
+{
+
+}
+
 static void Radio_Settings(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
@@ -223,6 +235,34 @@ static void Banks(jgfx_menu_ptr menu_ptr)
     }
 }
 
+static void Button_press(jgfx_menu_ptr ptr)
+{
+    submenu_item_t sub_menu;
+    uint8_t submenu_list_num = 1, exit_flag = 0;
+    sub_menu.cur_item = 1;
+    while (!exit_flag)
+    {
+        // Create submenu
+        switch (submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " PF1", " PF2", " TOP KEY"))
+        {
+        case 1:
+            PF1_Button_callback();
+            ;
+            break;
+        case 2:
+            PF2_Button_callback();
+            break;
+        case 3:
+            TopKey_Button_callback();
+            break;
+        default:
+            return_to_menu(ptr);
+            exit_flag = 1;
+            break;
+        }
+    }
+}
+
 void BandWidth(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
@@ -238,12 +278,11 @@ void Squelch(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
     uint8_t submenu_list_num = 10;
-    sub_menu.cur_item = 1;
-
+    sub_menu.cur_item = radio_channel.cur_channel->sql + 1;
     uint8_t param = submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
                                       " 0", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9");
 
-    channel_bandwidth_change(&radio_channel, param);
+    channel_squelch_change(&radio_channel, param);
     ptr->status = JGFX_MENU_STATUS_SELECTED;
     return_to_menu(ptr);
 }
@@ -271,7 +310,7 @@ void Channel_Select(jgfx_menu_ptr ptr)
 
     radio_channel.channel_changed == TRUE;
     channel_store(&radio_channel);
-    
+
     ptr->status = JGFX_MENU_STATUS_SELECTED;
     return_to_menu(ptr);
 }
@@ -288,17 +327,10 @@ void Channel_Delete(jgfx_menu_ptr ptr)
 
     uint32_t d_frequency = 0;
     flash_channel_read(1, &d_frequency);
-    printf("frequency equal to : %d \n", d_frequency);
+    // printf("frequency equal to : %d \n", d_frequency);
 
     ptr->status = JGFX_MENU_STATUS_SELECTED;
     return_to_menu(ptr);
-}
-
-void cb9(jgfx_menu_ptr ptr)
-{
-    submenu_item_t sub_menu;
-    uint8_t index = 1, submenu_list_num = 3;
-    submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " menu_item9", " menu_item5", " menu_item6");
 }
 
 void cb10(jgfx_menu_ptr ptr)
@@ -322,13 +354,13 @@ void ui_menu_init(void)
     jgfx_menu_append_text(&jgfx_menu, "Radio Setting", Radio_Settings);
     jgfx_menu_append_text(&jgfx_menu, "Display ", Display_Settings);
     // Don't delete the space below,it works
-    jgfx_menu_append_text(&jgfx_menu, "Banks ", Banks);
+    jgfx_menu_append_text(&jgfx_menu, "Banks", Banks);
     jgfx_menu_append_text(&jgfx_menu, "B/W", BandWidth);
     jgfx_menu_append_text(&jgfx_menu, "SQL", Squelch);
     jgfx_menu_append_text(&jgfx_menu, "Ch Save", Channel_Save);
     jgfx_menu_append_text(&jgfx_menu, "Ch Select", Channel_Select);
     jgfx_menu_append_text(&jgfx_menu, "Ch Delete", Channel_Delete);
-    // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing9", cb9);
+    jgfx_menu_append_text(&jgfx_menu, "Button", Button_press);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing10", cb10);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing11", NULL);
     // jgfx_menu_append_text(&jgfx_menu, "Menu_Testing12", NULL);
@@ -383,11 +415,13 @@ void ui_menu_event_cb(void)
         {
             jgfx_menu_item_previous(&jgfx_menu);
             index_num_display(&jgfx_menu);
+            key_press_delay();
         }
         else if (key == KEY_MAP_3)
         {
             jgfx_menu_item_next(&jgfx_menu);
             index_num_display(&jgfx_menu);
+            key_press_delay();
         }
         else if (key == KEY_MAP_4)
         {
@@ -413,6 +447,7 @@ void ui_menu_event_cb(void)
                 corner_index_init(&jgfx_menu_corner);
             }
             index_num_display(&jgfx_menu);
+            key_press_delay();
         }
 
         vTaskDelay(500);
