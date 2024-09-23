@@ -8,7 +8,7 @@ void rtos_tim_config(void)
     timer_initpara.prescaler = (84 - 1);
     timer_initpara.alignedmode = TIMER_COUNTER_EDGE;
     timer_initpara.counterdirection = TIMER_COUNTER_UP;
-    timer_initpara.period = (1000 - 1);
+    timer_initpara.period = (200 - 1);                          // 84Mhz / 84 / 200 = 5*10^3HZ        1 Tick = 200us    1s = 1000ms = 1000000us
     timer_initpara.clockdivision = TIMER_CKDIV_DIV1;
     timer_initpara.repetitioncounter = 1;
     timer_init(TIMER1, &timer_initpara);

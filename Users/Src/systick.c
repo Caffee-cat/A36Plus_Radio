@@ -67,7 +67,7 @@ void systick_config(void)
 void delay_1us(uint32_t count)
 {
     if (FREERTOS_ON)
-        vTaskDelay(count);
+        vTaskDelay(1);
     else
     {
         delay = count;
