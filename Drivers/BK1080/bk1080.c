@@ -30,7 +30,10 @@ SOFTWARE.
  */
 #include "bk1080.h"
 
-void i2c_start(void)
+static bool BK1080_POWER = FALSE;
+static uint16_t last_frequency = 875;
+
+static void i2c_start(void)
 {
     BK1080_SDA_HIGH;
     bk1080_delay(1);
@@ -120,12 +123,25 @@ static iic_ack_t i2c_get_ack(void)
     return ack;
 }
 
+
 static void bk1080_delay(uint32_t count)
 {
     delay_1us(count);
 }
 
-static void bk1080_write_reg(bk1080_reg_t reg, uint16_t data)
+
+void bk1080_enable_loudspeaker(void)
+{
+    gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+}
+
+void bk1080_disable_loudspeaker(void)
+{
+    gpio_bit_reset(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+}
+
+
+void bk1080_write_reg(bk1080_reg_t reg, uint16_t data)
 {
     i2c_start();
     i2c_write_byte(BK1080_ADDRESS);
@@ -151,7 +167,7 @@ static void bk1080_write_reg(bk1080_reg_t reg, uint16_t data)
     i2c_stop();
 }
 
-static uint16_t bk1080_read_reg(bk1080_reg_t reg)
+uint16_t bk1080_read_reg(bk1080_reg_t reg)
 {
     uint16_t data = 0;
     i2c_start();
@@ -179,6 +195,10 @@ static uint16_t bk1080_read_reg(bk1080_reg_t reg)
 
 void bk1080_init(void)
 {
+    if(BK1080_POWER == TRUE)
+        return;
+    BK1080_POWER = TRUE;
+    
     for (uint8_t i = 0; i < sizeof(BK1080_RegisterTable) / sizeof(uint16_t);
          i++)
     {
@@ -241,14 +261,21 @@ uint16_t bk1080_freq_to_chan(uint16_t freq){
 }
 
 void bk1080_set_channel(uint16_t channel){
-    bk1080_write_reg(BK1080_REG_03, channel | (1 << 15));
+    uint16_t reg;
+
+    bk1080_write_reg(BK1080_REG_03, channel);
+    delay_1ms(2);
+    reg = bk1080_read_reg(BK1080_REG_03);
+    reg |= 0x8000;
+    bk1080_write_reg(BK1080_REG_03, reg);
 }
 
-void bk1080_seek_channel_hw(uint8_t mode, uint8_t dir, uint16_t startChannel, uint8_t timeout, seek_tune_complete_cb cb){
+bool bk1080_seek_channel_hw(uint8_t mode, uint8_t dir, uint16_t startChannel, uint8_t timeout, seek_tune_complete_cb cb){
     uint16_t data;
 
-    bk1080_write_reg(BK1080_REG_03, 0x8000);
-    bk1080_delay(50000);
+
+    bk1080_write_reg(BK1080_REG_03, 0x0000);
+    bk1080_delay(1000);
     bk1080_write_reg(BK1080_REG_03, startChannel);
 
     data = bk1080_read_reg(BK1080_REG_02);
@@ -259,10 +286,22 @@ void bk1080_seek_channel_hw(uint8_t mode, uint8_t dir, uint16_t startChannel, ui
 
     while (timeout-- && !bk1080_get_flag(BK1080_FLAG_STC))
     {
-        bk1080_delay(1000);
+        bk1080_delay(40);
     }
 
-   cb(bk1080_get_flag(BK1080_FLAG_SFBL), bk1080_read_reg(BK1080_REG_10) & 0x7F, bk1080_read_reg(BK1080_REG_03) & 0x01FF);
+    data = bk1080_read_reg(BK1080_REG_10);
+    if(data & 0x2000 == 1)
+        return FALSE;
+    else
+    {
+        data = bk1080_read_reg(BK1080_REG_03);
+        data |= 0x8000;
+        bk1080_write_reg(BK1080_REG_03, data);
+        data = bk1080_read_reg(BK1080_REG_03);
+        return TRUE;
+    }
+
+//    cb(bk1080_get_flag(BK1080_FLAG_SFBL), bk1080_read_reg(BK1080_REG_10) & 0x7F, bk1080_read_reg(BK1080_REG_03) & 0x01FF);
     
 }
 
@@ -280,4 +319,33 @@ uint8_t bk1080_get_flag(bk1080_flag_t flag){
         return 1;
     else
         return 0;
+}
+
+uint16_t bk1080_get_cur_frequency(void)
+{
+    uint16_t reg;
+
+    reg = bk1080_read_reg(BK1080_REG_11);
+    reg &= 0x03FF;
+
+    return bk1080_chan_to_freq(reg);
+
+}
+
+void BK1080_Mute(void)
+{
+    uint16_t reg;
+    reg = bk1080_read_reg(BK1080_REG_02);
+    reg |= 0x0041;
+	bk1080_write_reg(BK1080_REG_02, reg);
+    bk1080_disable_loudspeaker();
+    BK1080_POWER = FALSE;
+    last_frequency = bk1080_get_cur_frequency();
+}
+
+bool bk1080_status(void)
+{
+    if(BK1080_POWER == TRUE)
+        return TRUE;
+    return FALSE;
 }

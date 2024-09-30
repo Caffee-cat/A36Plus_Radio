@@ -25,4 +25,8 @@ void main_channel_listening_draw(ui_main_channel_ptr channel_ptr,uint8_t *state)
 
 void MainChannel_input_interrupt(void);
 
+void FM_main_init(void);
+
+static void FM_main_callback(void);
+
 #endif  

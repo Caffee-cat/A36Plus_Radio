@@ -63,11 +63,11 @@ static void i2c_stop(void);
 static void i2c_write_byte(uint8_t data);
 static uint8_t i2c_read_byte(void);
 static void i2c_send_ack(iic_ack_t ack);
-static uint8_t i2c_get_ack(void);
+static iic_ack_t i2c_get_ack(void);
 static void bk1080_delay(uint32_t count);
 
-static void bk1080_write_reg(bk1080_reg_t reg, uint16_t data);
-static uint16_t bk1080_read_reg(bk1080_reg_t reg);
+void bk1080_write_reg(bk1080_reg_t reg, uint16_t data);
+uint16_t bk1080_read_reg(bk1080_reg_t reg);
 
 /**
  * @brief Init sequence
@@ -125,9 +125,13 @@ void bk1080_set_channel(uint16_t channel);
  *                                              1: failed
  *                                      rssi:   rssi value
  *                                      channel: channel value
+ * 
+ * @return bool
+ *          true: Found channel
+ *          false:failed
  *
  */
-void bk1080_seek_channel_hw(uint8_t mode,
+bool bk1080_seek_channel_hw(uint8_t mode,
                             uint8_t dir,
                             uint16_t startChannel,
                             uint8_t timeout,
@@ -155,6 +159,45 @@ void bk1080_set_band_spacing(uint8_t band, uint8_t spacing);
  * @return uint8_t 
  */
 uint8_t bk1080_get_flag(bk1080_flag_t flag);
+
+
+/**
+ * @brief Get current frequency
+ * 
+ * @return uint16_t current frequency value
+ */
+uint16_t bk1080_get_cur_frequency(void);
+
+
+/**
+ * @brief Turn on loudspeaker
+ * 
+ */
+void bk1080_enable_loudspeaker(void);
+
+
+/**
+ * @brief Turn off loudspeaker
+ * 
+ */
+void bk1080_disable_loudspeaker(void);
+
+
+/**
+ * @brief Turn off bk1080
+ * 
+ * 
+ */
+void BK1080_Mute();
+
+
+/**
+ * @brief Check if bk1080 is working
+ * 
+ * @return true working
+ * @return false sleeping
+ */
+bool bk1080_status();
 
 #endif
 

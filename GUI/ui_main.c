@@ -2,6 +2,7 @@
 
 static uint8_t tmp[100];
 static bool confirm = 0;
+static bool battery_draw_finished = FALSE;
 static uint8_t input_num = 0;
 
 uint8_t input_state = 0;
@@ -237,7 +238,7 @@ void draw_battery(void)
     static uint16_t battery = 0;
     uint8_t count = 10;
     uint16_t val = 0;
-    if (ui_main.initial_finished == FALSE)
+    if (ui_main.initial_finished == FALSE || battery_draw_finished == TRUE)
     {
         battery = 0;
         return;
@@ -279,6 +280,8 @@ void draw_battery(void)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_empty);
     }
+    battery_draw_finished = TRUE;
+
 }
 
 void ui_main_init(void)
@@ -290,6 +293,7 @@ void ui_main_refresh(void)
 {
     static uint8_t time = 0;
     ui_main.initial_finished = FALSE;
+    battery_draw_finished = FALSE;
 
     // clear screen
     jgfx_set_color_hex(JGFXF_COLOR_BLACK);
@@ -333,6 +337,9 @@ void ui_main_destory(void)
 void ui_main_event_cb(void)
 {
     vTaskDelay(20);
+    if(ui_main.initial_finished == FALSE)
+        return;
+
     Display_Timer_count(&Display_Timer);
     channel_input_flicker(&radio_channel, input_state);
     draw_battery();
@@ -458,6 +465,8 @@ void ui_main_event_cb(void)
         //  PTT press
         else if (key == 18)
         {
+            if(bk1080_status() == TRUE)
+                return;
             //  while talking,it can't listen,while listening ,it can't talk .Just avoid BK4819's frequency has been changed between two threads
             if (xSemaphoreTake(xMainChannelTalking, portMAX_DELAY) == pdTRUE)
             {
@@ -482,14 +491,15 @@ void ui_main_event_cb(void)
         else if (key == 19)
         {
             input_state == 1;
-            main_DTMF_init(&radio_channel);
-            xSemaphoreTake(jgfx_mutex, portMAX_DELAY);
-            main_DTMF_input(&radio_channel);
-            xSemaphoreGive(jgfx_mutex);
-            ui_main_refresh();
+
+            key_press_function(&radio_channel, 1);
+            input_state == 0;
         }
         else if (key == 20)
         {
+            input_state == 1;
+            key_press_function(&radio_channel, 2);
+            input_state == 0;
         }
         // channel input
         else if (key != KEY_MAP_16 && key != KEY_MAP_L1 && key != KEY_MAP_L2 && key != KEY_MAP_TOP)
