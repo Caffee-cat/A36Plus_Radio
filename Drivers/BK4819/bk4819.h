@@ -248,13 +248,14 @@ typedef enum
     BK4819_AF_UNKNOWN9 = 15u  // not a lot
 } BK4819_AF_Type_t;
 
+
 enum PF_function_t
 {
-    NO_EXECUTE = 0x00,
+    PF_OFF = 0x00,
     PF_DTMF,
     PF_NOAA,
+    PF_FM
 };
-
 
 
 typedef struct bk4819_squelch_t

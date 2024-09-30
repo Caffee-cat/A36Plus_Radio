@@ -51,7 +51,7 @@ const uint16_t DCS_Options[104] = {
 	0x01C3, 0x01CA, 0x01D3, 0x01D9, 0x01DA, 0x01DC, 0x01E3, 0x01EC,
 };
 
-uint8_t flash_channel[MEM_CAHNNEL_LISTS][15] =
+uint8_t flash_channel[MEM_CAHNNEL_LISTS][MENU_NAME_LEN_LIM] =
     {
         "001","002","003","004","005","006","007","008",
         "009","010","011","012","013","014","015","016",
@@ -145,18 +145,38 @@ uint16_t bk4819_read_reg(bk4819_reg_t reg)
     return data;
 }
 
+
+/**
+ * @brief Set squelch threshold
+ *
+ * @param RTSO RSSI threshold for Squelch=1, 0.5dB/step
+ * @param RTSC RSSI threshold for Squelch =0, 0.5dB/step
+ * @param ETSO Ex-noise threshold for Squelch =1
+ * @param ETSC Ex-noise threshold for Squelch =0
+ * @param GTSO Glitch threshold for Squelch =1
+ * @param GTSC Glitch threshold for Squelch =0
+ */
+void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC)
+{
+    bk4819_write_reg(BK4819_REG_78, (RTSO << 8) | RTSC);
+    bk4819_write_reg(BK4819_REG_4F, (ETSC << 8) | ETSO);
+    bk4819_write_reg(BK4819_REG_4D, GTSC);
+    bk4819_write_reg(BK4819_REG_4E, GTSO);
+}
+
+
 void bk4819_Tx_Power(Tx_Power_t power)
 {
     switch (power)
     {
     case TXP_HIGH:
-        bk4819_write_reg(BK4819_REG_36, 0xFFBF);
+        bk4819_write_reg(BK4819_REG_36, 0xDFBF);
         break;
     case TXP_MID:
-        bk4819_write_reg(BK4819_REG_36, 0xA2AD);
+        bk4819_write_reg(BK4819_REG_36, 0x82AD);
         break;
     case TXP_LOW:
-        bk4819_write_reg(BK4819_REG_36, 0x70aa);
+        bk4819_write_reg(BK4819_REG_36, 0x30aa);
         break;
     case TXP_STANDBY:
         bk4819_write_reg(BK4819_REG_36, 0x103f);
@@ -341,7 +361,7 @@ void bk4819_tx_on(void)
  */
 void bk4819_tx_off(void)
 {
-    gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+    // gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
 
     bk4819_write_reg(BK4819_REG_30, 0);
 }
@@ -378,32 +398,28 @@ uint16_t bk4819_RSSI_return(void)
  */
 bool Squelch_resultoutput(void)
 {
-    uint16_t reg = bk4819_read_reg(BK4819_REG_0C);
+    static uint16_t count = 0;
+    static bool Flag = FALSE;
+    uint16_t reg;
+    reg = bk4819_read_reg(BK4819_REG_0C);
+
+    printf("reg_0C euqal to : 0x%04x\n",reg);
     // recive info
     if (reg & 0x02)
     {
+        count = 20;
         return TRUE;
     }
-    return FALSE;
+
+    if(count > 0)
+        count--;
+        
+    if(count == 0)
+        return FALSE;
+    else
+        return TRUE;
 }
 
-/**
- * @brief Set squelch threshold
- *
- * @param RTSO RSSI threshold for Squelch=1, 0.5dB/step
- * @param RTSC RSSI threshold for Squelch =0, 0.5dB/step
- * @param ETSO Ex-noise threshold for Squelch =1
- * @param ETSC Ex-noise threshold for Squelch =0
- * @param GTSO Glitch threshold for Squelch =1
- * @param GTSC Glitch threshold for Squelch =0
- */
-void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, uint8_t GTSO, uint8_t GTSC)
-{
-    bk4819_write_reg(BK4819_REG_78, (RTSO << 8) | RTSC);
-    bk4819_write_reg(BK4819_REG_4F, (ETSC << 8) | ETSO);
-    bk4819_write_reg(BK4819_REG_4D, GTSC);
-    bk4819_write_reg(BK4819_REG_4E, GTSO);
-}
 
 void bk4819_subchannel_set_Squelch(uint8_t sqlLevel)
 {
@@ -758,7 +774,7 @@ void flash_channel_delete(uint16_t param)
     w25q16jv_read_num((param - 1) * 0x200, &data[0], 2);
     if (data[1] == 0xaa)
     {
-        printf("Detele failed!\n");
+        // printf("Detele failed!\n");
         return;
     }
 
@@ -913,7 +929,6 @@ void BK4819_PlayDTMF(char Code)
 
 void Send_DTMF_String(uint8_t  *pString)
 {
-    printf("%s\n",pString);
     xSemaphoreTake(xMainChannelDTMFSending,portMAX_DELAY);
     uint8_t i;
     bool firstfont = TRUE;
@@ -961,4 +976,20 @@ void Send_DTMF_String(uint8_t  *pString)
     xSemaphoreGive(xMainChannelDTMFSending);
 
     // BK4819_PlayDTMF
+}
+
+
+void FSKReceive_pre(void)
+{
+    uint16_t reg;
+
+    bk4819_write_reg(BK4819_REG_3F, 0x0000);    //Disable interrupt
+    
+    reg = bk4819_read_reg(BK4819_REG_59);       // Clear RX FIFO
+    reg = reg | 0x4000;
+    bk4819_write_reg(BK4819_REG_59, reg);
+
+    bk4819_write_reg(BK4819_REG_59, 0x0068);        // Sync length 4 bytes, 7 byte preamble
+
+    
 }
