@@ -37,7 +37,7 @@ void channel_A_store(uint32_t channel_val)
 
     while (1)
     {
-        fmc_state_enum state = fmc_page_erase(0x0800c800); // page 50
+        fmc_state_enum state = fmc_page_erase(CHANNEL_PAGE_ADDR); // page 50
         if (state == FMC_READY)
             break;
     }
@@ -63,7 +63,7 @@ void channel_B_store(uint32_t channel_val)
 
     while (1)
     {
-        fmc_state_enum state = fmc_page_erase(0x0800c800); // page 50
+        fmc_state_enum state = fmc_page_erase(CHANNEL_PAGE_ADDR); // page 50
         if (state == FMC_READY)
             break;
     }
@@ -83,7 +83,7 @@ void channel_B_store(uint32_t channel_val)
 
 void FMC_channel_init(void)
 {
-    uint32_t OutData = (*(__IO uint32_t *)(0x0800c800));
+    uint32_t OutData = (*(__IO uint32_t *)(CHANNEL_PAGE_ADDR));
     if (OutData == CAHNNEL_FMC_INIT_FALG)
         return;
 
@@ -91,7 +91,7 @@ void FMC_channel_init(void)
 
     while (1)
     {
-        fmc_state_enum state = fmc_page_erase(0x0800c800); // page 50
+        fmc_state_enum state = fmc_page_erase(CHANNEL_PAGE_ADDR); // page 50
         if (state == FMC_READY)
             break;
     }
