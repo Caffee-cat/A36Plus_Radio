@@ -1,15 +1,17 @@
 #include "main.h"
+#include "my_task.h"
 // #include "portmacro.h"
 
-extern ui_main_channel_t radio_channel;
-extern Brightness_setting_t Display_brightness;
-extern Display_Timer_t Display_Timer;
-extern uint8_t input_state;
 
 bool FREERTOS_ON = FALSE;
 SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput, xMainChannelDTMFSending;
 SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
 SemaphoreHandle_t xChannelScan, jgfx_mutex;
+
+void vTaskSystemStart(void)
+{
+    PWR_restart();
+}
 
 void vTaskChannelListening(void)
 {
@@ -72,7 +74,8 @@ void xSemaphore_init(void)
 void vtasks_init(void)
 {
     xTaskCreate(vTaskUIInit, "UI Init", 128, NULL, 4, NULL);
-    xTaskCreate(vTaskUIEvent, "Event handler", 128, NULL, 3, NULL);
+    // xTaskCreate(vTaskSystemStart, "Event System", 64, NULL, 3, NULL);
+    xTaskCreate(vTaskUIEvent, "Event handler", 150, NULL, 3, NULL);
     xTaskCreate(vTaskChannelListening, "Channel Listening", 128, NULL, 3, NULL);
     xTaskCreate(vTaskSpeakingDraw, "UI draw", 128, NULL, 3, NULL);
     xSemaphore_init();
