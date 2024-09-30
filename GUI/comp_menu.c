@@ -36,6 +36,13 @@ extern SemaphoreHandle_t xChannelScan;
 extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 
+
+void _r_clear_item_area(jgfx_menu_ptr menu_ptr)
+{
+    jgfx_set_color_back_hex(0x0000);
+    jgfx_fill_react(32 + menu_ptr->menu_x, menu_ptr->menu_y + menu_ptr->menu_title_height + 5, menu_ptr->menu_width, menu_ptr->menu_height - menu_ptr->menu_title_height - (menu_ptr->menu_divide_height * menu_ptr->item_show_num) - 10);
+}
+
 /**
  * @brief Only displayed at startup
  *
@@ -48,7 +55,7 @@ void Startup_display(void)
     jgfx_set_color_back_hex(0x0000);
     jgfx_draw_text_en(32 + DISPLAY_W / 2 - (7 * 8 / 2), DISPLAY_H / 2 - 20, "A36Plus");
     jgfx_draw_text_en(32 + DISPLAY_W / 2 - (4 * 8 / 2), DISPLAY_H / 2 + 10, "RTOS");
-    vTaskDelay(8000);
+    vTaskDelay(5000);
 }
 
 /**
@@ -70,7 +77,9 @@ void jgfx_menu_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr main_channel)
     menu_ptr->Initial_flag = 1;
     menu_ptr->page = 0;
     menu_ptr->channel_ptr = main_channel;
-    menu_ptr->menu_draw_complete = FALSE;
+    menu_ptr->menu_draw_completed = FALSE;
+
+    menu_item_param_init(menu_ptr, main_channel);
 }
 
 /**
@@ -151,11 +160,16 @@ void jgfx_menu_append_text(jgfx_menu_ptr menu_ptr, uint8_t *str, jgfx_menu_item_
  */
 void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
 {
-
-    menu_ptr->menu_draw_complete = TRUE;
+    static jgfx_menu_item_ptr cur_item;
+    static bool menu_index_finish = FALSE;
     /** Init item selected */
     menu_ptr->item_show_num = (menu_ptr->menu_height - (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0)) / (menu_ptr->menu_item_height + menu_ptr->menu_divide_height);
     menu_ptr->cur_item = menu_ptr->head_item;
+    if(menu_index_finish == FALSE)
+    {
+        cur_item = menu_ptr->cur_item;
+        menu_index_finish = TRUE;
+    }
     menu_ptr->index = 0;
 
     /** Draw menu box*/
@@ -184,6 +198,8 @@ void jgfx_menu_show(jgfx_menu_ptr menu_ptr)
 
     /** Draw selector */
     _r_menu_draw_selector(menu_ptr);
+
+    menu_ptr->menu_draw_completed = TRUE;
 }
 
 /**
@@ -401,24 +417,21 @@ uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item
         if (data == NULL)
             return -1;
         submenu_ptr->item_name[i] = data;
-        // jgfx_draw_text_en(36 + menu_ptr->menu_x,
-        //                   submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
-        //                   submenu_ptr->item_name[i]);
     }
     va_end(pointer);
 
     // Draw items
     submenu_items_refresh(menu_ptr, submenu_ptr);
 
-    // redraw the line in the botton to fix some error
-    jgfx_set_color_hex(0xFFFF);
-    jgfx_set_color_back_hex(0x0000);
-    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
+    // // redraw the line in the botton to fix some error
+    // jgfx_set_color_hex(0xFFFF);
+    // jgfx_set_color_back_hex(0x0000);
+    // jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
 
     return submenu_cb(menu_ptr, submenu_ptr);
 }
 
-uint8_t submenu_item_show_v2(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, uint8_t string[][15])
+uint8_t submenu_item_show_with_array(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, uint8_t string[][MENU_NAME_LEN_LIM])
 {
     uint8_t index = 1, i;
     uint8_t *data;
@@ -443,11 +456,34 @@ uint8_t submenu_item_show_v2(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_i
     submenu_items_refresh(menu_ptr, submenu_ptr);
 
     // redraw the line in the botton to fix some error
-    jgfx_set_color_hex(0xFFFF);
-    jgfx_set_color_back_hex(0x0000);
-    jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
+    // jgfx_set_color_hex(0xFFFF);
+    // jgfx_set_color_back_hex(0x0000);
+    // jgfx_draw_rect(32 + menu_ptr->menu_x, menu_ptr->menu_y, menu_ptr->menu_x + menu_ptr->menu_width + 31, menu_ptr->menu_y + menu_ptr->menu_height - 5);
 
     return submenu_cb(menu_ptr, submenu_ptr);
+}
+
+/**
+ * @brief Draw line box for menu item after clicking
+ * 
+ * @param menu_ptr Menu pointer
+ * @param string Menu item's name drawed on the left side without param
+ * @param index position counted from 0
+ */
+void render_submenu_with_param(jgfx_menu_ptr menu_ptr, uint8_t *string, uint8_t index)
+{
+
+    jgfx_set_color_hex(0xFFFF);
+    jgfx_set_color_back_hex(0x0000);
+    
+     jgfx_draw_text_en(36 + menu_ptr->menu_x,
+                      menu_ptr->menu_item_height / 2 - 1 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+                      string);
+
+    jgfx_draw_rect(32 + menu_ptr->menu_x,
+                   menu_ptr->menu_item_height / 2 - 5 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+                   32 + menu_ptr->menu_x + menu_ptr->menu_width,
+                   menu_ptr->menu_item_height / 2 - 5 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + menu_ptr->menu_item_height);
 }
 
 /**
@@ -466,6 +502,80 @@ void index_num_display(jgfx_menu_ptr menu_ptr)
     snprintf(count_num_str, sizeof(count_num_str), "%02d", menu_ptr->cur_item->item_id + 1);
     count_num_str[2] = '\0';
     jgfx_draw_text_en(130, 3, count_num_str);
+
+    switch (menu_ptr->menu_item[menu_ptr->cur_item->item_id].show_channel_pic)
+    {
+    case 1:
+
+#ifdef USE_FONT_LOADED_IN_MCU
+        delay_1us(3);
+        jgfx_draw_img(32 + 5, 5, 10, 10, (menu_ptr->channel_ptr->channel == 1 ? (channel_A) : (channel_B)));
+#else
+        uint32_t addr = menu_ptr->channel_ptr->channel == 1 ? (FLASH_ICON_CHANNELA_ADDR) : (FLASH_ICON_CHANNELB_ADDR);
+        jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, addr);
+#endif
+        break;
+    case 0:
+        jgfx_fill_react(32 + 5, 5, 10, 10);
+        break;
+    }
+
+}
+
+void menu_item_param_init(jgfx_menu_ptr menu_ptr,ui_main_channel_ptr main_channel)
+{
+    static menu_list_t menu_item[] =
+    {
+        {"Radio Setting",   1,          MENU_RADIO_SETTING  },
+        {"SQL",             0,          MENU_SQUELCH        },
+        {"Ch Save",         1,          MENU_CHANNEL_SAVE   },
+        {"Ch Select",       1,          MENU_CHANNEL_SELECT },
+        {"Ch Delete",       1,          MENU_CHANNEL_DELETE },
+        {"Display",         0,          MENU_DISPLAY        },
+        {"Banks",           0,          MENU_BANKS          },
+        {"B/W",             0,          MENU_BANDWIDTH      },
+        {"Button",          0,          MENU_BUTTON         },
+        {"DTMF",            0,          MENU_DTMF           },
+    };
+
+    static bool initial_finished = FALSE;
+    uint8_t menu_item_size = sizeof(menu_item) / sizeof(menu_item[0]);
+    uint8_t index, i;
+
+    if(initial_finished == TRUE)
+        return;
+
+    for(i = 0; i < sizeof(menu_item)/sizeof(menu_item[0]); i++)
+    {
+        menu_ptr->menu_item[i] = menu_item[i];
+    }
+
+#ifdef SUQELCH_MENU_SHOW_WITH_PARAM
+    //Init SQL menu name
+    uint8_t sql_val = main_channel->cur_channel->sql;
+    index = 0;
+    while(index < menu_item_size)
+    {
+        if(menu_ptr->menu_item[index].menu_id == MENU_SQUELCH)
+            break;
+        index++;
+    }
+    i = 0;
+    while(menu_ptr->menu_item[index].menu_name[i] != '\0')
+        i++;
+    
+    while(i < MENU_NAME_LEN_LIM - 1)
+        menu_ptr->menu_item[index].menu_name[i++] = ' ';
+    
+    menu_ptr->menu_item[index].menu_name[i] = '\0';
+
+    sprintf(&menu_ptr->menu_item[index].menu_name[i - 1], "%d",sql_val);
+#endif
+
+
+    initial_finished = TRUE;
+    // channel_ptr->cur_channel->sql = param - 1;
+
 }
 
 /**
@@ -614,6 +724,10 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->ch_bak = 0;
     channel_ptr->dual_channel = TRUE;
     channel_ptr->channel_listening = FALSE;
+    channel_ptr->DTMF_up_enable = FALSE;
+    channel_ptr->DTMF_dowm_enable = FALSE;
+    channel_ptr->PF1 = PF_DTMF;
+    channel_ptr->PF2 = PF_OFF;
 
     bk4819_set_freq(channel_ptr->channel_1.frequency);
     bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
@@ -630,8 +744,6 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->cur_index = 1;
     channel_ptr->SFT_D_index = 1;
     channel_ptr->TxPower_index = 1;
-    channel_ptr->PF1 = 1;
-    channel_ptr->PF2 = 1;
     channel_ptr->TopKey = 1;
 
     channel_ptr->ch_pra = main_channel_step;
@@ -685,10 +797,12 @@ void main_channel_speaking(ui_main_channel_ptr channel_ptr)
  */
 void main_PTT_transmit(ui_main_channel_ptr channel_ptr)
 {
+    uint16_t reg_temp;
+
     channel_offset_preload(channel_ptr);
     draw_channel();
-    uint16_t reg_temp = bk4819_read_reg(BK4819_REG_36);
-    bk4819_write_reg(BK4819_REG_36, 0xefbf);
+    reg_temp = bk4819_read_reg(BK4819_REG_36);
+    bk4819_Tx_Power(channel_ptr->cur_channel->power);
     TxAmplifier_enable(channel_ptr);
 
     bk4819_set_freq(channel_ptr->cur_channel->frequency);
@@ -696,8 +810,10 @@ void main_PTT_transmit(ui_main_channel_ptr channel_ptr)
     bk4819_TxCTDCSS_set_auto(channel_ptr);
     draw_status_tx();
     main_channel_speaking(channel_ptr);
+
     while (key_get() != 0)
         ;
+    
     bk4819_tx_off();
     TxAmplifier_disable();
     bk4819_write_reg(BK4819_REG_36, reg_temp);
@@ -729,12 +845,113 @@ void main_DTMF_init(ui_main_channel_ptr channel_ptr)
     }
 }
 
+
+
 /**
- *@brief
+ *@brief Accept value from keyboard press.If not empty,press PTT to send DTMF
  *
- * @param channel_ptr
+ * @param channel_ptr channel_pointer
  */
 void main_DTMF_input(ui_main_channel_ptr channel_ptr)
+{
+    
+    // channel_ptr->PF1 = param;
+    uint8_t key, key1, offset, StringLength = 0;
+    uint8_t x, y;
+    x = 72;
+    y = channel_ptr->cur_channel == &channel_ptr->channel_1 ? (DISPLAY_H / 10 + 30) : (DISPLAY_H / 2 + 35);
+    char code;
+    char string[11];
+    strncpy(string, "----------", sizeof(string) - 1);
+
+    while (key_get())
+        ;
+    while (1)
+    {
+        vTaskDelay(10);
+        key = key_get();
+        if (key == KEY_MAP_NONE)
+            continue;
+        if (key == 18)
+        {
+            if(StringLength == 0)
+                break;
+
+            char DTMF_String[15];
+            for(int i = 0;i < StringLength; i++)
+            {
+                DTMF_String[i] = string[i];
+            }
+            DTMF_String[StringLength] = '\0';
+
+            bk4819_set_freq(channel_ptr->cur_channel->frequency);
+            Send_DTMF_String(DTMF_String);
+            // Show param
+            vTaskDelay(2000);
+            break;
+        }
+        if (key == 19 && channel_ptr->PF1 == 1)
+        {
+            if (StringLength > 0)
+            {
+                string[StringLength - 1] = '-';
+                StringLength -= 1;
+                jgfx_fill_react(x, y, 80, 16);
+                jgfx_draw_text_en(x, y, string);
+                while (key_get())
+                    ;
+            }
+            else if (StringLength == 0)
+                break;
+            // exit or sub
+        }
+        // if (key == 20 && channel_ptr->PF2 == 1)
+        // {
+        //     // exit or sub
+        // }
+
+        if (StringLength == 10)
+            continue;
+
+        if (key == 0 || key > 16)
+            continue;
+        key1 = KEY_GET_NUM(key);
+
+        if (key1 < 10)
+            code = 48 + key1;
+
+        else if (key1 >= 10)
+        {
+            if (key >= 1 && key <= 4)
+            {
+                code = 64 + key;
+            }
+            else if (key == 8)
+                code = '*';
+            else if (key == 16)
+                code = '#';
+        }
+
+        if (StringLength < 10)
+            string[StringLength + 1] = string[StringLength];
+        string[StringLength] = code;
+
+        jgfx_fill_react(x, y, 80, 16);
+        jgfx_draw_text_en(x, y, string);
+        StringLength += 1;
+        while (key_get())
+            ;
+            
+    }
+}
+
+/**
+ * @brief Accept DTMF code from keyboard press
+ * 
+ * @param channel_ptr channel pointer
+ * @param Direction 0: DOWN   1: UP
+ */
+void main_DTMF_input_MENU(ui_main_channel_ptr channel_ptr,uint8_t Direction)
 {
     
     // channel_ptr->PF1 = param;
@@ -759,17 +976,26 @@ void main_DTMF_input(ui_main_channel_ptr channel_ptr)
             if(StringLength == 0)
                 break;
 
-            char DTMF_String[15];
+            uint8_t *DTMF_String;
+
+            switch (Direction)
+            {
+            case 0:
+                DTMF_String = channel_ptr->DTMF_DownCode;
+                break;
+            case 1:
+                DTMF_String = channel_ptr->DTMF_UPCode;
+                break;
+            default:
+                break;
+            }
+
             for(int i = 0;i < StringLength; i++)
             {
                 DTMF_String[i] = string[i];
             }
             DTMF_String[StringLength] = '\0';
 
-            bk4819_set_freq(channel_ptr->cur_channel->frequency);
-            Send_DTMF_String(DTMF_String);
-            // Show param
-            vTaskDelay(2000);
             break;
         }
         if (key == 19 && channel_ptr->PF1 == 1)
@@ -949,13 +1175,16 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
  */
 void loudspeaker_TurnOn(ui_main_channel_ptr channel_ptr, main_channel_speak_t status)
 {
+    uint16_t reg;
+
     if (status == NONE_CHANNEL_SPEAKING)
     {
         bk4819_set_freq(channel_ptr->cur_channel->frequency);
         return;
     }
     // turn on sound
-    uint16_t reg = bk4819_read_reg(BK4819_REG_30);
+    gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+    reg = bk4819_read_reg(BK4819_REG_30);
     bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
     // RxAmplifier_enable();
 
@@ -981,7 +1210,7 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
         xSemaphoreGive(xMainChannelTalking);
         if (xSemaphoreTake(xMainChannelListening, portMAX_DELAY) == pdTRUE)
         {
-            printf("Dual watching!\n");
+            // printf("Dual watching!\n");
             if (loudspeaker_TurnOff() == TRUE)
             {
                 main_channel_speak_t cur_chan = channel_detect(channel_ptr);
@@ -990,9 +1219,6 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
                     bk4819_Tx_Power(TXP_MID);
                     wakeup_screen(Brightness_ptr, Timer_ptr);
 
-                    // *state = 0;
-                    // draw_channel();
-
                     loudspeaker_TurnOn(channel_ptr, cur_chan);
                     xSemaphoreGive(xMainListeningRender);
                 }
@@ -1000,13 +1226,6 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
             xSemaphoreGive(xMainChannelListening);
         }
     }
-}
-
-void menu_draw_rightside(uint8_t *string)
-{
-    // jgfx_draw_text_en(36 + menu_ptr->menu_x,
-    //                       submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (i + 1),
-    //                       submenu_ptr->item_name[i]);
 }
 
 /**
@@ -1034,11 +1253,18 @@ void return_to_menu(jgfx_menu_ptr menu_ptr)
 
 void Brightness_init(Brightness_setting_ptr bri_ptr)
 {
-    bri_ptr->cur_bri = 3;
+
     bri_ptr->bri_pra = brightness_param;
     bri_ptr->bri_val = bri_ptr->bri_pra;
+
+#ifdef BRIGHTNESS_MENU_SHOW_WITH_PARAM
+    bri_ptr->cur_bri = 15;
+    bri_ptr->bri_val += 15;
+#else 
+    bri_ptr->cur_bri = 3;
     bri_ptr->bri_val += 3;
-    // printf("Brightness vlaue now is %d\n",*(bri_ptr->bri_val));
+#endif
+
 }
 
 void Brightness_change(Brightness_setting_ptr bri_ptr, uint8_t bri_num)
@@ -1056,7 +1282,7 @@ void Display_Timer_Init(Display_Timer_ptr Timer_ptr)
     // Init for only once in the hole program
     // if (Timer_ptr->Timer_init_flag == TRUE)
     //     return;
-    Timer_ptr->index = 1;
+    Timer_ptr->index = 3;
     Timer_ptr->Timer_limit = 33; // count 33 times for one second
     Timer_ptr->Timer_count = 0;
     Timer_ptr->Second_count = 0;
@@ -1288,29 +1514,6 @@ void offset_direction(ui_main_channel_ptr channel_ptr, uint8_t param)
     }
 }
 
-// /**
-//  * @brief set bk4819 Tx power.
-//  *
-//  * @param power refer from Tx_Power_t
-//  */
-// void bk4819_Tx_Power(Tx_Power_t power)
-// {
-//     switch (power)
-//     {
-//     case TXP_HIGH:
-//         bk4819_write_reg(BK4819_REG_36, 0xffbf);
-//         break;
-//     case TXP_MID:
-//         bk4819_write_reg(BK4819_REG_36, 0x82AD);
-//         break;
-//     default:
-//     case TXP_LOW:
-//         bk4819_write_reg(BK4819_REG_36, 0x30aa);
-//         break;
-//     case TXP_STANDBY:
-//         bk4819_write_reg(BK4819_REG_36, 0x103f);
-//     }
-// }
 
 /**
  * @brief set TX power parameter for radio_channel
@@ -1583,8 +1786,63 @@ void PF1_funtion_change(ui_main_channel_ptr channel_ptr, uint8_t param)
 {
     if (param == 0)
         return;
-    channel_ptr->PF1 = param;
+    switch (param)
+    {
+    case 1:
+        channel_ptr->PF1 = PF_DTMF;
+        break;
+    case 2:
+        channel_ptr->PF1 = PF_NOAA;
+        break;
+    case 3:
+        channel_ptr->PF1 = PF_FM;
+        break;
+    case 4:
+        channel_ptr->PF1 = PF_OFF;
+    default:
+        break;
+    }
 }
+
+
+void bk4819_TxCTDCSS_set_auto(ui_main_channel_ptr channel_ptr)
+{
+    if (channel_ptr->cur_channel->Tx_CTCSS == 0 && channel_ptr->cur_channel->Tx_CDCSS == 0)
+        return;
+    if (channel_ptr->cur_channel->Tx_CTCSS != 0)
+        bk4819_CTDCSS_set(0, channel_ptr->cur_channel->Tx_CTCSS);
+    else if (channel_ptr->cur_channel->Tx_CDCSS != 0)
+    {
+        bk4819_CDCSS_set_v2(channel_ptr->cur_channel->Tx_CDCSS);
+    }
+}
+
+
+void key_press_function(ui_main_channel_ptr channel_ptr, uint8_t key_press)
+{
+    if(key_press == 1)
+    {
+        switch (channel_ptr->PF1)
+        {
+        case PF_DTMF:
+            main_DTMF_init(channel_ptr);
+            xSemaphoreTake(jgfx_mutex, portMAX_DELAY);
+            main_DTMF_input(channel_ptr);
+            xSemaphoreGive(jgfx_mutex);
+            ui_main_refresh();
+            break;
+        case PF_NOAA:
+            break;
+        case PF_FM:
+            FM_main_init();
+            break;
+        default:
+            break;
+        }
+    }
+}
+
+
 
 /**
  * @brief Destory item
@@ -1622,17 +1880,7 @@ static void _l_destory_menu_item(jgfx_menu_item_ptr item)
     free(item);
 }
 
-void bk4819_TxCTDCSS_set_auto(ui_main_channel_ptr channel_ptr)
-{
-    if (channel_ptr->cur_channel->Tx_CTCSS == 0 && channel_ptr->cur_channel->Tx_CDCSS == 0)
-        return;
-    if (channel_ptr->cur_channel->Tx_CTCSS != 0)
-        bk4819_CTDCSS_set(0, channel_ptr->cur_channel->Tx_CTCSS);
-    else if (channel_ptr->cur_channel->Tx_CDCSS != 0)
-    {
-        bk4819_CDCSS_set_v2(channel_ptr->cur_channel->Tx_CDCSS);
-    }
-}
+
 
 /**
  * @brief Append item to menu
@@ -1778,11 +2026,12 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
         //                 36 + menu_ptr->menu_x + 104 - 1,
         //                 menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + 15);
 
-        // draw box cling to the right side of the screen
-        jgfx_draw_rect(32 + menu_ptr->menu_x,
-                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
-                       32 + menu_ptr->menu_x + menu_ptr->menu_width,
-                       menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + menu_ptr->menu_item_height);
+
+        /**draw box cling to the right side of the screen*/
+        // jgfx_draw_rect(32 + menu_ptr->menu_x,
+        //                menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index,
+        //                32 + menu_ptr->menu_x + menu_ptr->menu_width,
+        //                menu_ptr->menu_item_height / 2 - 4 + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index + menu_ptr->menu_item_height);
     }
 
     // jgfx_draw_line(36 + menu_ptr->menu_x,
@@ -1791,11 +2040,7 @@ static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_pt
     //                menu_ptr->menu_item_height + (menu_ptr->menu_use_tiltle == 1 ? menu_ptr->menu_title_height : 0) + 3 + menu_ptr->menu_y + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * index);
 }
 
-static void _r_clear_item_area(jgfx_menu_ptr menu_ptr)
-{
-    jgfx_set_color_back_hex(0x0000);
-    jgfx_fill_react(35 + menu_ptr->menu_x, menu_ptr->menu_y + menu_ptr->menu_title_height + 5, menu_ptr->menu_width - 5, menu_ptr->menu_height - menu_ptr->menu_title_height - (menu_ptr->menu_divide_height * menu_ptr->item_show_num) - 10);
-}
+
 
 /**
  * @brief set defalut parameters for the submenu
@@ -1841,6 +2086,7 @@ static void submenu_items_refresh(jgfx_menu_ptr menu_ptr, submenu_item_ptr subme
     jgfx_draw_text_en(36 + menu_ptr->menu_x,
                       submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * ((submenu_ptr->cur_item - 1) % submenu_ptr->num_in_page + 1),
                       submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
+    submenu_show_channel_icon(menu_ptr,submenu_ptr);
 }
 
 /**
@@ -1883,6 +2129,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
                     jgfx_set_color_hex(0x0000);
                     jgfx_set_color_back_hex(0xFFFF);
                     jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (index), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
+                    submenu_show_channel_icon(menu_ptr,submenu_ptr);
                 }
                 while (key_get() != KEY_MAP_NONE)
                     ;
@@ -1907,6 +2154,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
                     jgfx_set_color_hex(0x0000);
                     jgfx_set_color_back_hex(0xFFFF);
                     jgfx_draw_text_en(36 + menu_ptr->menu_x, submenu_ptr->line_height + (menu_ptr->menu_item_height + menu_ptr->menu_divide_height) * (index), submenu_ptr->item_name[submenu_ptr->cur_item - 1]);
+                    submenu_show_channel_icon(menu_ptr,submenu_ptr);
                 }
                 while (key_get() != KEY_MAP_NONE)
                     ;
@@ -1960,4 +2208,17 @@ static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channe
         }
     }
     return CHANNEL_SPEAKING;
+}
+static void submenu_show_channel_icon(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr)
+{
+    if(submenu_ptr->show_icon[submenu_ptr->cur_item] == 1)
+    {
+        uint32_t addr = menu_ptr->channel_ptr->channel == 1 ? (FLASH_ICON_CHANNELA_ADDR) : (FLASH_ICON_CHANNELB_ADDR);
+        jgfx_draw_img_byaddr(32 + 5, 5, 10, 10, addr);
+    }
+    else
+    {
+        jgfx_set_color_back_hex(JGFXF_COLOR_BLACK);
+        jgfx_fill_react(32 + 5, 5, 10, 10);
+    }
 }

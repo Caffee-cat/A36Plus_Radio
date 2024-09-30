@@ -1,7 +1,17 @@
 #include "backlight.h"
 
 const uint16_t Display_Timer_param[] = {999, 10, 30, 60, 120};
-const uint32_t brightness_param[] = {5, 20, 100, 200, 500};
+
+#ifdef BRIGHTNESS_MENU_SHOW_WITH_PARAM
+const uint32_t brightness_param[] = {5, 10, 15, 20,//20
+                                    30, 40, 50, 60,//40
+                                    80, 100,115,130,//60
+                                    145,160,185,200,//80
+                                    275,350,425,500
+                                    };  
+#else 
+    const uint32_t brightness_param[] = {5, 20, 100, 200, 500};
+#endif
 Display_Timer_t Display_Timer;
 
 

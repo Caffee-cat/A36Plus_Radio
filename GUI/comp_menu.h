@@ -1,6 +1,7 @@
 #ifndef __COMP_MENU_JAMIEXU_H__
 #define __COMP_MENU_JAMIEXU_H__
 #include "main.h"
+#include "ui.h"
 // #include "radio.h"
 #define JGFX_MENU_STR_MAX_LEN 10
 
@@ -14,10 +15,19 @@ typedef struct ui_main_channel_t *ui_main_channel_ptr;
 typedef struct Display_Timer_t *Display_Timer_ptr;
 typedef struct Brightness_setting_t *Brightness_setting_ptr;
 
-extern uint32_t *cur_ch, ch1, ch2;
-
-
-
+typedef enum
+{
+    MENU_RADIO_SETTING = 0x00,
+    MENU_SQUELCH,
+    MENU_CHANNEL_SAVE,
+    MENU_CHANNEL_SELECT,
+    MENU_CHANNEL_DELETE,
+    MENU_DISPLAY,
+    MENU_BANKS,
+    MENU_BANDWIDTH,
+    MENU_BUTTON,
+    MENU_DTMF,
+}menu_item_ID_t;
 
 typedef enum
 {
@@ -76,6 +86,14 @@ typedef enum
     SUBTRACTION
 } offset_direction_t;
 
+// typedef enum
+// {
+//     PF_OFF = 0x00,
+//     PF_DTMF,
+//     PF_NOAA,
+//     PF_FM
+// }main_PF_select_t;
+
 typedef struct jgfx_menu_item_t
 {
     jgfx_menu_item_type_t item_type;
@@ -98,6 +116,13 @@ typedef struct jgfx_menu_item_t
 
 } jgfx_menu_item_t;
 
+typedef struct
+{
+    uint8_t menu_name[MENU_NAME_LEN_LIM];
+    bool show_channel_pic;
+    menu_item_ID_t menu_id;
+}menu_list_t;
+
 typedef struct jgfx_menu_t
 {
     uint16_t menu_x;
@@ -114,12 +139,13 @@ typedef struct jgfx_menu_t
     uint8_t menu_title[JGFX_MENU_STR_MAX_LEN];
     uint8_t menu_title_height;
 
+    menu_list_t menu_item[15];
     uint8_t index;
     uint8_t item_size;
     uint8_t item_show_num;
     uint8_t page;
     uint8_t Initial_flag;
-    bool menu_draw_complete;
+    bool menu_draw_completed;
     jgfx_menu_status_t status;
 
     jgfx_menu_item_ptr head_item;
@@ -135,6 +161,8 @@ typedef struct submenu_item_t
     uint8_t cur_item;           //Count from 1
     uint8_t cur_page;           //Count from 1
     uint8_t num_in_page;        //Count from 1
+    bool    show_icon[10];
+    bool    channel_select;
 } submenu_item_t;
 
 typedef struct corner_index_num_t
@@ -173,6 +201,11 @@ typedef struct ui_main_channel_t
 
     sub_channel_t channel_1;
     sub_channel_t channel_2;
+
+    uint8_t DTMF_UPCode[20];
+    uint8_t DTMF_DownCode[20];
+    bool DTMF_up_enable;
+    bool DTMF_dowm_enable;
 
     // for main channel input logic
     uint32_t ch_bak;
@@ -223,6 +256,11 @@ typedef struct Display_Timer_t
     const uint16_t *Tim_val;
 } Display_Timer_t;
 
+extern menu_list_t menu_item[];
+extern uint32_t *cur_ch, ch1, ch2;
+
+void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
+
 void Startup_display(void);
 
 void jgfx_menu_init(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr main_channel);
@@ -259,9 +297,13 @@ void jgfx_menu_destory(jgfx_menu_ptr menu_ptr);
 
 uint8_t submenu_item_show(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, ...);
 
-uint8_t submenu_item_show_v2(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, uint8_t (*string)[]);
+uint8_t submenu_item_show_with_array(jgfx_menu_ptr menu_ptr, uint8_t item_num, submenu_item_ptr submenu_ptr, uint8_t (*string)[]);
+
+void render_submenu_with_param(jgfx_menu_ptr menu_ptr, uint8_t *string, uint8_t index);
 
 void index_num_display(jgfx_menu_ptr menu_ptr);
+
+void menu_item_param_init(jgfx_menu_ptr menu_ptr,ui_main_channel_ptr main_channel);
 
 void corner_index_init(corner_index_num_ptr corner_ptr);
 
@@ -284,6 +326,8 @@ void main_PTT_transmit(ui_main_channel_ptr channel_ptr);
 void main_DTMF_init(ui_main_channel_ptr channel_ptr);
 
 void main_DTMF_input(ui_main_channel_ptr channel_ptr);
+
+void main_DTMF_input_MENU(ui_main_channel_ptr channel_ptr,uint8_t Direction);
 
 void channel_input_flicker(ui_main_channel_ptr channel_ptr, uint8_t state);
 
@@ -343,6 +387,12 @@ void bk4819_TxCTDCSS_set_auto(ui_main_channel_ptr channel_ptr);
 
 void PF1_funtion_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
+void key_press_function(ui_main_channel_ptr channel_ptr, uint8_t key_press);
+
+void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+
+void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+
 static void _l_destory_menu_item(jgfx_menu_item_ptr item);
 
 static void _r_menu_draw_items(jgfx_menu_ptr menu_ptr, uint8_t order);
@@ -353,7 +403,6 @@ static void _r_menu_draw_selector(jgfx_menu_ptr menu_ptr);
 
 static void _r_menu_draw_item(jgfx_menu_ptr menu_ptr, jgfx_menu_item_ptr item_ptr, jgfx_menu_item_status_t status, uint8_t index);
 
-static void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 
 static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, uint8_t num);
 
@@ -363,8 +412,7 @@ static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 
 static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channel);
 
-void channel_bandwidth_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
-void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param);
+static void submenu_show_channel_icon(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 
 #endif

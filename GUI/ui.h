@@ -5,6 +5,12 @@
 #include "ui_stack.h"
 #include "key.h"
 
+// #define SUQELCH_MENU_SHOW_WITH_PARAM
+// #define BRIGHTNESS_MENU_SHOW_WITH_PARAM
+// #define TIMER_MENU_SHOW_WITH_PARAM
+
+
+
 
 
 void ui_init(void);
