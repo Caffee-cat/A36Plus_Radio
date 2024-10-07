@@ -1548,16 +1548,17 @@ void TxPower_change(ui_main_channel_ptr channel_ptr, uint8_t param)
  */
 void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
 {
-    xSemaphoreTake(xChannelScan, portMAX_DELAY);
     uint8_t str[20];
     uint8_t mode = 0;
-    uint32_t count = 10000;
+    uint32_t count = 100;
     uint32_t CTDCSS_result = 0;
     uint32_t frequency = NULL;
 
     bool FrequencyScan = FALSE;
     bool CTDCSSSCAN = FALSE;
 
+    xSemaphoreTake(xChannelScan, portMAX_DELAY);
+    // vTaskDelay(20);
     _r_clear_item_area(menu_ptr);
     jgfx_set_font(JGFX_FONT_EN_8X16);
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
@@ -1566,6 +1567,7 @@ void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
     jgfx_draw_text_en(40, 30, "fre: ");
     jgfx_draw_text_en(40, 60, "CXCSS: ");
 
+    bk4819_init();
     BK4819_EnableFrequencyScan();
     // Scan_test();
     while (count--)
@@ -1616,7 +1618,7 @@ void frequency_scan(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_ptr)
 
     xSemaphoreGive(xChannelScan);
     BK4819_DisableFrequencyScan();
-    vTaskDelay(800);
+    vTaskDelay(5000);
 }
 
 /**

@@ -254,11 +254,11 @@ void bk4819_init(void)
 
     bk4819_set_freq(48762500);
     // bk4819_set_freq(12245300);
-    // bk4819_CTDCSS_enable(1);
+    bk4819_CTDCSS_enable(1);
     // bk4819_CDCSS_set(1,0x19);
     // bk4819_CTDCSS_set(0, 719); // Set CTCSS to 71.9HZ
     // bk4819_CTDCSS_set(0, 2775); // Set CTCSS to 88.5HZ
-    bk4819_CTDCSS_disable();
+    // bk4819_CTDCSS_disable();
 
     bk4819_Tx_Power(TXP_STANDBY);
 
@@ -547,53 +547,61 @@ void BK4819_DisableFrequencyScan(void)
  */
 uint32_t FrequencyScanResult(uint8_t *mode, uint32_t *CTDCSS_result)
 {
+    uint16_t count;
+    *mode = 1;
+
     bk4819_rx_on();
     uint16_t reg = bk4819_read_reg(BK4819_REG_0D);
-    delay_1us(10);
-    if (reg & 0x8000)
+    // delay_1us(10);
+
+    count = 30;
+    while(count--)
     {
-        return NULL;
-    }
-    else
-    {
-        uint16_t count = 1000;
-        while (count--)
+        if (reg & 0x8000)
         {
-            uint16_t Low;
-            uint16_t High = bk4819_read_reg(BK4819_REG_69);
-            // delay_1ms(10);
+            return NULL;
+        }
+    }
 
-            if ((High & 0x8000) == 0)
+    count = 30;
+    while (count--)
+    {
+        uint16_t Low;
+        uint16_t High = bk4819_read_reg(BK4819_REG_69);
+        // delay_1ms(10);
+
+        if ((High & 0x8000) == 0)
+        {
+            Low = bk4819_read_reg(BK4819_REG_6A);
+            *CTDCSS_result = DCS_GetCdcssCode(((High & 0xFFF) << 12) | (Low & 0xFFF));
+            if (*CTDCSS_result == 0xFF || count == 1)
             {
-                Low = bk4819_read_reg(BK4819_REG_6A);
-                *CTDCSS_result = DCS_GetCdcssCode(((High & 0xFFF) << 12) | (Low & 0xFFF));
-                if (*CTDCSS_result == 0xFF)
-                {
-                    *mode = 1;
-                    *CTDCSS_result = 0xFFFF;
-                    break;
-                }
-                *mode = 2;
+                // printf("mode euqal to 1\n");
+                *mode = 1;
+                *CTDCSS_result = 0xFFFF;
                 break;
             }
-
-            Low = bk4819_read_reg(BK4819_REG_68);
-
-            if ((Low & 0x8000) == 0)
-            {
-                *CTDCSS_result = ((Low & 0x1FFF) * 4843) / 10000;
-                *mode = 3;
-                break;
-            }
-            // delay_1ms(10);
+            *mode = 2;
+            break;
         }
 
-        uint32_t high, low, fre;
-        high = (uint32_t)(bk4819_read_reg(BK4819_REG_0D) & 0x03ff) << 16;
-        low = bk4819_read_reg(BK4819_REG_0E);
-        bk4819_rx_off();
-        return high + low;
+        Low = bk4819_read_reg(BK4819_REG_68);
+
+        if ((Low & 0x8000) == 0)
+        {
+            *CTDCSS_result = ((Low & 0x1FFF) * 4843) / 10000;
+            *mode = 3;
+            break;
+        }
+        // delay_1ms(10);
     }
+
+    uint32_t high, low, fre;
+    high = (uint32_t)(bk4819_read_reg(BK4819_REG_0D) & 0x03ff) << 16;
+    low = bk4819_read_reg(BK4819_REG_0E);
+    bk4819_rx_off();
+    return high + low;
+    
 }
 
 /**
