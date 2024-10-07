@@ -9,6 +9,7 @@
 
 #define W25Q16JV_SET 1
 #define W25Q16JV_RESET !W25Q16JV_SET
+#define W25Q16JV_FIRST_BYTE_READ_ERROR
 
 typedef enum
 {
@@ -95,6 +96,7 @@ void w25q16jv_read_block(uint32_t addr, uint8_t *readData);
 void w25q16jv_read_block_fast(uint32_t addr, uint8_t *readData);
 
 void w25q16jv_read_num(uint32_t addr, uint8_t *readData, uint32_t num);
+int W25Qx_readData(uint32_t addr, void* buf, size_t len);
 
 void w25q16jv_page_program(uint32_t addr, uint8_t *raw_data, uint16_t size);
 void w25q16jv_sector_erase(uint32_t addr);

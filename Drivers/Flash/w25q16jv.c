@@ -33,6 +33,36 @@ SOFTWARE.
 // Written by Jamiexu
 // Errors needs to fix
 
+
+uint8_t spiFlash_SendRecv(uint8_t val)
+{
+    uint8_t data = 0;
+    for(uint8_t i = 0; i < 8; i++)
+    {
+        gpio_bit_reset(FLASH_GPIO_PORT, FLASH_GPIO_SCK_PIN);
+        delay_1us(1);
+
+        if((val << i) & 0x80)
+        {
+            gpio_bit_set(FLASH_GPIO_PORT, FLASH_GPIO_DOUT_PIN);
+        }
+        else
+        {
+            gpio_bit_reset(FLASH_GPIO_PORT, FLASH_GPIO_DOUT_PIN);
+        }
+
+        gpio_bit_set(FLASH_GPIO_PORT, FLASH_GPIO_SCK_PIN);
+        delay_1us(1);
+
+        data <<= 1;
+        data |= (gpio_input_bit_get(FLASH_GPIO_PORT, FLASH_GPIO_DIN_PIN)) ? 0x01 : 0x00;
+    }
+
+    return data;
+}
+
+
+
 static void SPI_send_data(uint8_t data)
 {
 #ifdef RTOS_ON
@@ -229,16 +259,46 @@ void w25q16jv_read_num(uint32_t addr, uint8_t *readData, uint32_t num)
     }
 
     FLASH_CS_LOW;
+    spi_i2s_data_receive(SPI0);
+
+    #ifdef W25Q16JV_FIRST_BYTE_READ_ERROR
+    addr -= 1;
+    #endif
 
     SPI_send_data(W25Q16JV_CMD_READ);
     SPI_send_data((addr >> 16) & 0xFF);
     SPI_send_data((addr >> 8) & 0xFF);
     SPI_send_data(addr & 0xFF);
 
+    delay_1us(10);
+
+    #ifdef W25Q16JV_FIRST_BYTE_READ_ERROR
+    SPI_read_data();
+    #endif
+    
     for (uint16_t i = 0; i < num; i++)
         readData[i] = SPI_read_data();
 
     FLASH_CS_HIGHT;
+}
+
+int W25Qx_readData(uint32_t addr, void* buf, size_t len)
+{
+    FLASH_CS_LOW;
+
+    spiFlash_SendRecv(0x03);             /* Command        */
+    spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
+    spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
+    spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+
+    for(size_t i = 0; i < len; i++)
+    {
+        ((uint8_t *) buf)[i] = spiFlash_SendRecv(0x00);
+    }
+
+    FLASH_CS_HIGHT;
+
+    return 0;
 }
 
 void w25q16jv_sector_erase(uint32_t addr)
