@@ -218,9 +218,9 @@ uint16_t bk1080_chan_to_freq(uint16_t channel){
     uint16_t spacing = 0;
 
     if (((reg5 >> 4) & 0x03) == 0x00)
-        spacing = 20;
+        spacing = 200;
     else if (((reg5 >> 4) & 0x03) == 0x01)
-        spacing = 10;
+        spacing = 100;
     else if (((reg5 >> 4) & 0x03) == 0x02)
         spacing = 50;
     
@@ -233,7 +233,7 @@ uint16_t bk1080_chan_to_freq(uint16_t channel){
     else if (((reg5 >> 6) & 0x03) == 0x03)
         band = 640;
     
-    return channel / 10 * spacing + band;
+    return (channel * spacing) / 100  + band;
 }
 
 uint16_t bk1080_freq_to_chan(uint16_t freq){
@@ -242,9 +242,9 @@ uint16_t bk1080_freq_to_chan(uint16_t freq){
     uint16_t spacing = 0;
 
     if (((reg5 >> 4) & 0x03) == 0x00)
-        spacing = 20;
+        spacing = 200;
     else if (((reg5 >> 4) & 0x03) == 0x01)
-        spacing = 10;
+        spacing = 100;
     else if (((reg5 >> 4) & 0x03) == 0x02)
         spacing = 50;
     
@@ -257,7 +257,7 @@ uint16_t bk1080_freq_to_chan(uint16_t freq){
     else if (((reg5 >> 6) & 0x03) == 0x03)
         band = 640;
     
-    return (freq - band) * 10 / spacing;
+    return (freq - band) * 100 / spacing;
 }
 
 void bk1080_set_channel(uint16_t channel){
@@ -325,6 +325,7 @@ uint16_t bk1080_get_cur_frequency(void)
 {
     uint16_t reg;
 
+    delay_1us(2);
     reg = bk1080_read_reg(BK1080_REG_11);
     reg &= 0x03FF;
 
