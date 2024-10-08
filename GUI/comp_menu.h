@@ -190,7 +190,7 @@ typedef struct sub_channel_t
     uint32_t Tx_CDCSS;
     uint32_t Rx_CDCSS;
     uint8_t channnel_bandwidth;
-    uint8_t sql;
+    
     uint16_t offset;
     Tx_Power_t power;
     offset_direction_t direction;
@@ -202,6 +202,7 @@ typedef struct ui_main_channel_t
     sub_channel_t channel_1;
     sub_channel_t channel_2;
 
+    uint8_t sql;
     uint8_t DTMF_UPCode[20];
     uint8_t DTMF_DownCode[20];
     bool DTMF_up_enable;
@@ -315,8 +316,6 @@ void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_pt
 uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key);
 
 void sub_channel_init(sub_channel_ptr sub_ch);
-
-void main_channel_init(ui_main_channel_ptr channel_ptr);
 
 void radio_channel_change(ui_main_channel_ptr channel_ptr, uint8_t step);
 

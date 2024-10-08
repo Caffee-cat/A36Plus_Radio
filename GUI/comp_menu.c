@@ -33,7 +33,6 @@
 extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput, xMainChannelDTMFSending;
 extern SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
 extern SemaphoreHandle_t xChannelScan;
-extern PowerCalibrationTables_t calData;
 extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 
@@ -706,52 +705,9 @@ void sub_channel_init(sub_channel_ptr sub_ch)
     sub_ch->direction = OFF;
     sub_ch->power = TXP_MID;
     sub_ch->channnel_bandwidth = 1;
-    sub_ch->sql = 3;
 }
 
-void main_channel_init(ui_main_channel_ptr channel_ptr)
-{
-    // if (channel_ptr->Initial_flag == TRUE)
-    //     return;
-    channel_ptr->Initial_flag = TRUE;
-    // Achieve flicker the selected channel number
-    channel_ptr->flash_count_num1 = 0;
-    channel_ptr->flash_count_num2 = 0;
 
-    sub_channel_init(&channel_ptr->channel_1);
-    sub_channel_init(&channel_ptr->channel_2);
-    channel_ptr->channel_1.frequency = channel_A_get();
-    channel_ptr->channel_2.frequency = channel_B_get();
-    channel_ptr->ch_bak = 0;
-    channel_ptr->dual_channel = TRUE;
-    channel_ptr->channel_listening = FALSE;
-    channel_ptr->DTMF_up_enable = FALSE;
-    channel_ptr->DTMF_dowm_enable = FALSE;
-    channel_ptr->PF1 = PF_DTMF;
-    channel_ptr->PF2 = PF_OFF;
-
-    
-    bk4819_set_freq(channel_ptr->channel_1.frequency);
-    bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
-
-    // Point to channel 1 for initial setup
-    channel_ptr->cur_channel = &channel_ptr->channel_1;
-    // printf("0x38:%d     0x39:%d", bk4819_read_reg(0x38), bk4819_read_reg(0x39));
-    // printf("main channel initialization finished! Current channel's freqency equal %x\n", channel_ptr->cur_channel->frequency);
-
-    channel_ptr->channel = (channel_ptr->cur_channel == &channel_ptr->channel_1 ? TRUE : FALSE);
-    channel_ptr->step = 10.0000; // 10.0KHZ
-
-    // index set
-    channel_ptr->cur_index = 1;
-    channel_ptr->SFT_D_index = 1;
-    channel_ptr->TxPower_index = 1;
-    channel_ptr->TopKey = 1;
-
-    channel_ptr->ch_pra = main_channel_step;
-    channel_ptr->ch_val = channel_ptr->ch_pra;
-    channel_ptr->channel_changed = FALSE;
-}
 
 /**
  * @brief main channel change
@@ -807,7 +763,7 @@ void main_PTT_transmit(ui_main_channel_ptr channel_ptr)
 #ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(channel_ptr->cur_channel->power);
 #else 
-    bk4819_setTxPower(channel_ptr->cur_channel->power, channel_ptr->cur_channel->frequency, calData);
+    bk4819_setTxPower(channel_ptr->cur_channel->power, channel_ptr->cur_channel->frequency);
 #endif
     TxAmplifier_enable(channel_ptr);
 
@@ -1518,7 +1474,8 @@ void channel_squelch_change(ui_main_channel_ptr channel_ptr, uint8_t param)
 {
     if (param <= 0 || param > 10)
         return;
-    channel_ptr->cur_channel->sql = param - 1;
+    channel_ptr->sql = param - 1;
+    bk4819_Squelch_val_change(channel_ptr->sql);
 }
 
 /**

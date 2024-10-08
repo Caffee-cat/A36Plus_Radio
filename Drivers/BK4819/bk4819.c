@@ -30,11 +30,12 @@ SOFTWARE.
  */
 
 #include "bk4819.h"
+#include "DataCalib.h"
 
 ui_main_channel_t radio_channel;
 
 extern SemaphoreHandle_t xMainChannelDTMFSending;
-extern PowerCalibrationTables_t calData;
+extern PowerCalibrationTables_t PwrCalData;
 const uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
 const float main_channel_step[] = {5, 6.25, 10, 12.5, 20.0, 25.0, 50.0};
 
@@ -188,7 +189,7 @@ void bk4819_Tx_Power(Tx_Power_t power)
     }
 }
 #else
-void bk4819_setTxPower(Tx_Power_t power, uint32_t freq, PowerCalibrationTables_t calData)
+void bk4819_setTxPower(Tx_Power_t power, uint32_t freq)
 {
 
     uint16_t reg = 0;
@@ -201,20 +202,20 @@ void bk4819_setTxPower(Tx_Power_t power, uint32_t freq, PowerCalibrationTables_t
     {
     case TXP_LOW:
         PaGainValues = 0xD7;
-        // Retrieve the top byte from calData based on power and frequency
-        PaBias = getPaBiasCalValue(freq, calData.low);
+        // Retrieve the top byte from PwrCalData based on power and frequency
+        PaBias = getPaBiasCalValue(freq, PwrCalData.low);
         break;
     case TXP_MID:
         PaGainValues = 0xD7;
-        PaBias = getPaBiasCalValue(freq, calData.med);
+        PaBias = getPaBiasCalValue(freq, PwrCalData.med);
         break;
     case TXP_HIGH:
         PaGainValues = 0xFF;
-        PaBias = getPaBiasCalValue(freq, calData.high);
+        PaBias = getPaBiasCalValue(freq, PwrCalData.high);
         break;
     case TXP_STANDBY:
         PaGainValues = 0x13;
-        PaBias = getPaBiasCalValue(freq, calData.low);
+        PaBias = getPaBiasCalValue(freq, PwrCalData.low);
         break;
     }
     // Combine the top byte with the least significant byte
@@ -304,7 +305,7 @@ void bk4819_init(void)
 #ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(TXP_STANDBY);
 #else
-    bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency, calData);
+    bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency);
 #endif
 
     // bk4819_tx_on();
@@ -468,12 +469,25 @@ bool Squelch_resultoutput(void)
 }
 
 
-void bk4819_subchannel_set_Squelch(uint8_t sqlLevel)
+void bk4819_Squelch_val_change(uint8_t sqlLevel)
 {
+#ifdef LOAD_IN_A36PLUS
+    uint8_t RTSO, RTSC, ETSO, ETSC, GTSO, GTSC;
+    w25q16jv_page_program(0xF0C0 + sqlLevel, &RTSO, 1);
+    w25q16jv_page_program(0xF0D0 + sqlLevel, &RTSC, 1);
+    w25q16jv_page_program(0xF0E0 + sqlLevel, &ETSC, 1);
+    w25q16jv_page_program(0xF0F0 + sqlLevel, &ETSO, 1);
+    w25q16jv_page_program(0xF100 + sqlLevel, &GTSO, 1);
+    w25q16jv_page_program(0xF110 + sqlLevel, &GTSC, 1);
+
+    bk4819_set_Squelch(RTSO, RTSC, ETSO, ETSC, GTSO, GTSC);
+#else
+    
     int squelch = -127 + (sqlLevel * 66) / 15;
     bk4819_set_Squelch((squelch / 2 + 160) * 2,
                        ((squelch - 2) / 2 + 160) * 2,
                        0x5f, 0x5e, 0x20, 0x08);
+#endif
 }
 
 /**
@@ -541,7 +555,7 @@ void TxAmplifier_enable(ui_main_channel_ptr channel_ptr)
 #ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(channel_ptr->cur_channel->power);
 #else
-    bk4819_setTxPower(channel_ptr->cur_channel->power, radio_channel.cur_channel->frequency, calData);
+    bk4819_setTxPower(channel_ptr->cur_channel->power, radio_channel.cur_channel->frequency);
 #endif
 }
 
@@ -552,7 +566,7 @@ void TxAmplifier_disable(void)
 #ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(TXP_STANDBY);
 #else 
-    bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency, calData);
+    bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency);
 #endif
 }
 
@@ -1056,44 +1070,6 @@ void FSKReceive_pre(void)
     bk4819_write_reg(BK4819_REG_59, 0x0068);        // Sync length 4 bytes, 7 byte preamble
 
     
-}
-
-
-
-void nvm_readCalibData(void *buf)
-{
-    // W25Qx_wakeup();
-    // delayUs(5);
-
-    PowerCalibrationTables_t *calib = ((PowerCalibrationTables_t *) buf);
-
-    // Load calibration data
-    uint32_t addr = CAL_BASE;
-
-    uint8_t *ptr = (uint8_t*)calib;  
-
-
-    for(int i = 0;i < sizeof(PowerCalibration_t); i++)
-    {
-        w25q16jv_read_num(addr + i, ptr + i, 1);
-    }
-    addr += 64;
-    ptr += sizeof(PowerCalibration_t);
-
-
-    for(int i = 0;i < sizeof(PowerCalibration_t); i++)
-    {
-        w25q16jv_read_num(addr + i, ptr + i, 1);
-    }
-    addr += 64;
-    ptr += sizeof(PowerCalibration_t);
-
-
-    for(int i = 0;i < sizeof(PowerCalibration_t); i++)
-    {
-        w25q16jv_read_num(addr + i, ptr + i, 1);
-    }
-
 }
 
 

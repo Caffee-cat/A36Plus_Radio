@@ -2,8 +2,8 @@
 #define __RADIO_H__
 #include "main.h"
 #include "comp_menu.h"
+#include "DataCalib.h"
 
-PowerCalibrationTables_t calData;
 
 extern ui_page_t ui_menu, ui_main;
 extern ui_stack_t ui_stack;
@@ -12,6 +12,8 @@ extern ui_main_channel_t radio_channel;
 extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput, xMainChannelDTMFSending;
 extern SemaphoreHandle_t xMainListeningRender,xMainListeningUnrender;
 extern SemaphoreHandle_t xMainChannelDraw, xChannelScan;
+
+void main_channel_init(ui_main_channel_ptr channel_ptr);
 
 main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr);
 

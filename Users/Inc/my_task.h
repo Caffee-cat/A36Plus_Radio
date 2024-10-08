@@ -1,6 +1,7 @@
 #ifndef __MY_TASK_H__
 #define __MY_TASK_H__
 #include "main.h"
+#include "DataCalib.h"
 
 extern ui_main_channel_t radio_channel;
 extern Brightness_setting_t Display_brightness;

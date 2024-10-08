@@ -3,6 +3,52 @@
 uint16_t count = 0;
 bool render_finish = FALSE; 
 
+void main_channel_init(ui_main_channel_ptr channel_ptr)
+{
+    // if (channel_ptr->Initial_flag == TRUE)
+    //     return;
+    channel_ptr->Initial_flag = TRUE;
+    // Achieve flicker the selected channel number
+    channel_ptr->flash_count_num1 = 0;
+    channel_ptr->flash_count_num2 = 0;
+
+    sub_channel_init(&channel_ptr->channel_1);
+    sub_channel_init(&channel_ptr->channel_2);
+    channel_ptr->channel_1.frequency = channel_A_get();
+    channel_ptr->channel_2.frequency = channel_B_get();
+    channel_ptr->ch_bak = 0;
+    channel_ptr->sql = 3;
+    channel_ptr->dual_channel = TRUE;
+    channel_ptr->channel_listening = FALSE;
+    channel_ptr->DTMF_up_enable = FALSE;
+    channel_ptr->DTMF_dowm_enable = FALSE;
+    channel_ptr->PF1 = PF_DTMF;
+    channel_ptr->PF2 = PF_OFF;
+
+    
+    bk4819_set_freq(channel_ptr->channel_1.frequency);
+    bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
+    bk4819_Squelch_val_change(channel_ptr->sql);
+
+    // Point to channel 1 for initial setup
+    channel_ptr->cur_channel = &channel_ptr->channel_1;
+    // printf("0x38:%d     0x39:%d", bk4819_read_reg(0x38), bk4819_read_reg(0x39));
+    // printf("main channel initialization finished! Current channel's freqency equal %x\n", channel_ptr->cur_channel->frequency);
+
+    channel_ptr->channel = (channel_ptr->cur_channel == &channel_ptr->channel_1 ? TRUE : FALSE);
+    channel_ptr->step = 10.0000; // 10.0KHZ
+
+    // index set
+    channel_ptr->cur_index = 1;
+    channel_ptr->SFT_D_index = 1;
+    channel_ptr->TxPower_index = 1;
+    channel_ptr->TopKey = 1;
+
+    channel_ptr->ch_pra = main_channel_step;
+    channel_ptr->ch_val = channel_ptr->ch_pra;
+    channel_ptr->channel_changed = FALSE;
+}
+
 /**
  * @brief Dual Band in main interface
  *
@@ -26,8 +72,6 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
         vTaskDelay(800);
 
         // printf("RSSI equal to :0x%04x\n",bk4819_read_reg(BK4819_REG_67));
-
-        bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
 
         // printf("detecting!\n");
         reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
@@ -53,8 +97,6 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
         bk4819_rx_on();
 
         vTaskDelay(800);
-
-        bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
 
         // printf("detecting!\n");
         reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
@@ -92,17 +134,17 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
         xSemaphoreGive(xMainChannelTalking);
         if (xSemaphoreTake(xMainChannelListening, portMAX_DELAY) == pdTRUE)
         {
-            printf("Dual watching!\n");
+            // printf("Dual watching!\n");
             if (loudspeaker_TurnOff() == TRUE)
             {
                 main_channel_speak_t cur_chan = channel_detect(channel_ptr);
                 if (cur_chan != NONE_CHANNEL_SPEAKING && cur_chan != CTDCSS_INCORRENT)
                 {
-                    printf("Dual watch Detected!\n");
+                    // printf("Dual watch Detected!\n");
 #ifndef LOAD_IN_A36PLUS
                     bk4819_Tx_Power(TXP_MID);
 #else 
-                    bk4819_setTxPower(TXP_MID, channel_ptr->cur_channel->frequency, calData);
+                    bk4819_setTxPower(TXP_MID, channel_ptr->cur_channel->frequency);
 #endif
                     wakeup_screen(Brightness_ptr, Timer_ptr);
 
@@ -169,7 +211,7 @@ bool loudspeaker_TurnOff(void)
 #ifndef LOAD_IN_A36PLUS
         bk4819_Tx_Power(TXP_LOW);
 #else
-        bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency, calData);
+        bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency);
 #endif
         xSemaphoreTake(xMainListeningRender, portMAX_DELAY);
         

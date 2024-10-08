@@ -13,14 +13,13 @@
 
 typedef struct bk4819_squelch_t *bk4819_squelch_ptr;
 
-static const uint32_t CAL_BASE = 0xF000;
-static const uint32_t baseAddress = 0x000A1000;     // 0x000A1000;
+
+
 
 
 extern const uint16_t CTCSS_param[];
 extern const float main_channel_step[];
 extern const uint16_t DCS_Options[];
-// extern PowerCalibrationTables_t calData;  
 
 
 
@@ -289,17 +288,6 @@ typedef struct PowerCalibration {
     // uint8_t unused[56]; // Remaining unused bytes in the 64-byte block
 } PowerCalibration_t;
 
-
-typedef struct PowerCalibrationTables {
-    PowerCalibration_t high;
-    PowerCalibration_t med;
-    PowerCalibration_t low;
-} PowerCalibrationTables_t;
-
-
-
-
-
 // typedef enum
 // {
 
@@ -342,6 +330,8 @@ void bk4819_tx_on(void);
 void bk4819_tx_off(void);
 
 void bk4819_rx_off(void);
+
+void bk4819_Squelch_val_change(uint8_t sqlLevel);
 
 void bk4819_CTDCSS_enable(uint8_t sel);
 
@@ -397,8 +387,6 @@ void BK4819_DisableDTMF(void);
 void BK4819_PlayDTMF(char Code);
 
 void Send_DTMF_String(uint8_t  *pString);
-
-void nvm_readCalibData(void *buf);
 
 uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration_t calTable);
 
