@@ -3,6 +3,7 @@
 uint16_t count = 0;
 bool render_finish = FALSE; //
 
+
 /**
  * @brief Check if radio is opening loudspeaker and check Squelch resultoutput.
  *
@@ -24,7 +25,11 @@ bool loudspeaker_TurnOff(void)
         bk4819_set_freq(radio_channel.cur_channel->frequency * 100);
 
         radio_channel.channel_listening = FALSE;
+#ifndef LOAD_IN_A36PLUS
         bk4819_Tx_Power(TXP_LOW);
+#else
+        bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency, calData);
+#endif
         xSemaphoreTake(xMainListeningRender, portMAX_DELAY);
         
         return TRUE;
@@ -123,7 +128,7 @@ static void FM_draw_current_frequency(void)
     uint8_t string[10];
 
     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
-    jgfx_set_color_back_hex(JGFXF_COLOR_YELLOW);
+    jgfx_set_color_back_hex(JGFXF_COLOR_PINK);
 
     sprintf(string, "%d", frequency);
     if(frequency > 1000)
@@ -155,7 +160,7 @@ void FM_main_init(void)
 
         jgfx_set_font(JGFX_FONT_EN_8X16);
         jgfx_set_color_hex(JGFXF_COLOR_WHITE);
-        jgfx_set_color_back_hex(JGFXF_COLOR_YELLOW);
+        jgfx_set_color_back_hex(JGFXF_COLOR_PINK);
 
         jgfx_fill_react(32, DISPLAY_H / 2 + 11, DISPLAY_W, DISPLAY_H / 2);
         jgfx_set_color_hex(JGFXF_COLOR_WHITE);

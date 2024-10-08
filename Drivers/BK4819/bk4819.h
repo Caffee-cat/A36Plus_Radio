@@ -9,11 +9,19 @@
 #define MEM_CAHNNEL_SIZES 8
 #define MEM_CHANNEL_LIST_IN_BLOCK 8
 
+
+
 typedef struct bk4819_squelch_t *bk4819_squelch_ptr;
+
+static const uint32_t CAL_BASE = 0xF000;
+static const uint32_t baseAddress = 0x000A1000;     // 0x000A1000;
+
 
 extern const uint16_t CTCSS_param[];
 extern const float main_channel_step[];
 extern const uint16_t DCS_Options[];
+// extern PowerCalibrationTables_t calData;  
+
 
 
 
@@ -269,6 +277,26 @@ typedef struct bk4819_squelch_t
 }bk4819_squelch_t;
 
 
+typedef struct PowerCalibration {
+    uint8_t power_below_130mhz;
+    uint8_t power_455_470mhz;
+    uint8_t power_420_455mhz;
+    uint8_t power_300_420mhz;
+    uint8_t power_200_300mhz;
+    uint8_t power_166_200mhz;
+    uint8_t power_145_166mhz;
+    uint8_t power_130_145mhz;
+    // uint8_t unused[56]; // Remaining unused bytes in the 64-byte block
+} PowerCalibration_t;
+
+
+typedef struct PowerCalibrationTables {
+    PowerCalibration_t high;
+    PowerCalibration_t med;
+    PowerCalibration_t low;
+} PowerCalibrationTables_t;
+
+
 
 
 
@@ -331,6 +359,7 @@ uint16_t bk4819_RSSI_return(void);
 
 // void bk4819_Tx_Power(Tx_Power_t power);
 
+
 void TxAmplifier_disable(void);
 
 void RxAmplifier_enable(void);
@@ -368,5 +397,9 @@ void BK4819_DisableDTMF(void);
 void BK4819_PlayDTMF(char Code);
 
 void Send_DTMF_String(uint8_t  *pString);
+
+void nvm_readCalibData(void *buf);
+
+uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration_t calTable);
 
 #endif

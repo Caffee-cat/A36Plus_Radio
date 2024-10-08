@@ -33,6 +33,7 @@
 extern SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput, xMainChannelDTMFSending;
 extern SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
 extern SemaphoreHandle_t xChannelScan;
+extern PowerCalibrationTables_t calData;
 extern uint8_t channel_A[];
 extern uint8_t channel_B[];
 
@@ -729,6 +730,7 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     channel_ptr->PF1 = PF_DTMF;
     channel_ptr->PF2 = PF_OFF;
 
+    
     bk4819_set_freq(channel_ptr->channel_1.frequency);
     bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
 
@@ -802,7 +804,11 @@ void main_PTT_transmit(ui_main_channel_ptr channel_ptr)
     channel_offset_preload(channel_ptr);
     draw_channel();
     reg_temp = bk4819_read_reg(BK4819_REG_36);
+#ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(channel_ptr->cur_channel->power);
+#else 
+    bk4819_setTxPower(channel_ptr->cur_channel->power, channel_ptr->cur_channel->frequency, calData);
+#endif
     TxAmplifier_enable(channel_ptr);
 
     bk4819_set_freq(channel_ptr->cur_channel->frequency);
@@ -1216,7 +1222,11 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
                 main_channel_speak_t cur_chan = channel_detect(channel_ptr);
                 if (cur_chan != NONE_CHANNEL_SPEAKING && cur_chan != CTDCSS_INCORRENT)
                 {
+#ifndef LOAD_IN_A36PLUS
                     bk4819_Tx_Power(TXP_MID);
+#else 
+                    bk4819_setTxPower(TXP_MID, channel_ptr->cur_channel->frequency, calData);
+#endif
                     wakeup_screen(Brightness_ptr, Timer_ptr);
 
                     loudspeaker_TurnOn(channel_ptr, cur_chan);

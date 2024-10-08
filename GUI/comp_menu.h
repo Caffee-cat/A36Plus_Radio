@@ -259,6 +259,7 @@ typedef struct Display_Timer_t
 extern menu_list_t menu_item[];
 extern uint32_t *cur_ch, ch1, ch2;
 
+
 void _r_clear_item_area(jgfx_menu_ptr menu_ptr);
 
 void Startup_display(void);

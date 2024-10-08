@@ -7,7 +7,7 @@ static uint8_t input_num = 0;
 
 uint8_t input_state = 0;
 ui_page_t ui_main;
-ui_main_channel_t radio_channel;
+extern ui_main_channel_t radio_channel;
 
 void ui_main_initial(void)
 {

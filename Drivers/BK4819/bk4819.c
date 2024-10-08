@@ -31,9 +31,13 @@ SOFTWARE.
 
 #include "bk4819.h"
 
+ui_main_channel_t radio_channel;
+
 extern SemaphoreHandle_t xMainChannelDTMFSending;
+extern PowerCalibrationTables_t calData;
 const uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
 const float main_channel_step[] = {5, 6.25, 10, 12.5, 20.0, 25.0, 50.0};
+
 
 const uint16_t DCS_Options[104] = {
 	0x0013, 0x0015, 0x0016, 0x0019, 0x001A, 0x001E, 0x0023, 0x0027,
@@ -164,7 +168,7 @@ void bk4819_set_Squelch(uint8_t RTSO, uint8_t RTSC, uint8_t ETSO, uint8_t ETSC, 
     bk4819_write_reg(BK4819_REG_4E, GTSO);
 }
 
-
+#ifndef LOAD_IN_A36PLUS
 void bk4819_Tx_Power(Tx_Power_t power)
 {
     switch (power)
@@ -179,10 +183,48 @@ void bk4819_Tx_Power(Tx_Power_t power)
         bk4819_write_reg(BK4819_REG_36, 0x30aa);
         break;
     case TXP_STANDBY:
-        bk4819_write_reg(BK4819_REG_36, 0x103f);
+        bk4819_write_reg(BK4819_REG_36, 0x133f);
         break;
     }
 }
+#else
+void bk4819_setTxPower(Tx_Power_t power, uint32_t freq, PowerCalibrationTables_t calData)
+{
+
+    uint16_t reg = 0;
+    uint8_t PaBias = 0;
+    uint8_t PaGainValues = 0;
+    
+    // NOTE: PaGainValues taken straight from disassembly.
+    // Determine the PaGainValues based on power
+    switch (power)
+    {
+    case TXP_LOW:
+        PaGainValues = 0xD7;
+        // Retrieve the top byte from calData based on power and frequency
+        PaBias = getPaBiasCalValue(freq, calData.low);
+        break;
+    case TXP_MID:
+        PaGainValues = 0xD7;
+        PaBias = getPaBiasCalValue(freq, calData.med);
+        break;
+    case TXP_HIGH:
+        PaGainValues = 0xFF;
+        PaBias = getPaBiasCalValue(freq, calData.high);
+        break;
+    case TXP_STANDBY:
+        PaGainValues = 0x13;
+        PaBias = getPaBiasCalValue(freq, calData.low);
+        break;
+    }
+    // Combine the top byte with the least significant byte
+    reg = (PaBias << 8) | PaGainValues;
+
+    bk4819_write_reg(BK4819_REG_36, reg);
+}
+#endif
+
+
 
 void bk4819_write_reg(bk4819_reg_t reg, uint16_t data)
 {
@@ -259,14 +301,18 @@ void bk4819_init(void)
     // bk4819_CTDCSS_set(0, 719); // Set CTCSS to 71.9HZ
     // bk4819_CTDCSS_set(0, 2775); // Set CTCSS to 88.5HZ
     // bk4819_CTDCSS_disable();
-
+#ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(TXP_STANDBY);
+#else
+    bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency, calData);
+#endif
 
     // bk4819_tx_on();
     // bk4819_tx_off();
 
     // bk4819_rx_off();
     bk4819_rx_on();
+
 }
 
 /**
@@ -490,14 +536,23 @@ void TxAmplifier_enable(ui_main_channel_ptr channel_ptr)
         bk4819_gpio_pin_set(4, TRUE);
     else
         gpio_bit_set(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
+
+#ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(channel_ptr->cur_channel->power);
+#else
+    bk4819_setTxPower(channel_ptr->cur_channel->power, radio_channel.cur_channel->frequency, calData);
+#endif
 }
 
 void TxAmplifier_disable(void)
 {
     bk4819_gpio_pin_set(4, FALSE);
     gpio_bit_reset(TxAmplifier_VHF_PORT, TxAmplifier_VHF_PIN);
+#ifndef LOAD_IN_A36PLUS
     bk4819_Tx_Power(TXP_STANDBY);
+#else 
+    bk4819_setTxPower(TXP_STANDBY, radio_channel.cur_channel->frequency, calData);
+#endif
 }
 
 void RxAmplifier_enable(void)
@@ -1001,3 +1056,69 @@ void FSKReceive_pre(void)
 
     
 }
+
+
+
+void nvm_readCalibData(void *buf)
+{
+    // W25Qx_wakeup();
+    // delayUs(5);
+
+    PowerCalibrationTables_t *calib = ((PowerCalibrationTables_t *) buf);
+
+    // Load calibration data
+    uint32_t addr = CAL_BASE;
+
+    uint8_t *ptr = (uint8_t*)calib;  
+
+
+    for(int i = 0;i < sizeof(PowerCalibration_t); i++)
+    {
+        w25q16jv_read_num(addr + i, ptr + i, 1);
+    }
+    addr += 64;
+    ptr += sizeof(PowerCalibration_t);
+
+
+    for(int i = 0;i < sizeof(PowerCalibration_t); i++)
+    {
+        w25q16jv_read_num(addr + i, ptr + i, 1);
+    }
+    addr += 64;
+    ptr += sizeof(PowerCalibration_t);
+
+
+    for(int i = 0;i < sizeof(PowerCalibration_t); i++)
+    {
+        w25q16jv_read_num(addr + i, ptr + i, 1);
+    }
+
+}
+
+
+// Consolidated function to get the calibration value based on frequency
+uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration_t calTable) {
+
+    freq *= 10;
+    if (freq < 130000000) {
+        return calTable.power_below_130mhz;
+    } else if (freq >= 455000000 && freq <= 470000000) {
+        return calTable.power_455_470mhz;
+    } else if (freq >= 420000000 && freq < 455000000) {
+        return calTable.power_420_455mhz;
+    } else if (freq >= 300000000 && freq < 420000000) {
+        return calTable.power_300_420mhz;
+    } else if (freq >= 200000000 && freq < 300000000) {
+        return calTable.power_200_300mhz;
+    } else if (freq >= 166000000 && freq < 200000000) {
+        return calTable.power_166_200mhz;
+    } else if (freq >= 145000000 && freq < 166000000) {
+        return calTable.power_145_166mhz;
+    } else if (freq >= 130000000 && freq < 145000000) {
+        return calTable.power_130_145mhz;
+    }
+    // Default case, should not happen if freq is within valid range
+    return calTable.power_below_130mhz;
+}
+
+

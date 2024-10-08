@@ -9,6 +9,8 @@
 // extern struct ui_page_ptr temp_page;
 // extern struct SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput;
 
+PowerCalibrationTables_t calData;
+
 extern ui_page_t ui_menu, ui_main;
 extern ui_stack_t ui_stack;
 extern ui_page_ptr temp_page;
