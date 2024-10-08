@@ -87,6 +87,16 @@ void battery_gpio_init(void)
     gpio_output_options_set(BATTERY_GPIO_PORT, GPIO_OTYPE_OD, GPIO_OSPEED_50MHZ, BATTERY_GPIO_PIN);
 }
 
+void led_gpio_init(void)
+{
+    gpio_mode_set(LED_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, R_LED_GPIO_PIN);
+    gpio_output_options_set(LED_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, R_LED_GPIO_PIN);
+
+    gpio_mode_set(LED_GPIO_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_PULLUP, G_LED_GPIO_PIN);
+    gpio_output_options_set(LED_GPIO_PORT, GPIO_OTYPE_PP, GPIO_OSPEED_50MHZ, G_LED_GPIO_PIN);
+}
+
+
 void gpio_config(void)
 {
     rcu_periph_clock_enable(LCD_GPIO_RCU);
@@ -100,6 +110,10 @@ void gpio_config(void)
     rcu_periph_clock_enable(KEY_GPIO_PTT_RCU);
     rcu_periph_clock_enable(MIC_EN_GPIO_RCU);
 
+#ifdef LOAD_IN_A36PLUS
+    rcu_periph_clock_enable(LED_GPIO_RCU);
+#endif
+
 
     LCD_gpio_init();
     key_gpio_init();
@@ -110,4 +124,7 @@ void gpio_config(void)
     misc_gpio_init();
     TxAmplifier_gpio_init();
     RxAmplifier_gpio_init();
+#ifdef LOAD_IN_A36PLUS
+    led_gpio_init();
+#endif
 }

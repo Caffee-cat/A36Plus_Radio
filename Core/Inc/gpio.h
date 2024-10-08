@@ -1,6 +1,7 @@
 #ifndef __GPIO_JAMIEXU_H__
 #define __GPIO_JAMIEXU_H__
 #include "gd32f3x0.h"
+#include "main.h"
 
 // Written by Jamiexu
 
@@ -100,6 +101,15 @@
 #define MIC_EN_GPIO_PORT GPIOA
 #define MIC_EN_GPIO_PIN GPIO_PIN_12
 #define MIC_EN_GPIO_RCU RCU_GPIOA
+
+
+// LED
+#define LED_GPIO_PORT GPIOA
+#define R_LED_GPIO_PIN GPIO_PIN_13
+#define G_LED_GPIO_PIN GPIO_PIN_14
+#define LED_GPIO_RCU RCU_GPIOA
+
+
 
 static void LCD_gpio_init(void);
 static void key_gpio_init(void);

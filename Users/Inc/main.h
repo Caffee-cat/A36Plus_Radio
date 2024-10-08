@@ -1,9 +1,14 @@
 #ifndef __MAIN_JAMIEXU_H__
 #define __MAIN_JAMIEXU_H__
 
-#define USE_FONT_LOADED_IN_MCU
+
 #define RTOS_ON
 // #define USE_USART_AND_FLASH
+#define LOAD_IN_A36PLUS
+
+#ifdef LOAD_IN_A36PLUS
+#define USE_FONT_LOADED_IN_MCU
+#endif
 
 // Font address
 #define FLASH_SPLASH_ADDR 0x7D000        // file: font/splash.bin, offset: 0x7d000
@@ -42,6 +47,7 @@
 #include "task.h"
 #include "jgfx.h"
 #include "ui.h"
+#include "led.h"
 // #include "ui_menu.h"
 // #include "comp_menu.h"
 // #include "radio.h"
