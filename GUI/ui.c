@@ -17,11 +17,11 @@ void ui_init(void)
     vTaskDelay(30);
 
     // Startup_display();
-    ui_main_initial();
     ui_menu_initial();
+    ui_main_initial();
     uiStackInit(&ui_stack, UI_STACK_MAX_SIZE);
-    uiStackPush(&ui_stack, &ui_main);
     uiStackPush(&ui_stack, &ui_menu);
+    uiStackPush(&ui_stack, &ui_main);
 
     temp_page = uiStackGetTop(&ui_stack);
     if (temp_page == NULL)
