@@ -1,7 +1,146 @@
 #include "radio.h"
 
 uint16_t count = 0;
-bool render_finish = FALSE; //
+bool render_finish = FALSE; 
+
+/**
+ * @brief Dual Band in main interface
+ *
+ * @param channel_ptr channel pointer
+ * @return uint8_t 1: Detect successd,refresh main interface; 0 :Detect failed,doing nothing
+ */
+main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
+{
+
+    uint16_t count = 10, reg_0c_flag;
+    // channel turn
+    if (channel_ptr->dual_channel)
+    {
+
+        channel_ptr->dual_channel = FALSE;
+
+        bk4819_set_freq(channel_ptr->channel_1.frequency);
+
+        bk4819_rx_on();
+
+        vTaskDelay(800);
+
+        // printf("RSSI equal to :0x%04x\n",bk4819_read_reg(BK4819_REG_67));
+
+        bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
+
+        // printf("detecting!\n");
+        reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
+        // recive info
+        if (reg_0c_flag & 0x02)
+        {
+
+            // check RxCTC/CDC
+            // vTaskDelay(10);
+            if (main_channel_CTDCSS_judge(&channel_ptr->channel_1) == CHANNEL_SPEAKING)
+                return CHANNAL_A_SPEAKING;
+            return CTDCSS_INCORRENT;
+        }
+    }
+
+    else if (!channel_ptr->dual_channel)
+    {
+
+        channel_ptr->dual_channel = TRUE;
+
+        bk4819_set_freq(channel_ptr->channel_2.frequency);
+
+        bk4819_rx_on();
+
+        vTaskDelay(800);
+
+        bk4819_subchannel_set_Squelch(channel_ptr->cur_channel->sql);
+
+        // printf("detecting!\n");
+        reg_0c_flag = bk4819_read_reg(BK4819_REG_0C);
+
+        if (bk4819_read_reg(BK4819_REG_0C) & 0x02)
+        {
+
+            if (main_channel_CTDCSS_judge(&channel_ptr->channel_2) == CHANNEL_SPEAKING)
+                return CHANNEL_B_SPEAKING;
+            return CTDCSS_INCORRENT;
+        }
+    }
+
+    bk4819_set_freq(channel_ptr->cur_channel->frequency);
+    return 0;
+}
+
+
+/**
+ * @brief Dual-Band standby and draw the main interface when a signal is detected
+ *
+ * @param channel_ptr channel pointer
+ * @param Brightness_ptr brightness pointer
+ * @param Timer_ptr timer pointer
+ * @param state input state refer from ui_main
+ */
+void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr, uint8_t *state)
+{
+    if (xSemaphoreTake(xMainChannelTalking, portMAX_DELAY) == pdTRUE)
+    {   
+        xSemaphoreTake(xMainChannelDTMFSending,portMAX_DELAY);
+        xSemaphoreGive(xMainChannelDTMFSending);
+        xSemaphoreTake(xChannelScan, portMAX_DELAY);
+        xSemaphoreGive(xChannelScan);
+        xSemaphoreGive(xMainChannelTalking);
+        if (xSemaphoreTake(xMainChannelListening, portMAX_DELAY) == pdTRUE)
+        {
+            printf("Dual watching!\n");
+            if (loudspeaker_TurnOff() == TRUE)
+            {
+                main_channel_speak_t cur_chan = channel_detect(channel_ptr);
+                if (cur_chan != NONE_CHANNEL_SPEAKING && cur_chan != CTDCSS_INCORRENT)
+                {
+                    printf("Dual watch Detected!\n");
+#ifndef LOAD_IN_A36PLUS
+                    bk4819_Tx_Power(TXP_MID);
+#else 
+                    bk4819_setTxPower(TXP_MID, channel_ptr->cur_channel->frequency, calData);
+#endif
+                    wakeup_screen(Brightness_ptr, Timer_ptr);
+
+                    loudspeaker_TurnOn(channel_ptr, cur_chan);
+                    xSemaphoreGive(xMainListeningRender);
+                }
+            }
+            xSemaphoreGive(xMainChannelListening);
+        }
+    }
+}
+
+/**
+ * @brief Turn on loudspeaker after RSSI meet requirment
+ *
+ * @param channel_ptr channel pointer
+ * @param status the speaking channel
+ */
+void loudspeaker_TurnOn(ui_main_channel_ptr channel_ptr, main_channel_speak_t status)
+{
+    uint16_t reg;
+#ifdef LOAD_IN_A36PLUS
+    G_LED_ON;
+#endif
+
+    if (status == NONE_CHANNEL_SPEAKING)
+    {
+        bk4819_set_freq(channel_ptr->cur_channel->frequency);
+        return;
+    }
+    // turn on sound
+    gpio_bit_set(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
+    reg = bk4819_read_reg(BK4819_REG_30);
+    bk4819_write_reg(BK4819_REG_30, reg | BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE);
+    // RxAmplifier_enable();
+
+    channel_ptr->channel_listening = TRUE;
+}
 
 
 /**
@@ -18,7 +157,9 @@ bool loudspeaker_TurnOff(void)
         return FALSE;
     if (Squelch_resultoutput() == FALSE)
     {
-
+#ifdef LOAD_IN_A36PLUS
+        G_LED_OFF;
+#endif
         gpio_bit_reset(MIC_EN_GPIO_PORT, MIC_EN_GPIO_PIN);
         uint16_t reg = bk4819_read_reg(BK4819_REG_30);
         bk4819_write_reg(BK4819_REG_30, reg | ~(BK4819_REG30_AF_DAC_ENABLE | BK4819_REG30_MIC_ADC_ENABLE));
@@ -237,6 +378,42 @@ static void FM_main_callback(void)
             }
         }
     }
+}
+
+
+/**
+ * @brief Check if CT/DCSS setting is correct or not
+ *
+ * @param sub_channel sub_channel pointer
+ * @return main_channel_speak_t
+ */
+static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channel)
+{
+    uint8_t count = 20;
+    if (sub_channel->Rx_CTCSS || sub_channel->Rx_CDCSS)
+    {
+        if (sub_channel->Rx_CTCSS != 0)
+        {
+            bk4819_CTDCSS_set(0, sub_channel->Rx_CTCSS);
+            while (count--)
+            {
+                if (bk4819_read_reg(BK4819_REG_0C) & 0x400)
+                    return CHANNEL_SPEAKING;
+            }
+            return CTDCSS_INCORRENT;
+        }
+        if (sub_channel->Rx_CDCSS != 0)
+        {
+            bk4819_CDCSS_set_v2(sub_channel->Rx_CDCSS);
+            while (count--)
+            {
+                if (bk4819_read_reg(BK4819_REG_0C) & 0x4000)
+                    return CHANNEL_SPEAKING;
+            }
+            return CTDCSS_INCORRENT;
+        }
+    }
+    return CHANNEL_SPEAKING;
 }
 
 

@@ -334,10 +334,6 @@ void channel_input_flicker(ui_main_channel_ptr channel_ptr, uint8_t state);
 
 void channel_store(ui_main_channel_ptr channel_ptr);
 
-main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr);
-
-void loudspeaker_TurnOn(ui_main_channel_ptr channel_ptr, main_channel_speak_t status);
-
 void offset_direction(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 // void bk4819_Tx_Power(Tx_Power_t power);
@@ -359,8 +355,6 @@ void channel_RxCTCSS_change(ui_main_channel_ptr channel_ptr, uint8_t prarm);
 void channel_TxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
 
 void channel_RxCDCSS_change(ui_main_channel_ptr channel_ptr, uint8_t param);
-
-void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr Brightness_ptr, Display_Timer_ptr Timer_ptr,uint8_t *state);
 
 void return_to_menu(jgfx_menu_ptr menu_ptr);
 
@@ -410,8 +404,6 @@ static void submenu_init(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr, u
 static void submenu_items_refresh(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
 
 static uint8_t submenu_cb(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
-
-static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channel);
 
 
 static void submenu_show_channel_icon(jgfx_menu_ptr menu_ptr, submenu_item_ptr submenu_ptr);
