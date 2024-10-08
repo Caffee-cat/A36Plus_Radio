@@ -260,19 +260,19 @@ void draw_battery(void)
             ;
     }
 
-    if (val > 2553)
+    if (val > BatCalData.BAT_Full)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_full);
     }
-    else if (val > 2409)
+    else if (val > BatCalData.BAT_Level3)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_level3);
     }
-    else if (val > 2280)
+    else if (val > BatCalData.BAT_Level2)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_level2);
     }
-    else if (val > 2104)
+    else if (val > BatCalData.BAT_Level1)
     {
         jgfx_draw_img(32, 0, 21, 14, battery_level1);
     }

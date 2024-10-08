@@ -1,6 +1,7 @@
 #ifndef __UI_MAIN_JAMIEXU_H__
 #define __UI_MAIN_JAMIEXU_H___
 #include "ui.h"
+#include "DataCalib.h"
 
 #ifdef USE_FONT_LOADED_IN_MCU
 extern uint8_t channel_A[];
@@ -22,6 +23,7 @@ extern SemaphoreHandle_t xMainChannelListening;
 extern SemaphoreHandle_t xMainChannelInput;
 extern SemaphoreHandle_t xMainChannelDraw;
 extern SemaphoreHandle_t jgfx_mutex;
+extern BatteryCalibrationTables_t BatCalData;
 extern bool render_finish;
 
 void draw_channel(void);
