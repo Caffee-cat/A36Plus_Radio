@@ -449,7 +449,8 @@ bool Squelch_resultoutput(void)
     uint16_t reg;
     reg = bk4819_read_reg(BK4819_REG_0C);
 
-    printf("reg_0C euqal to : 0x%04x\n",reg);
+    
+    // printf("reg_0C euqal to : 0x%04x\n", reg);
     // recive info
     if (reg & 0x02)
     {

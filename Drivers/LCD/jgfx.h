@@ -37,6 +37,8 @@
 #define JGFXF_COLOR_PINK 0xFDB8
 #define JGFXF_COLOR_PURPLE 0x8010
 
+extern SemaphoreHandle_t jgfx_mutex;
+
 // define piexel rgb depth format
 typedef union
 {
