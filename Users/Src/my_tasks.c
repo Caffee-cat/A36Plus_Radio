@@ -49,6 +49,7 @@ void vTaskUIInit(void)
         Startup_display();
         FMC_channel_init();
         main_channel_init(&radio_channel);
+        nvm_readCalibData(&calData);
         Brightness_init(&Display_brightness);
         Display_Timer_Init(&Display_Timer);
         ui_init();
