@@ -15,7 +15,7 @@ void vTaskSystemStart(void)
 
 void vTaskChannelListening(void)
 {
-    vTaskDelay(1500);
+    vTaskDelay(2000);
     xSemaphoreTake(xMainListeningRender, portMAX_DELAY);
     for (;;)
     {
