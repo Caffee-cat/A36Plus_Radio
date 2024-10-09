@@ -66,11 +66,15 @@ static void nvm_read_BAT_CalibData(void *buf)
     uint32_t addr = BAT_CAL_BASE;
     uint8_t data; 
     uint16_t *ptr = (uint16_t*)calib;  
+    uint8_t i = 0;
 
-    for(int i = 0;i < sizeof(BatteryCalibrationTables_t); i++)
+    while(1)
     {
         w25q16jv_read_num(addr + i, &data, 1);
         *ptr = (uint16_t)data * 16;
+        i++;
+        if(i == sizeof(BatteryCalibrationTables_t) / sizeof(uint16_t))
+            break;
         ptr += sizeof(uint8_t);
     }
 
