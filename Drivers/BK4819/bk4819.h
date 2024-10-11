@@ -26,6 +26,7 @@ extern const uint16_t DCS_Options[];
 
 
 
+
 // extern uint8_t flash_channel[MEM_CAHNNEL_LISTS][15];
 
 
@@ -389,5 +390,19 @@ void BK4819_PlayDTMF(char Code);
 void Send_DTMF_String(uint8_t  *pString);
 
 uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration_t calTable);
+
+void BK4819_ResetFSK(void);
+
+void FSKReceive_pre(void);
+
+void BK4819_SetupFSK(void);
+
+void BK4819_SendFSKData(uint16_t *pData);
+
+void FSK_Info_TX(void);
+
+void FSK_Info_RX(void);
+
+static uint8_t *FSK_s_info_decode(uint16_t *string);
 
 #endif

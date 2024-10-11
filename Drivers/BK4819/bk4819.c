@@ -36,6 +36,7 @@ ui_main_channel_t radio_channel;
 
 extern SemaphoreHandle_t xMainChannelDTMFSending;
 extern PowerCalibrationTables_t PwrCalData;
+extern QueueHandle_t xQueue; 
 const uint16_t CTCSS_param[] = {0, 670, 693, 719, 744, 770, 797, 825, 854, 885, 915};
 const float main_channel_step[] = {5, 6.25, 10, 12.5, 20.0, 25.0, 50.0};
 
@@ -480,6 +481,8 @@ void bk4819_Squelch_val_change(uint8_t sqlLevel)
     w25q16jv_page_program(0xF100 + sqlLevel, &GTSO, 1);
     w25q16jv_page_program(0xF110 + sqlLevel, &GTSC, 1);
 
+    printf("%x %x %x %x %x %x \n", RTSO, RTSC, ETSO, ETSC, GTSO, GTSC);
+
     bk4819_set_Squelch(RTSO, RTSC, ETSO, ETSC, GTSO, GTSC);
 #else
     
@@ -860,7 +863,7 @@ void flash_channel_delete(uint16_t param)
 }
 
 /**
- * @brief only run for one time when turn on radio to initial channel_select ui showed
+ * @brief only run for once when turn on radio to initial channel_select ui showed
  *
  */
 void flash_channel_init(void)
@@ -902,6 +905,43 @@ static void channel_ShowParam_delete(uint8_t param)
     flash_channel[param][2] = (char)((param + 1) % 10 + 48);
     flash_channel[param][3] = '\0';
 }
+
+static uint8_t *FSK_s_info_decode(uint16_t *string)
+{
+    uint8_t FSK_String[100] = {0};
+    uint8_t word;
+    uint8_t i;
+
+    for (i = 0; (i < sizeof(FSK_String) - 1) && (string[i] != 0); i++)
+        FSK_String[i] = (string[i] & 0xFF);
+    FSK_String[i] = '\0';
+
+    return FSK_String;
+}
+
+
+/**
+ * @brief               Use the header and tail to enclose the main body of information. 
+ *                      The first 8 bits of the main body represent the sequence number, and the last 8 bits represent the data.
+ * 
+ * @param FSK_info      Message to be sent
+ */
+static void *FSK_s_info_encode(uint8_t *FSK_info, uint16_t *FSK_encode_info)
+{
+    uint16_t data_flag = 0x0057;
+    uint16_t index = 0;
+
+    FSK_encode_info[0] = 0xABCD;
+
+    for(int i = 1; i < 35; i++)
+    {
+        FSK_encode_info[i] = ((uint16_t)FSK_info[i - 1] + (index++ << 8));
+        // printf("%04x\n", FSK_info[i]);
+    }
+    FSK_encode_info[35] = 0xDCBA;
+
+}
+
 
 void BK4819_SetAF(BK4819_AF_Type_t AF)
 {
@@ -1057,22 +1097,6 @@ void Send_DTMF_String(uint8_t  *pString)
 }
 
 
-void FSKReceive_pre(void)
-{
-    uint16_t reg;
-
-    bk4819_write_reg(BK4819_REG_3F, 0x0000);    //Disable interrupt
-    
-    reg = bk4819_read_reg(BK4819_REG_59);       // Clear RX FIFO
-    reg = reg | 0x4000;
-    bk4819_write_reg(BK4819_REG_59, reg);
-
-    bk4819_write_reg(BK4819_REG_59, 0x0068);        // Sync length 4 bytes, 7 byte preamble
-
-    
-}
-
-
 // Consolidated function to get the calibration value based on frequency
 uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration_t calTable) {
 
@@ -1097,5 +1121,172 @@ uint8_t getPaBiasCalValue(uint32_t freq, PowerCalibration_t calTable) {
     // Default case, should not happen if freq is within valid range
     return calTable.power_below_130mhz;
 }
+
+void BK4819_ResetFSK(void)
+{
+	bk4819_write_reg(BK4819_REG_3F, 0x0000);        // Disable interrupts
+	bk4819_write_reg(BK4819_REG_59, 0x0068);        // Sync length 4 bytes, 7 byte preamble
+
+	delay_1ms(20);
+
+	// bk4819_write_reg(BK4819_REG_30, 0x0000);    // BK4819 idle
+}
+
+void FSKReceive_pre(void)
+{
+    BK4819_ResetFSK();
+	bk4819_write_reg(BK4819_REG_02, 0);
+	bk4819_write_reg(BK4819_REG_3F, 0);             //Disable interrupt
+    bk4819_rx_on();
+	bk4819_write_reg(BK4819_REG_3F, 0 | (1 << 13) | (1 << 12));
+
+	// Clear RX FIFO
+	// FSK Preamble Length 7 bytes
+	// FSK SyncLength Selection
+	bk4819_write_reg(BK4819_REG_59, 0x4068);
+
+    delay_1ms(20);
+
+	// Enable FSK Scramble
+	// Enable FSK RX
+	// FSK Preamble Length 7 bytes
+	// FSK SyncLength Selection
+	bk4819_write_reg(BK4819_REG_59, 0x3068);
+
+    
+}
+
+
+void BK4819_SetupFSK(void)
+{
+    bk4819_write_reg(BK4819_REG_70, 0x00E0);    // Enable Tone2, tuning gain 48
+    bk4819_write_reg(BK4819_REG_72, 0x3065);    // Tone2 baudrate 1200
+    bk4819_write_reg(BK4819_REG_58, 0x03e1);    // FSK Enable, FSK 1.2K RX Bandwidth, Preamble 0x55, RX Gain 0x11, RX Mode
+                                                // (FSK1.2K, FSK2.4K Rx and NOAA SAME Rx), TX Mode FSK 1.2K and FSK 2.4K Tx
+    bk4819_write_reg(BK4819_REG_5C, 0x5625);    // Disable CRC among other things we don't know yet
+    bk4819_write_reg(BK4819_REG_5D, 0x4700);    // FSK Data Length 72 Bytes (0xabcd + 2 byte length + 64 byte payload + 2 byte CRC + 0xdcba)   
+
+}
+
+
+void BK4819_SendFSKData(uint16_t *pData)
+{
+	uint8_t i;
+	uint8_t Timeout = 200;
+    uint16_t data[100] = {0};
+
+
+	bk4819_write_reg(BK4819_REG_3F, 0x8000);      // FSK Tx Finished Interrupt Enable
+	bk4819_write_reg(BK4819_REG_59, 0x8068);        // clear TX info
+	delay_1ms(20);
+	bk4819_write_reg(BK4819_REG_59, 0x0068);        // unclear
+
+	for (i = 0; i < 36; i++)
+    {
+        // printf("pData[%d] = %04x\n", i, pData[i]);
+		bk4819_write_reg(BK4819_REG_5F, pData[i]);  // Input Tx info
+        delay_1ms(20);
+    }
+
+	delay_1ms(20);
+
+	bk4819_write_reg(BK4819_REG_59, 0x2868);        // Enable FSK Scramble, Enable FSK TX
+
+	while (Timeout-- && (bk4819_read_reg(BK4819_REG_0C) & 1u) == 0) // Timeout or Interrupt Indicator
+		delay_1ms(5);
+
+	bk4819_write_reg(BK4819_REG_02, 0);             // clear Interrupt flag
+
+	delay_1ms(20);
+
+	BK4819_ResetFSK();
+}
+
+
+void FSK_Info_TX(void)
+{
+    vTaskDelay(1000);
+    uint16_t reg1, reg2, reg3;
+    uint16_t gAirCopyBlockNumber;
+    uint16_t gErrorsDuringAirCopy;
+    uint8_t gAirCopyIsSendMode;
+    uint16_t FSK_Tx_info[50];
+    uint8_t g_FSK_Buffer[36] = "A36Plus";
+
+    BK4819_SetupFSK();
+    FSK_s_info_encode(g_FSK_Buffer, FSK_Tx_info);
+
+    vTaskDelay(20);
+    BK4819_SendFSKData(FSK_Tx_info);
+}
+
+
+void FSK_Info_RX(void)
+{
+    uint16_t reg1, reg2, reg3;
+    uint16_t data[100] = {0};
+    uint16_t index_n = 0;
+    uint16_t index1 = 0;
+    uint16_t count = 100;
+    bool head_flag = FALSE;
+    uint16_t number = 0;
+    uint8_t *FSK_Rx_info;
+    vTaskDelay(50);
+    
+    BK4819_SetupFSK();
+    FSKReceive_pre();
+    while (1)
+    {
+        count--;
+        if (count == 0)
+        {
+
+            if( head_flag != FALSE)
+            {
+                // printf("error data, ready for next round!\n");
+            }
+            else
+            {
+                FSK_Rx_info = FSK_s_info_decode(data);
+                radio_channel.ANI_Receive = TRUE;
+                printf("decode: %s\n", FSK_Rx_info);
+                xQueueSend(xQueue, FSK_Rx_info, portMAX_DELAY);
+            }
+
+            FSKReceive_pre();
+            BK4819_ResetFSK();
+            vTaskDelay(20);
+            break;
+        }
+
+        reg1 = bk4819_read_reg(BK4819_REG_0B);
+        reg2 = bk4819_read_reg(BK4819_REG_5F);
+        // reg3 = bk4819_read_reg(BK4819_REG_02);
+        
+        if(index_n == 0)
+            index1 = 0;
+        else
+            index1 = index_n - 1;
+        //  reg_02 is always 0x01
+        // printf("FSK receive info:reg_0b:0x%04x   reg_5f:0x%04x  HeadFlag = %d, number = %d\n", reg1, reg2, head_flag, number);
+        if(reg2 == 0xABCD)
+        {
+            head_flag = TRUE;
+            // printf("Head found!");
+        }
+
+        else if(reg2 == 0xDCBA)
+        head_flag = FALSE;
+
+        if( (reg2 >> 8 == number) && (index_n < sizeof(data) - 1))
+        {
+            count = 50;
+            data[index_n++] = reg2;
+            number++;
+        }
+    }
+}
+
+
 
 
