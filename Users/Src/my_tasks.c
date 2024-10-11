@@ -1,5 +1,7 @@
 #include "main.h"
 #include "my_task.h"
+#define QUEUE_LENGTH 3         
+#define ITEM_SIZE sizeof(uint8_t) * 20 
 // #include "portmacro.h"
 
 
@@ -7,6 +9,7 @@ bool FREERTOS_ON = FALSE;
 SemaphoreHandle_t xMainChannelTalking, xMainChannelListening, xMainChannelInput, xMainChannelDTMFSending;
 SemaphoreHandle_t xMainListeningRender, xMainListeningUnrender, xMainChannelDraw;
 SemaphoreHandle_t xChannelScan, jgfx_mutex;
+QueueHandle_t xQueue; 
 
 void vTaskSystemStart(void)
 {
@@ -19,14 +22,15 @@ void vTaskChannelListening(void)
     xSemaphoreTake(xMainListeningRender, portMAX_DELAY);
     for (;;)
     {
-        PWR_restart();
         dual_band_standby(&radio_channel, &Display_brightness, &Display_Timer, &input_state);
     }
 }
+
 void vTaskUIEvent(void)
 {
     for (;;)
     {
+        PWR_restart();
         ui_event_cb();
     }
 }
@@ -57,7 +61,7 @@ void vTaskUIInit(void)
     }
 }
 
-void xSemaphore_init(void)
+static void xSemaphore_init(void)
 {
     xMainChannelTalking = xSemaphoreCreateMutex();
     xMainChannelListening = xSemaphoreCreateMutex();
@@ -69,17 +73,28 @@ void xSemaphore_init(void)
     jgfx_mutex = xSemaphoreCreateMutex();
     xMainChannelDTMFSending = xSemaphoreCreateMutex();
 
+    xQueue = xQueueCreate(QUEUE_LENGTH, ITEM_SIZE);  
+    if (xQueue == NULL)  
+    {  
+        printf("xQueue create error!\n");
+        while(1); 
+    } 
+
+ 
+
+
     xSemaphoreTake(xMainListeningUnrender, portMAX_DELAY);
 }
 
 void vtasks_init(void)
 {
+    xSemaphore_init();
+
     xTaskCreate(vTaskUIInit, "UI Init", 128, NULL, 4, NULL);
     // xTaskCreate(vTaskSystemStart, "Event System", 64, NULL, 3, NULL);
     xTaskCreate(vTaskUIEvent, "Event handler", 150, NULL, 3, NULL);
-    xTaskCreate(vTaskChannelListening, "Channel Listening", 128, NULL, 3, NULL);
     xTaskCreate(vTaskSpeakingDraw, "UI draw", 128, NULL, 3, NULL);
-    xSemaphore_init();
+    xTaskCreate(vTaskChannelListening, "Channel Listening", 128, NULL, 3, NULL);
     timer_enable(TIMER1);
     FREERTOS_ON = TRUE;
 }

@@ -102,6 +102,15 @@ static void Scan_callback(jgfx_menu_ptr menu_ptr, ui_main_channel_ptr channel_pt
     frequency_scan(menu_ptr, channel_ptr);
 }
 
+static void ANI_callback(ui_main_channel_ptr channel_ptr)
+{
+    submenu_item_t sub_menu;
+    uint8_t submenu_list_num = 2;
+    sub_menu.cur_item = radio_channel.ANI_enable + 1;
+    uint8_t param = submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, " Turn OFF", " Turn ON");
+    channel_ANI_change(param);
+}
+
 #ifndef BRIGHTNESS_MENU_SHOW_WITH_PARAM
 // Set screen Brightness
 static void Brightness_callback(void)
@@ -363,7 +372,7 @@ static void Display_Settings(jgfx_menu_ptr ptr)
 static void Banks(jgfx_menu_ptr menu_ptr)
 {
     submenu_item_t sub_menu;
-    uint8_t submenu_list_num = 4, exit_flag = 0;
+    uint8_t submenu_list_num = 5, exit_flag = 0;
     sub_menu.cur_item = 1;
 
     menu_list_t Banks_item[] =
@@ -372,6 +381,7 @@ static void Banks(jgfx_menu_ptr menu_ptr)
             {"SFT-D",   1},
             {"TxPower", 1},
             {"Scan",    0},
+            {"ANI",  0},
         };
 
     for (int i = 0; i < sizeof(Banks_item) / sizeof(Banks_item[0]); i++)
@@ -380,7 +390,7 @@ static void Banks(jgfx_menu_ptr menu_ptr)
     while (!exit_flag)
     {
         // Create submenu
-        switch (submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, "Offset", "SFT-D", "TxPower", "Scan"))
+        switch (submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, "Offset", "SFT-D", "TxPower", "Scan", "ANI"))
         {
         case 1:
             Offset_callback(menu_ptr, &radio_channel);
@@ -394,6 +404,9 @@ static void Banks(jgfx_menu_ptr menu_ptr)
             break;
         case 4:
             Scan_callback(menu_ptr, &radio_channel);
+            break;
+        case 5:
+            ANI_callback(&radio_channel);
             break;
         default:
             return_to_menu(menu_ptr);
@@ -447,7 +460,7 @@ void Squelch(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
     uint8_t submenu_list_num = 10;
-    sub_menu.cur_item = radio_channel.cur_channel->sql + 1;
+    sub_menu.cur_item = radio_channel.sql + 1;
     uint8_t param = submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu,
                                       " 0", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9");
 
@@ -564,10 +577,17 @@ static void DTMF_Setting(jgfx_menu_ptr ptr)
 {
     submenu_item_t sub_menu;
     uint8_t index = 1, submenu_list_num = 3, exit_flag = 0;
+    uint8_t submenu_DTMF_item[][16] = 
+    {
+        "UPCode",
+        "DWCode",
+        "DTMF Code",
+    };
+
     sub_menu.cur_item = 1;
     while(!exit_flag)
     {
-        switch (submenu_item_show(&jgfx_menu, submenu_list_num, &sub_menu, "UPCode", "DWCode", "DTMF Code"))
+        switch (submenu_item_show_with_array(&jgfx_menu, submenu_list_num, &sub_menu, submenu_DTMF_item))
         {
         case 1:
             DTMF_Up_Code_setting_callback(ptr, &radio_channel);

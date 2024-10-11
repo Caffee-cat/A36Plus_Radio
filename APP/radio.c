@@ -16,19 +16,21 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     sub_channel_init(&channel_ptr->channel_2);
     channel_ptr->channel_1.frequency = channel_A_get();
     channel_ptr->channel_2.frequency = channel_B_get();
-    channel_ptr->ch_bak = 0;
-    channel_ptr->sql = 3;
-    channel_ptr->dual_channel = TRUE;
-    channel_ptr->channel_listening = FALSE;
-    channel_ptr->DTMF_up_enable = FALSE;
-    channel_ptr->DTMF_dowm_enable = FALSE;
-    channel_ptr->PF1 = PF_DTMF;
-    channel_ptr->PF2 = PF_OFF;
+    channel_ptr->ch_bak =               0;
+    channel_ptr->sql =                  3;
+    channel_ptr->dual_channel =         TRUE;
+    channel_ptr->channel_listening =    FALSE;
+    channel_ptr->DTMF_up_enable =       FALSE;
+    channel_ptr->DTMF_dowm_enable =     FALSE;
+    channel_ptr->ANI_enable =           FALSE;
+    channel_ptr->ANI_Receive =          FALSE;
+    channel_ptr->PF1 =                  PF_DTMF;
+    channel_ptr->PF2 =                  PF_OFF;
 
     
     bk4819_set_freq(channel_ptr->channel_1.frequency);
     bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
-    bk4819_Squelch_val_change(channel_ptr->sql);
+    // bk4819_Squelch_val_change(channel_ptr->sql);        /**There are some unknow problems with SPI-SQL*/
 
     // Point to channel 1 for initial setup
     channel_ptr->cur_channel = &channel_ptr->channel_1;
@@ -114,6 +116,18 @@ main_channel_speak_t channel_detect(ui_main_channel_ptr channel_ptr)
     return 0;
 }
 
+void channel_ANI_change(uint8_t param)
+{
+    if(param == 0)
+        return;
+    
+    if(param == 1)
+        radio_channel.ANI_enable = FALSE;
+    
+    else if(param == 2)
+        radio_channel.ANI_enable = TRUE;
+}
+
 
 /**
  * @brief Dual-Band standby and draw the main interface when a signal is detected
@@ -147,9 +161,17 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
                     bk4819_setTxPower(TXP_MID, channel_ptr->cur_channel->frequency);
 #endif
                     wakeup_screen(Brightness_ptr, Timer_ptr);
-
+                    
                     loudspeaker_TurnOn(channel_ptr, cur_chan);
+
                     xSemaphoreGive(xMainListeningRender);
+
+                    if(radio_channel.ANI_enable == TRUE)
+                    {
+                        FSK_Info_RX();
+                        printf("FSK finish!\n");
+                    }
+
                 }
             }
             xSemaphoreGive(xMainChannelListening);
@@ -208,6 +230,7 @@ bool loudspeaker_TurnOff(void)
         bk4819_set_freq(radio_channel.cur_channel->frequency * 100);
 
         radio_channel.channel_listening = FALSE;
+        radio_channel.ANI_Receive       = FALSE;
 #ifndef LOAD_IN_A36PLUS
         bk4819_Tx_Power(TXP_LOW);
 #else
@@ -228,8 +251,11 @@ bool loudspeaker_TurnOff(void)
  */
 void main_channel_listening_draw(ui_main_channel_ptr channel_ptr, uint8_t *state)
 {
-
+    
     uint16_t count = 1000;
+    uint8_t ANI_Info[50] = {0};
+    bool ANI_render_finish = FALSE;
+
     xSemaphoreTake(jgfx_mutex, portMAX_DELAY);
     xSemaphoreGive(jgfx_mutex);
 
@@ -249,13 +275,35 @@ void main_channel_listening_draw(ui_main_channel_ptr channel_ptr, uint8_t *state
             if (temp_page != &ui_main)
                 render_finish = FALSE;
 
+            // Clear all rander finish flag
+            if(render_finish == FALSE)
+            {
+                ANI_render_finish = FALSE;
+            }
+
             // Render disable when channel nothing detected
             if (channel_ptr->channel_listening == FALSE)
                 break;
 
             // Render disable temporarily when render finished
             if (render_finish == TRUE)
+            {   
+                // Have to wait until main render finished to render ANI
+                if((channel_ptr->ANI_enable == TRUE) && (ANI_render_finish == FALSE) && (channel_ptr->ANI_Receive == TRUE))
+                {
+                    if(ANI_Info[0] == 0)
+                        xQueueReceive(xQueue, ANI_Info, portMAX_DELAY);
+
+                    printf("prepare to render ANI_Info, equal to :%s\n", ANI_Info);
+                    
+                    jgfx_set_color_hex(JGFXF_COLOR_WHITE);
+                    jgfx_set_color_back_hex(JGFXF_COLOR_BLUE);
+                    jgfx_draw_text_en(68, DISPLAY_H / 2 + 43, ANI_Info);
+                    ANI_render_finish = TRUE;
+
+                }
                 continue;
+            }
 
             if (temp_page == &ui_main && count-- == 0) // Only render in main interface
             {
@@ -271,15 +319,17 @@ void main_channel_listening_draw(ui_main_channel_ptr channel_ptr, uint8_t *state
                 {
                     jgfx_fill_react(32, DISPLAY_H / 2 + 11, DISPLAY_W, DISPLAY_H / 2);
                     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
-                    jgfx_draw_text_en(76, DISPLAY_H / 2 + 33, "A  RX");
+                    jgfx_draw_text_en(76, DISPLAY_H / 2 + 23, "A  RX");
                 }
                 else if (channel_ptr->dual_channel == TRUE)
                 {
                     jgfx_fill_react(32, 10 + 4, DISPLAY_W, DISPLAY_H / 2 - 4);
                     jgfx_set_color_hex(JGFXF_COLOR_WHITE);
-                    jgfx_draw_text_en(76, DISPLAY_H / 2 - 23, "B  RX");
+                    jgfx_draw_text_en(76, DISPLAY_H / 2 - 33, "B  RX");
                 }
+
                 render_finish = TRUE;
+
             }
         }
         render_finish = FALSE;
@@ -366,6 +416,18 @@ void FM_main_init(void)
 
         xSemaphoreGive(xMainChannelTalking);
     }
+}
+
+static void sub_channel_init(sub_channel_ptr sub_ch)
+{
+    sub_ch->offset = 0;
+    sub_ch->Rx_CTCSS = 0;
+    sub_ch->Tx_CTCSS = 0;
+    sub_ch->Rx_CDCSS = 0;
+    sub_ch->Tx_CDCSS = 0;
+    sub_ch->direction = OFF;
+    sub_ch->power = TXP_MID;
+    sub_ch->channnel_bandwidth = 1;
 }
 
 static void FM_main_callback(void)
@@ -457,5 +519,7 @@ static main_channel_speak_t main_channel_CTDCSS_judge(sub_channel_ptr sub_channe
     }
     return CHANNEL_SPEAKING;
 }
+
+
 
 

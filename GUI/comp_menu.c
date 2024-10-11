@@ -695,17 +695,7 @@ uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, ui
     }
 }
 
-void sub_channel_init(sub_channel_ptr sub_ch)
-{
-    sub_ch->offset = 0;
-    sub_ch->Rx_CTCSS = 0;
-    sub_ch->Tx_CTCSS = 0;
-    sub_ch->Rx_CDCSS = 0;
-    sub_ch->Tx_CDCSS = 0;
-    sub_ch->direction = OFF;
-    sub_ch->power = TXP_MID;
-    sub_ch->channnel_bandwidth = 1;
-}
+
 
 
 
@@ -771,7 +761,11 @@ void main_PTT_transmit(ui_main_channel_ptr channel_ptr)
     bk4819_tx_on();
     bk4819_TxCTDCSS_set_auto(channel_ptr);
     draw_status_tx();
+
     main_channel_speaking(channel_ptr);
+
+    if(channel_ptr->ANI_enable == TRUE)
+        FSK_Info_TX();
 
     while (key_get() != 0)
         ;

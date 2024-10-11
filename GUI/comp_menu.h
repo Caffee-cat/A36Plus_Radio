@@ -207,6 +207,8 @@ typedef struct ui_main_channel_t
     uint8_t DTMF_DownCode[20];
     bool DTMF_up_enable;
     bool DTMF_dowm_enable;
+    bool ANI_enable;
+    bool ANI_Receive;
 
     // for main channel input logic
     uint32_t ch_bak;
@@ -314,8 +316,6 @@ void corner_index_refresh(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_pt
 void corner_index_flicker(jgfx_menu_ptr menu_ptr, corner_index_num_ptr corner_ptr);
 
 uint8_t index_num_cb(corner_index_num_ptr corner_ptr, jgfx_menu_ptr menu_ptr, uint8_t key);
-
-void sub_channel_init(sub_channel_ptr sub_ch);
 
 void radio_channel_change(ui_main_channel_ptr channel_ptr, uint8_t step);
 
