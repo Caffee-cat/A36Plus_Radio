@@ -1,5 +1,7 @@
 #include "radio.h"
 
+// Written by Caffee-cat
+
 uint16_t count = 0;
 bool render_finish = FALSE; 
 
@@ -30,7 +32,7 @@ void main_channel_init(ui_main_channel_ptr channel_ptr)
     
     bk4819_set_freq(channel_ptr->channel_1.frequency);
     bk4819_set_BandWidth(channel_ptr->cur_channel->channnel_bandwidth);
-    // bk4819_Squelch_val_change(channel_ptr->sql);        /**There are some unknow problems with SPI-SQL*/
+    bk4819_Squelch_val_change(channel_ptr->sql);
 
     // Point to channel 1 for initial setup
     channel_ptr->cur_channel = &channel_ptr->channel_1;
@@ -169,7 +171,7 @@ void dual_band_standby(ui_main_channel_ptr channel_ptr, Brightness_setting_ptr B
                     if(radio_channel.ANI_enable == TRUE)
                     {
                         FSK_Info_RX();
-                        printf("FSK finish!\n");
+                        // printf("FSK finish!\n");
                     }
 
                 }

@@ -474,14 +474,12 @@ void bk4819_Squelch_val_change(uint8_t sqlLevel)
 {
 #ifdef LOAD_IN_A36PLUS
     uint8_t RTSO, RTSC, ETSO, ETSC, GTSO, GTSC;
-    w25q16jv_page_program(0xF0C0 + sqlLevel, &RTSO, 1);
-    w25q16jv_page_program(0xF0D0 + sqlLevel, &RTSC, 1);
-    w25q16jv_page_program(0xF0E0 + sqlLevel, &ETSC, 1);
-    w25q16jv_page_program(0xF0F0 + sqlLevel, &ETSO, 1);
-    w25q16jv_page_program(0xF100 + sqlLevel, &GTSO, 1);
-    w25q16jv_page_program(0xF110 + sqlLevel, &GTSC, 1);
-
-    printf("%x %x %x %x %x %x \n", RTSO, RTSC, ETSO, ETSC, GTSO, GTSC);
+    w25q16jv_read_num(0xF0C0 + sqlLevel, &RTSO, 1);
+    w25q16jv_read_num(0xF0D0 + sqlLevel, &RTSC, 1);
+    w25q16jv_read_num(0xF0E0 + sqlLevel, &ETSC, 1);
+    w25q16jv_read_num(0xF0F0 + sqlLevel, &ETSO, 1);
+    w25q16jv_read_num(0xF100 + sqlLevel, &GTSO, 1);
+    w25q16jv_read_num(0xF110 + sqlLevel, &GTSC, 1);
 
     bk4819_set_Squelch(RTSO, RTSC, ETSO, ETSC, GTSO, GTSC);
 #else
@@ -1141,17 +1139,19 @@ void FSKReceive_pre(void)
 	bk4819_write_reg(BK4819_REG_3F, 0 | (1 << 13) | (1 << 12));
 
 	// Clear RX FIFO
+    // Invert FSK data when RX(If SPI-SQL is setted )
 	// FSK Preamble Length 7 bytes
 	// FSK SyncLength Selection
-	bk4819_write_reg(BK4819_REG_59, 0x4068);
+	bk4819_write_reg(BK4819_REG_59, 0x4468);
 
     delay_1ms(20);
 
 	// Enable FSK Scramble
+    // Invert FSK data when RX(If SPI-SQL is setted )
 	// Enable FSK RX
 	// FSK Preamble Length 7 bytes
 	// FSK SyncLength Selection
-	bk4819_write_reg(BK4819_REG_59, 0x3068);
+	bk4819_write_reg(BK4819_REG_59, 0x3468);
 
     
 }
@@ -1249,7 +1249,7 @@ void FSK_Info_RX(void)
             {
                 FSK_Rx_info = FSK_s_info_decode(data);
                 radio_channel.ANI_Receive = TRUE;
-                printf("decode: %s\n", FSK_Rx_info);
+                // printf("decode: %s\n", FSK_Rx_info);
                 xQueueSend(xQueue, FSK_Rx_info, portMAX_DELAY);
             }
 
